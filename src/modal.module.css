@@ -1,0 +1,20 @@
+.modal {
+  width: min(800px, 100%);
+  padding-inline: clamp(0.5rem, 3dvw, 2rem);
+  @apply bg-transparent py-12;
+}
+
+.modal[open],
+.modal::backdrop {
+  animation: show 0.5s ease;
+}
+
+.modal::backdrop {
+  @apply bg-kbf-dark-purple/60 backdrop-blur;
+}
+
+@keyframes show {
+  0% {
+    opacity: 0;
+  }
+}

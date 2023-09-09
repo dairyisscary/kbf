@@ -1,0 +1,23 @@
+.pill {
+  @apply relative transition-all duration-300;
+}
+
+.pill > * {
+  @apply absolute left-[-10px] top-0 h-5 w-5 opacity-0 transition-all duration-300;
+}
+
+.pillsel {
+  @apply pl-6;
+}
+
+.pillsel > * {
+  @apply left-0 opacity-100;
+}
+
+.pip {
+  @apply opacity-0 transition-opacity duration-300;
+}
+
+.pipsel {
+  @apply opacity-100;
+}

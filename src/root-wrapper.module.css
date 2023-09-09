@@ -1,0 +1,28 @@
+.wrapper {
+  width: min(100%, 1800px);
+  padding-inline: clamp(1rem, 1dvw, 2rem);
+  @apply mx-auto flex items-start py-12;
+}
+
+.nav {
+  @apply sticky top-12 flex flex-col border-r border-kbf-accent-border pb-10 pr-5 pt-8;
+  @apply md:w-[clamp(170px,20%,250px)];
+}
+
+.nav a {
+  @apply relative flex items-center gap-2 p-3;
+}
+
+.nav a > span {
+  @apply absolute left-[calc(100%+0.4rem)] hidden rounded bg-black/70 p-2;
+  @apply md:static md:block md:bg-transparent md:p-0;
+}
+
+.nav a:focus > span,
+.nav a:hover > span {
+  @apply block;
+}
+
+.pill {
+  @apply inline-block rounded border border-kbf-dark-purple px-2.5 py-1 font-medium;
+}

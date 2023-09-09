@@ -1,0 +1,5 @@
+.icon {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  @apply shrink-0;
+}

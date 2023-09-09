@@ -1,0 +1,6 @@
+.direnv/
+.devenv/
+.solid/
+dist/
+node_modules/
+.env*.local

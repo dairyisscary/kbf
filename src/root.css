@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body,
+  dialog {
+    @apply font-sans leading-5 text-kbf-text-main antialiased;
+  }
+
+  body {
+    @apply bg-kbf-dark-purple;
+  }
+
+  a:hover,
+  a:focus {
+    @apply text-kbf-text-highlight;
+  }
+
+  a.active {
+    @apply text-kbf-action;
+  }
+
+  a,
+  textarea,
+  button,
+  input {
+    @apply rounded-md transition duration-300;
+    @apply ring-kbf-action-highlight focus:outline-none focus:ring-2;
+  }
+
+  textarea,
+  button,
+  input {
+    @apply px-4 py-3;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply text-kbf-text-highlight;
+  }
+
+  h1 {
+    @apply text-3xl;
+  }
+
+  h2 {
+    @apply text-xl;
+  }
+
+  textarea,
+  input[type="password"],
+  input[type="text"],
+  input[type="date"] {
+    @apply border-2 border-kbf-action bg-kbf-light-purple text-lg;
+  }
+
+  textarea:focus,
+  input[type="password"]:focus,
+  input[type="text"]:focus,
+  input[type="date"]:focus {
+    @apply text-kbf-text-highlight;
+  }
+}

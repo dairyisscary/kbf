@@ -1,0 +1,36 @@
+.th {
+  @apply text-left text-sm font-medium text-kbf-text-accent;
+}
+
+.th,
+.bodycell {
+  @apply px-4 py-2.5;
+}
+
+.bodycell {
+  @apply text-lg transition-colors duration-300;
+}
+
+tr:nth-child(even) .bodycell {
+  @apply bg-kbf-light-purple;
+}
+
+.bodycell:first-child {
+  @apply rounded-bl rounded-tl;
+}
+
+.bodycell:last-child {
+  @apply rounded-br rounded-tr;
+}
+
+tr.action:hover .bodycell:not(.empty) {
+  @apply cursor-pointer bg-kbf-action-alt;
+}
+
+tr:first-child .bodycell {
+  @apply mt-3;
+}
+
+.empty {
+  @apply text-center text-sm italic;
+}

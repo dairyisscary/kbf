@@ -1,0 +1,33 @@
+.label {
+  @apply cursor-pointer text-lg font-medium;
+}
+
+.row {
+  @apply my-14 flex flex-col gap-3;
+}
+
+.checkbox + label {
+  @apply flex items-center gap-3;
+}
+
+.visualcheckbox {
+  transform: rotateZ(-180deg);
+  @apply flex h-6 w-6 items-center justify-center rounded border-2 border-kbf-action bg-kbf-dark-purple transition duration-300;
+}
+
+.checkbox:checked + label .visualcheckbox {
+  transform: rotateZ(0);
+  @apply bg-kbf-action;
+}
+
+.checkboxicon {
+  @apply text-kbf-text-highlight opacity-0 transition duration-300;
+}
+
+.checkbox:checked + label .checkboxicon {
+  @apply opacity-100;
+}
+
+.checkbox:focus + label .visualcheckbox {
+  @apply ring-2 ring-kbf-text-accent;
+}

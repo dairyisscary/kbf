@@ -1,0 +1,13 @@
+.button {
+  @apply inline-flex items-center justify-center gap-2;
+  @apply transition-colors duration-300;
+  @apply border-2 border-kbf-action bg-kbf-action text-kbf-text-highlight;
+}
+
+.button:hover {
+  @apply bg-kbf-action-alt;
+}
+
+.cancel {
+  @apply bg-kbf-dark-purple text-kbf-text-main;
+}

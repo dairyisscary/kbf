@@ -1,0 +1,30 @@
+.table th:last-child,
+.table td:last-child:not(:first-child) {
+  @apply text-right;
+}
+
+.formatamount {
+  @apply opacity-0;
+}
+
+.amountrow:focus-within .formatamount {
+  @apply opacity-100;
+}
+
+.filters {
+  @apply mb-5 flex items-center gap-2;
+}
+
+.filters input {
+  @apply bg-kbf-dark-purple;
+}
+
+.filters input,
+.filters > button,
+.filters > div > button {
+  @apply border px-2 py-1 text-sm;
+}
+
+.activefilter {
+  @apply bg-kbf-action text-kbf-text-highlight;
+}
