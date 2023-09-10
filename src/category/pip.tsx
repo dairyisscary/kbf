@@ -112,7 +112,7 @@ export function CategoryPill<C extends { name: string; colorCode: number }>(prop
     >
       <span class={clx(Styles.pill, props.selected && Styles.pillsel)}>
         <Show when={props.onClick}>
-          <Icon name="check" />
+          <Icon name="check-square" />
         </Show>
         {props.category.name}
       </span>
