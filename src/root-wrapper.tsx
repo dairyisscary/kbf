@@ -20,7 +20,7 @@ function BackToTop() {
   });
   return (
     <A
-      href="#"
+      href="/back-to-top"
       class={clx("transition-opacity duration-300", hidden() && "pointer-events-none opacity-0")}
       tabindex={hidden() ? -1 : undefined}
       onClick={(event) => {
@@ -41,8 +41,8 @@ export default function Wrapper(props: { children: JSX.Element }) {
       <Show when={!isLogin()}>
         <nav class={Styles.nav}>
           <A href="/" end>
-            <Icon name="bar-chart" />
-            <span>Dashboard</span>
+            <Icon name="heart" class="text-kbf-action" />
+            <span>KBF</span>
           </A>
           <A href="/transactions">
             <Icon name="database" />

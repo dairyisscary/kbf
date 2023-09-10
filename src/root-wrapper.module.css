@@ -13,6 +13,10 @@
   @apply relative flex items-center gap-2 p-3;
 }
 
+.nav :global(a.active) {
+  @apply text-kbf-text-accent;
+}
+
 .nav a > span {
   @apply absolute left-[calc(100%+0.4rem)] hidden rounded bg-black/70 p-2;
   @apply md:static md:block md:bg-transparent md:p-0;
