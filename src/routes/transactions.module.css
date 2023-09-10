@@ -1,3 +1,7 @@
+.table {
+  @apply mb-16;
+}
+
 .table th:last-child,
 .table td:last-child:not(:first-child) {
   @apply text-right;
