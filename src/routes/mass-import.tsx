@@ -1,5 +1,5 @@
 import { createEffect, createSignal, Show } from "solid-js";
-import { useRouteData } from "solid-start";
+import { useRouteData, Title } from "solid-start";
 import { createServerData$, createServerAction$ } from "solid-start/server";
 
 import { formatCurrencySign } from "~/format";
@@ -7,7 +7,7 @@ import { massImport } from "~/transaction";
 import { CategorySelectFormRow } from "~/transaction/pip";
 import { allCategoriesByName } from "~/category";
 import { pealFormData, FormFooter, FormRow, Checkbox, FormRowWithId, Label } from "~/form";
-import { Title } from "~/root";
+import { getDocumentTitle } from "~/root";
 import Alert from "~/alert";
 import clx from "~/clx";
 import Button from "~/button";
@@ -31,7 +31,7 @@ export default function MassImport() {
   });
   return (
     <>
-      <Title>Mass Import</Title>
+      <Title>{getDocumentTitle("Mass Import")}</Title>
       <h1>Mass Import</h1>
       <Form>
         <Show when={submitting.error as null | Error}>

@@ -1,8 +1,8 @@
 import { createSignal, createEffect, Show } from "solid-js";
-import { useRouteData } from "solid-start";
+import { useRouteData, Title } from "solid-start";
 import { createServerData$, createServerAction$ } from "solid-start/server";
 
-import { Title } from "~/root";
+import { getDocumentTitle } from "~/root";
 import { allCategoriesWithCounts, deleteCategory, addCategory, editCategory } from "~/category";
 import { CategoryColorPip, CategoryColorSelector } from "~/category/pip";
 import { pealFormData, FormFooter, Checkbox, FormRowWithId, Label } from "~/form";
@@ -111,7 +111,7 @@ export default function Categories() {
   const [addEditModal, setAddEditModal] = createSignal<ModalState>(false);
   return (
     <>
-      <Title>Manage Categories</Title>
+      <Title>{getDocumentTitle("Manage Categories")}</Title>
       <header class="flex items-center justify-between gap-4 pb-8">
         <h1>Manage Categories</h1>
         <Button onClick={() => setAddEditModal({ type: "add" })}>

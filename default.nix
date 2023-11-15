@@ -1,9 +1,9 @@
 { mkPnpmPackage
 , gitignoreSource
-, nodejs-slim
+, nodejs-slim_20
 , nodePackages
 }: mkPnpmPackage rec {
-  nodejs = nodejs-slim;
+  nodejs = nodejs-slim_20;
   pnpm = nodePackages.pnpm;
 
   src = gitignoreSource ./.;

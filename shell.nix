@@ -1,17 +1,23 @@
 { pkgs, inputs, system }: inputs.devenv.lib.mkShell {
   inherit inputs pkgs;
   modules = [
-    ({ config, ... }: {
-      packages = with pkgs; [
-        nodejs-slim
-        nodePackages.pnpm
-        nodePackages.typescript-language-server
-        nodePackages.prettier
-      ];
+    ({ config, pkgs, ... }: {
+      packages =
+        let
+          nodePackages = pkgs.nodePackages.override { nodejs = pkgs.nodejs_20; };
+        in
+        [
+          pkgs.nodejs-slim_20
+          nodePackages.pnpm
+          nodePackages.typescript-language-server
+        ];
 
       dotenv.disableHint = true;
 
       scripts = {
+        prettier.exec = ''
+          ${pkgs.nodejs-slim_20}/bin/node "$DEVENV_ROOT/node_modules/prettier/bin/prettier.cjs" "$@"
+        '';
         dev.exec = ''
           #!/usr/bin/env bash
           set -e
@@ -22,7 +28,7 @@
           set -e
 
           local-esbuild() {
-            ./node_modules/.bin/esbuild --platform=node --target=node18 "$@"
+            ./node_modules/.bin/esbuild --platform=node --target=node20 "$@"
           }
 
           rm -rf dist/scripts

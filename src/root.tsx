@@ -10,15 +10,15 @@ import {
   Link,
   Routes,
   Scripts,
-  Title as SolidTitle,
+  Title,
 } from "solid-start";
 
 import "./root.css";
 
 import Wrapper from "~/root-wrapper";
 
-export function Title(props: { children: string }) {
-  return <SolidTitle>{props.children} · Kbf</SolidTitle>;
+export function getDocumentTitle(title: string) {
+  return `${title} · Kbf`;
 }
 
 export default function Root() {
@@ -26,7 +26,7 @@ export default function Root() {
     <Html lang="en">
       <Head>
         <Meta charset="utf-8" />
-        <Title>To the moon!</Title>
+        <Title>{getDocumentTitle("To the moon!")}</Title>
         <Meta name="viewport" content="width=device-width,initial-scale=1" />
         <Meta name="release-name" content={import.meta.env.PUBLIC_RELEASE_NAME} />
         <Link rel="icon" href="/favicon.png" />

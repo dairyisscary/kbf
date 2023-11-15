@@ -8,11 +8,11 @@ import {
   type ComponentProps,
   type JSX,
 } from "solid-js";
-import { useRouteData, useSearchParams } from "solid-start";
+import { useRouteData, useSearchParams, Title } from "solid-start";
 import { createServerData$, createServerAction$ } from "solid-start/server";
 import { subDays, startOfMonth, subMonths, endOfMonth, format } from "date-fns";
 
-import { Title } from "~/root";
+import { getDocumentTitle } from "~/root";
 import {
   allTransactionsFromFilters,
   addTransaction,
@@ -360,7 +360,7 @@ export default function Transactions() {
   const [addEditModal, setAddEditModal] = createSignal<ModalState>(false);
   return (
     <>
-      <Title>Manage Transactions</Title>
+      <Title>{getDocumentTitle("Manage Transactions")}</Title>
       <header class="flex items-center justify-between gap-4 pb-8">
         <h1>Manage Transactions</h1>
         <Button onClick={() => setAddEditModal({ type: "add" })}>

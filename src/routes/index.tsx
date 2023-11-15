@@ -1,8 +1,8 @@
 import { createMemo, createSignal, For, Show } from "solid-js";
-import { A, useRouteData, useSearchParams } from "solid-start";
+import { Title, A, useRouteData, useSearchParams } from "solid-start";
 import { createServerData$ } from "solid-start/server";
 
-import { Title } from "~/root";
+import { getDocumentTitle } from "~/root";
 import { transactionDataForReporting } from "~/transaction";
 import { allCategoriesByName } from "~/category";
 import { BarChart } from "~/chart";
@@ -83,8 +83,8 @@ function addInLines(
   return currencyStrat === "merged-usd"
     ? [{ ...usd, data: zipEuroIntoUsd({ usd: usd.data, euro: euro.data }) }]
     : currencyStrat === "merged-euro"
-    ? [{ ...euro, data: zipUsdIntoEuro({ usd: usd.data, euro: euro.data }) }]
-    : [usd, euro];
+      ? [{ ...euro, data: zipUsdIntoEuro({ usd: usd.data, euro: euro.data }) }]
+      : [usd, euro];
 }
 
 function Sums(props: {
@@ -200,7 +200,7 @@ export default function Dashboard() {
 
   return (
     <>
-      <Title>Dashboard</Title>
+      <Title>{getDocumentTitle("Dashboard")}</Title>
       <h1>Dashboard</h1>
       <header class="my-8 flex items-center justify-between">
         <TabGroup
