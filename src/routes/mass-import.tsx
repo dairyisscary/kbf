@@ -23,17 +23,19 @@ export default function MassImport() {
     const pealed = pealFormData(form, ["categoryIds"]);
     return massImport(pealed);
   });
-  let textAreaRef: undefined | HTMLTextAreaElement;
+  let formRef: undefined | HTMLFormElement;
+  const reset = () => Boolean(submitting.result && !submitting.error);
   createEffect(() => {
-    if (submitting.result) {
-      textAreaRef!.value = "";
+    if (reset()) {
+      formRef!.reset();
+      setCurrency("euro");
     }
   });
   return (
     <>
       <Title>{getDocumentTitle("Mass Import")}</Title>
       <h1>Mass Import</h1>
-      <Form>
+      <Form ref={formRef}>
         <Show when={submitting.error as null | Error}>
           {(error) => <Alert class="mt-6">{error().message}</Alert>}
         </Show>
@@ -42,7 +44,7 @@ export default function MassImport() {
           {(id) => (
             <>
               <Label for={id}>Comma-Separated Values</Label>
-              <textarea ref={textAreaRef} class="min-h-[200px]" id={id} name="csv" required />
+              <textarea class="min-h-[200px]" id={id} name="csv" required />
             </>
           )}
         </FormRowWithId>
@@ -61,6 +63,7 @@ export default function MassImport() {
         </FormRow>
 
         <CategorySelectFormRow
+          reset={reset()}
           allCategories={allCategories()}
           name="categoryIds"
           label="Mass Tag Categories"

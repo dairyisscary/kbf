@@ -1,4 +1,4 @@
-import { createSignal, For, type JSX, type ComponentProps } from "solid-js";
+import { createSignal, For, createEffect, type JSX, type ComponentProps } from "solid-js";
 
 import { formatMoneyAmount } from "~/format";
 import clx from "~/clx";
@@ -28,6 +28,7 @@ export function CategoryItems(props: { children: JSX.Element }) {
 
 export function CategorySelectFormRow(props: {
   allCategories: ({ id: string } & ComponentProps<typeof CategoryPill>["category"])[] | undefined;
+  reset?: boolean;
   label?: JSX.Element;
   name: string;
   initCategories?: string[];
@@ -38,6 +39,14 @@ export function CategorySelectFormRow(props: {
       return current.includes(id) ? current.filter((c) => c !== id) : current.concat(id);
     });
   };
+
+  if (props.reset !== undefined) {
+    createEffect(() => {
+      if (props.reset) {
+        setSelectedCategoryIds(props.initCategories || []);
+      }
+    });
+  }
 
   return (
     <FormRow>
