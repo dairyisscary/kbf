@@ -1,4 +1,4 @@
-import { createSignal, createEffect, Show } from "solid-js";
+import { createSignal, createEffect, createUniqueId, Show, For } from "solid-js";
 import { useRouteData, Title } from "solid-start";
 import { createServerData$, createServerAction$ } from "solid-start/server";
 
@@ -11,6 +11,8 @@ import Table from "~/table";
 import Button from "~/button";
 import Modal from "~/modal";
 import Icon from "~/icon";
+
+import Styles from "./categories.module.css";
 
 type Category = Awaited<ReturnType<typeof allCategoriesWithCounts>>[number];
 type ModalState =
@@ -25,6 +27,7 @@ export function routeData() {
 function AddEditModal(props: { onClose: () => void; editingCategory: undefined | Category }) {
   const [submitting, { Form }] = createServerAction$((form: FormData) => {
     const pealed = pealFormData(form);
+    pealed.predicates = (pealed.rulesText as string | undefined)?.split("/").filter(Boolean) || [];
     return pealed.isEditingId
       ? editCategory(pealed.isEditingId as string, pealed)
       : addCategory(pealed);
@@ -39,6 +42,7 @@ function AddEditModal(props: { onClose: () => void; editingCategory: undefined |
   });
 
   const [selectedColorCode, setSelectedColorCode] = createSignal(props.editingCategory?.colorCode);
+  const rulesDescriptionId = createUniqueId();
 
   return (
     <Modal onClose={props.onClose}>
@@ -66,6 +70,27 @@ function AddEditModal(props: { onClose: () => void; editingCategory: undefined |
               <Label for={id}>Color Code</Label>
               <CategoryColorSelector onChange={setSelectedColorCode} value={selectedColorCode()} />
               <input type="hidden" id={id} name="colorCode" value={selectedColorCode() || ""} />
+            </>
+          )}
+        </FormRowWithId>
+
+        <FormRowWithId>
+          {(id) => (
+            <>
+              <Label for={id}>Mass Import Rules</Label>
+              <p id={rulesDescriptionId} class="mb-1 text-sm">
+                Every mass-imported transaction will automatically receive this category if it
+                contains any of these forward-slash (/) separated search strings (case-insensitive).
+              </p>
+              <input
+                id={id}
+                type="text"
+                name="rulesText"
+                autocomplete="off"
+                placeholder="ex. delivery/market street/businessname"
+                aria-describedby={rulesDescriptionId}
+                value={props.editingCategory?.predicates.join("/") || ""}
+              />
             </>
           )}
         </FormRowWithId>
@@ -106,6 +131,14 @@ function AddEditModal(props: { onClose: () => void; editingCategory: undefined |
   );
 }
 
+function Predicates(props: { values: string[] }) {
+  return (
+    <div class="grid grid-cols-3 gap-1">
+      <For each={props.values}>{(pred) => <div>{pred}</div>}</For>
+    </div>
+  );
+}
+
 export default function Categories() {
   const categories = useRouteData<typeof routeData>();
   const [addEditModal, setAddEditModal] = createSignal<ModalState>(false);
@@ -119,15 +152,17 @@ export default function Categories() {
         </Button>
       </header>
       <Table
-        headers={["Name", "Color", "Transaction Count"]}
+        class={Styles.table}
+        headers={["Color", "Name", "Mass Import Rules", "Transaction Count"]}
         each={categories()}
         onRowClick={(category) => {
           setAddEditModal({ type: "edit", category });
         }}
       >
         {(category) => [
+          <CategoryColorPip block code={category.colorCode} />,
           <span class="text-kbf-text-highlight">{category.name}</span>,
-          <CategoryColorPip code={category.colorCode} />,
+          <Predicates values={category.predicates} />,
           category.transactionCount,
         ]}
       </Table>

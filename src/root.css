@@ -35,6 +35,10 @@
     @apply px-4 py-3;
   }
 
+  input::placeholder {
+    @apply text-kbf-text-main/40;
+  }
+
   h1,
   h2,
   h3 {

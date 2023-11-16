@@ -10,6 +10,7 @@ import Styles from "./pip.module.css";
 type PipProps = ComponentProps<"span"> & {
   code: number;
   size?: "sm" | "md";
+  block?: boolean;
 };
 type SelectorProps = {
   onChange: (newValue: number) => void;
@@ -59,19 +60,20 @@ function getPipStyle(code: number) {
   }`;
 }
 
-function getPipClass(size?: PipProps["size"]) {
+function getPipClass(size?: PipProps["size"], block?: boolean) {
   return clx(
-    "inline-flex items-center justify-center rounded-full",
+    block ? "flex" : "inline-flex",
+    "items-center justify-center rounded-full",
     size === "sm" ? "h-4 w-4" : "h-8 w-8",
   );
 }
 
 export function CategoryColorPip(props: PipProps) {
-  const [local, rest] = splitProps(props, ["class", "size", "code"]);
+  const [local, rest] = splitProps(props, ["class", "block", "size", "code"]);
   return (
     <span
       {...rest}
-      class={clx(getPipClass(local.size), local.class)}
+      class={clx(getPipClass(local.size, local.block), local.class)}
       style={getPipStyle(local.code)}
     />
   );

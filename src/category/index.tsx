@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { v4 } from "uuid";
 
-import { db } from "~/db";
+import { db, type DBTransaction } from "~/db";
 
 type TransactionCategoryFilters = {
   excludeBreakdownIgnoredCategories?: boolean;
@@ -10,6 +10,7 @@ type TransactionCategoryFilters = {
 const MAX_COLOR_CODE = 11;
 const INPUT_SCHEMA = z.object({
   name: z.string().trim().nonempty(),
+  predicates: z.array(z.string()),
   colorCode: z.coerce.number().min(0).max(MAX_COLOR_CODE),
   ignoredForBreakdownReporting: z.preprocess((val) => val === "on" || val, z.boolean()).optional(),
 });
@@ -28,6 +29,30 @@ const UNCATEGORIZED_CATEGORY = {
 
 function uniq(input: string[]): string[] {
   return Array.from(new Set(input));
+}
+
+async function addPredicates(trx: DBTransaction, categoryId: string, predicates: string[]) {
+  if (predicates.length) {
+    const rules = predicates.map((predicate) => ({
+      id: v4(),
+      predicate,
+      category_id: categoryId,
+    }));
+    await trx.insertInto("mass_import_rules").values(rules).execute();
+  }
+}
+
+async function predicatesByCategory(): Promise<Record<string, undefined | string[]>> {
+  const rules = await db
+    .selectFrom("mass_import_rules")
+    .select(["predicate", "category_id"])
+    .execute();
+  const result: Record<string, undefined | string[]> = {};
+  for (const rule of rules) {
+    const cur = (result[rule.category_id] ||= []);
+    cur.push(rule.predicate);
+  }
+  return result;
 }
 
 async function countsOfTransactions() {
@@ -89,10 +114,15 @@ export async function allCategoriesByName(filter?: {
 }
 
 export async function allCategoriesWithCounts() {
-  const [categories, counts] = await Promise.all([allCategoriesByName(), countsOfTransactions()]);
+  const [categories, counts, predicates] = await Promise.all([
+    allCategoriesByName(),
+    countsOfTransactions(),
+    predicatesByCategory(),
+  ]);
   return categories.map((category) => ({
     ...category,
     transactionCount: counts[category.id] || 0,
+    predicates: predicates[category.id] || [],
   }));
 }
 
@@ -104,33 +134,40 @@ export async function deleteCategory(categoryId: string) {
 export async function editCategory(categoryId: string, inputs: Record<string, unknown>) {
   const now = new Date();
   const category = INPUT_SCHEMA.parse(inputs);
-  await db
-    .updateTable("categories")
-    .set({
-      name: category.name,
-      color_code: category.colorCode,
-      ignored_for_breakdown_reporting: Boolean(category.ignoredForBreakdownReporting),
-      updated_at: now,
-    })
-    .where("id", "=", categoryId)
-    .executeTakeFirstOrThrow();
+  await db.transaction().execute(async (trx) => {
+    await trx
+      .updateTable("categories")
+      .set({
+        name: category.name,
+        color_code: category.colorCode,
+        ignored_for_breakdown_reporting: Boolean(category.ignoredForBreakdownReporting),
+        updated_at: now,
+      })
+      .where("id", "=", categoryId)
+      .executeTakeFirstOrThrow();
+    await trx.deleteFrom("mass_import_rules").where("category_id", "=", categoryId).execute();
+    await addPredicates(trx, categoryId, category.predicates);
+  });
   return categoryId;
 }
 
 export async function addCategory(inputs: Record<string, unknown>) {
   const now = new Date();
-  const id = v4();
+  const categoryId = v4();
   const category = INPUT_SCHEMA.parse(inputs);
-  await db
-    .insertInto("categories")
-    .values({
-      id,
-      name: category.name,
-      color_code: category.colorCode,
-      ignored_for_breakdown_reporting: Boolean(category.ignoredForBreakdownReporting),
-      inserted_at: now,
-      updated_at: now,
-    })
-    .executeTakeFirstOrThrow();
-  return id;
+  await db.transaction().execute(async (trx) => {
+    await trx
+      .insertInto("categories")
+      .values({
+        id: categoryId,
+        name: category.name,
+        color_code: category.colorCode,
+        ignored_for_breakdown_reporting: Boolean(category.ignoredForBreakdownReporting),
+        inserted_at: now,
+        updated_at: now,
+      })
+      .executeTakeFirstOrThrow();
+    await addPredicates(trx, categoryId, category.predicates);
+  });
+  return categoryId;
 }

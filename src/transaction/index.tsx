@@ -40,6 +40,39 @@ function allTransactionQueryBase(filter?: BaseFilters) {
   return query;
 }
 
+async function insertCategoryRelationsForMassImport(
+  trx: DBTransaction,
+  transactions: { id: string; description: string }[],
+  hardcodedCategoryIds: string[],
+) {
+  const rules = await trx
+    .selectFrom("mass_import_rules")
+    .select(["category_id", "predicate"])
+    .execute();
+  const processedRules = rules.map((rule) => ({
+    category_id: rule.category_id,
+    predicate: rule.predicate.toLowerCase(),
+  }));
+  const relations = transactions.flatMap((transaction) => {
+    const hardcodedRelations = hardcodedCategoryIds.map((categoryId) => ({
+      category_id: categoryId,
+      transaction_id: transaction.id,
+    }));
+    const matchedRelations = processedRules
+      .filter((rule) => {
+        return (
+          !hardcodedCategoryIds.includes(rule.category_id) &&
+          transaction.description.toLowerCase().includes(rule.predicate)
+        );
+      })
+      .map((rule) => ({ category_id: rule.category_id, transaction_id: transaction.id }));
+    return hardcodedRelations.concat(matchedRelations);
+  });
+  if (relations.length) {
+    await trx.insertInto("categories_transactions").values(relations).execute();
+  }
+}
+
 async function transactionsWithCategories<T extends { id: string }>(
   transactions: T[],
   options?: Parameters<typeof categoriesForTransactionIds>[1],
@@ -183,15 +216,7 @@ export async function massImport(inputs: Record<string, unknown>) {
         updated_at: now,
       }));
       await trx.insertInto("transactions").values(insertTransactions).execute();
-      if (categoryIds.length) {
-        const relations = insertTransactions.flatMap(({ id }) => {
-          return categoryIds.map((categoryId) => ({
-            category_id: categoryId,
-            transaction_id: id,
-          }));
-        });
-        await trx.insertInto("categories_transactions").values(relations).execute();
-      }
+      await insertCategoryRelationsForMassImport(trx, insertTransactions, categoryIds);
     }
     return {
       insertedCount: nonDupedParsedTransactions.length,
