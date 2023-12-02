@@ -17,7 +17,7 @@
     "feather-icons": "^4.29.1",
     "kysely": "^0.26.3",
     "pg": "^8.11.3",
-    "solid-js": "^1.8.5",
+    "solid-js": "^1.8.7",
     "solid-start": "^0.3.10",
     "solid-start-node": "^0.3.10",
     "tailwindcss": "^3.3.5",
@@ -28,16 +28,16 @@
   "devDependencies": {
     "@libsql/kysely-libsql": "^0.3.0",
     "@types/debug": "^4.1.12",
-    "@types/node": "^20.9.0",
+    "@types/node": "^20.10.2",
     "@types/pg": "^8.10.9",
     "@types/uuid": "^9.0.7",
-    "@typescript-eslint/eslint-plugin": "^6.11.0",
-    "@typescript-eslint/parser": "^6.11.0",
-    "esbuild": "^0.19.5",
-    "eslint": "^8.53.0",
+    "@typescript-eslint/eslint-plugin": "^6.13.1",
+    "@typescript-eslint/parser": "^6.13.1",
+    "esbuild": "^0.19.8",
+    "eslint": "^8.55.0",
     "kysely-codegen": "^0.11.0",
     "prettier": "^3.1.0",
     "prettier-plugin-tailwindcss": "^0.5.7",
-    "typescript": "^5.2.2"
+    "typescript": "^5.3.2"
   }
 }
