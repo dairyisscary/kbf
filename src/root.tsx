@@ -15,6 +15,7 @@ import {
 
 import "./root.css";
 
+import Favicon from "~/favicon.png";
 import Wrapper from "~/root-wrapper";
 
 export function getDocumentTitle(title: string) {
@@ -29,7 +30,7 @@ export default function Root() {
         <Title>{getDocumentTitle("To the moon!")}</Title>
         <Meta name="viewport" content="width=device-width,initial-scale=1" />
         <Meta name="release-name" content={import.meta.env.PUBLIC_RELEASE_NAME} />
-        <Link rel="icon" href="/favicon.png" />
+        <Link rel="icon" href={Favicon} />
       </Head>
       <Body>
         <Suspense>

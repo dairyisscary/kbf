@@ -3,6 +3,7 @@ import { A, useMatch } from "solid-start";
 
 import clx from "~/clx";
 import Icon from "~/icon";
+import Favicon from "~/favicon.png";
 
 import Styles from "./root-wrapper.module.css";
 
@@ -41,8 +42,8 @@ export default function Wrapper(props: { children: JSX.Element }) {
       <Show when={!isLogin()}>
         <nav class={Styles.nav}>
           <A href="/" end>
-            <Icon name="heart" class="text-kbf-action" />
-            <span>KBF</span>
+            <img src={Favicon} alt="" />
+            <span>Dashboard</span>
           </A>
           <A href="/transactions">
             <Icon name="database" />
