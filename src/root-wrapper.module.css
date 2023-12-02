@@ -13,6 +13,11 @@
   @apply relative flex items-center gap-2 p-3;
 }
 
+.nav img {
+  width: 24px;
+  height: 24px;
+}
+
 .nav :global(a.active) {
   @apply text-kbf-text-accent;
 }
