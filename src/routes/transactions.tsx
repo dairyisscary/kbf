@@ -219,7 +219,7 @@ function AddEditModal(props: {
 
         <CategorySelectFormRow
           allCategories={props.allCategories}
-          initCategories={props.editingTransaction?.categories.map((c) => c.id)}
+          initCategories={props.editingTransaction?.categories}
           name="categoryIds"
         />
 

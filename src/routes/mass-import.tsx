@@ -64,7 +64,7 @@ export default function MassImport() {
 
         <CategorySelectFormRow
           reset={reset()}
-          allCategories={allCategories()}
+          allCategories={allCategories() || []}
           name="categoryIds"
           label="Mass Tag Categories"
         />
