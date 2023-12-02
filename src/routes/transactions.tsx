@@ -75,6 +75,18 @@ export function routeData() {
   return { transactions, allCategories };
 }
 
+function transactionSum(
+  transactions: Transaction[] | undefined,
+  currency: Transaction["currency"],
+): number {
+  if (!transactions) {
+    return 0;
+  }
+  return transactions.reduce((accum, transaction) => {
+    return transaction.currency === currency ? accum + transaction.amount : accum;
+  }, 0);
+}
+
 function FilterCategoryPopup(props: { onClose: () => void; children: JSX.Element }) {
   return (
     <div
@@ -393,15 +405,13 @@ export default function Transactions() {
         )}
       </Show>
       <footer class="fixed bottom-0 left-0 flex w-full items-center justify-center gap-4 border-t border-kbf-action bg-kbf-light-purple p-6 text-lg">
-        <p>Showing {transactions()?.length || 0} transactions</p>
+        <p>Showing {transactions()?.length || 0} transaction(s)</p>
         <AmountPill
-          transaction={{
-            currency: "euro",
-            amount:
-              transactions()?.reduce((accum, transaction) => accum + transaction.amount, 0) || 0,
-          }}
+          transaction={{ currency: "euro", amount: transactionSum(transactions(), "euro") }}
         />
-        <AmountPill transaction={{ currency: "usd", amount: 0 }} />
+        <AmountPill
+          transaction={{ currency: "usd", amount: transactionSum(transactions(), "usd") }}
+        />
       </footer>
     </>
   );
