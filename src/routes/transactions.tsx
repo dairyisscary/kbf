@@ -335,7 +335,7 @@ function Filters(props: { allCategories: Category[] | undefined }) {
       <div class="relative ml-auto">
         <Button variant="cancel" class="" onClick={() => setFilterCategoriesOpen((o) => !o)}>
           {filterCategories().length
-            ? `(${filterCategories().length}) Selected Categories`
+            ? `(${filterCategories().length.toString()}) Selected Categories`
             : "Categories"}
         </Button>
         <Show when={filterCategoriesOpen()}>

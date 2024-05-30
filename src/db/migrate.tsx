@@ -27,7 +27,7 @@ export async function migrateToLatest() {
   if (error) {
     console.error("Failed to migrate!");
     console.error(error);
-    throw error;
+    throw error as Error;
   }
 
   return results;

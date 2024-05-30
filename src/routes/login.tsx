@@ -25,7 +25,7 @@ export default function Login() {
         }
         throw new Error(error || "Something went wrong");
       })
-      .catch((error: Error) => error.message);
+      .catch((error: unknown) => (error as Error).message);
   });
   return (
     <div class="mx-auto w-[min(600px,100%)]">

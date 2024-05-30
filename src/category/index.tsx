@@ -9,7 +9,7 @@ type TransactionCategoryFilters = {
 
 const MAX_COLOR_CODE = 11;
 const INPUT_SCHEMA = z.object({
-  name: z.string().trim().nonempty(),
+  name: z.string().trim().min(1),
   predicates: z.array(z.string()),
   colorCode: z.coerce.number().min(0).max(MAX_COLOR_CODE),
   ignoredForBreakdownReporting: z.preprocess((val) => val === "on" || val, z.boolean()).optional(),
