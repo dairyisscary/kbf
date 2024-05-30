@@ -1,12 +1,15 @@
-{ mkPnpmPackage
-, gitignoreSource
-, nodejs-slim_20
-, nodePackages
-}: mkPnpmPackage rec {
-  nodejs = nodejs-slim_20;
-  pnpm = nodePackages.pnpm;
+{ lib
+, mkPnpmPackage
+, nodejs
+}: mkPnpmPackage {
+  inherit nodejs;
 
-  src = gitignoreSource ./.;
+  src = lib.fileset.toSource {
+    root = ./.;
+    fileset = lib.fileset.gitTracked ./.;
+  };
+
+  buildInputs = [ nodejs ];
 
   installPhase = ''
     mkdir -p $out/bin
