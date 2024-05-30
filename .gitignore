@@ -3,4 +3,5 @@
 .solid/
 dist/
 node_modules/
+result/
 .env*.local
