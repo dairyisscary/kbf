@@ -1,5 +1,4 @@
-import type { Kysely } from "kysely";
-import type { DataTypeExpression } from "kysely/dist/cjs/parser/data-type-parser";
+import { sql, type Kysely } from "kysely";
 
 export async function up(db: Kysely<unknown>) {
   await db.schema
@@ -30,7 +29,7 @@ export async function up(db: Kysely<unknown>) {
     .addColumn("when", "date")
     .addColumn("inserted_at", "timestamp(0)", (col) => col.notNull())
     .addColumn("updated_at", "timestamp(0)", (col) => col.notNull())
-    .addColumn("currency", "currency" as DataTypeExpression, (col) => col.notNull())
+    .addColumn("currency", sql`currency`, (col) => col.notNull())
     .execute();
   await db.schema
     .createIndex("transactions_when_index")

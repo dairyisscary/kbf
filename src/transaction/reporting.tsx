@@ -81,7 +81,7 @@ export async function generateReportingData(
   });
 
   const transactions = await getTransactions({
-    onOrAfter: formatDate(interval[0], "yyyy-MM-dd"),
+    onOrAfter: formatDate(interval[0]!, "yyyy-MM-dd"),
   });
 
   const allCategories = Array.from(
@@ -100,7 +100,7 @@ export async function generateReportingData(
   const categoriesWithMatchingTransactions = allCategories.map((category) => ({
     category,
     transactions: transactions.filter((transaction) => {
-      return category.id === transaction.categories[0].id;
+      return category.id === transaction.categories[0]?.id;
     }),
   }));
 

@@ -31,7 +31,7 @@ export default function Table<T>(props: Props<T>) {
           each={props.each}
           fallback={
             <tr>
-              <td colspan={props.headers.length} class={`${Styles.bodycell} ${Styles.empty}`}>
+              <td colspan={props.headers.length} class={clx(Styles.bodycell, Styles.empty)}>
                 None
               </td>
             </tr>

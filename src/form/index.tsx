@@ -34,7 +34,7 @@ export function Checkbox(props: {
       <input
         type="checkbox"
         checked={props.checked}
-        class={`${Styles.checkbox} sr-only`}
+        class={clx(Styles.checkbox, "sr-only")}
         name={props.name}
         id={props.id}
         onInput={props.onInput}

@@ -1,15 +1,18 @@
 {
   "compilerOptions": {
-    "allowSyntheticDefaultImports": true,
-    "baseUrl": ".",
+    "isolatedModules": true,
     "jsx": "preserve",
     "jsxImportSource": "solid-js",
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleDetection": "force",
+    "moduleResolution": "bundler",
     "noEmit": true,
+    "noImplicitOverride": true,
+    "noUncheckedIndexedAccess": true,
     "paths": {
       "~/*": ["./src/*"]
     },
+    "skipLibCheck": true,
     "strict": true,
     "target": "esnext"
   }

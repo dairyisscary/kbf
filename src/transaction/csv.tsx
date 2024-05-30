@@ -26,13 +26,13 @@ function marshalDate(row: RawRow) {
   // US localized month/day/year
   const slashSplit = rawDate.split("/");
   if (slashSplit.length >= 3) {
-    return `${slashSplit[2]}-${slashSplit[0]}-${slashSplit[1]}`;
+    return `${slashSplit[2]!}-${slashSplit[0]!}-${slashSplit[1]!}`;
   }
 
   const dashSplit = rawDate.split("-");
   // For Date keyed values, assume day-month-year, otherwise assume US
   if (dashSplit.length >= 3) {
-    return `${dashSplit[2]}-${dashSplit[1]}-${dashSplit[0]}`;
+    return `${dashSplit[2]!}-${dashSplit[1]!}-${dashSplit[0]!}`;
   }
 
   return null;
@@ -82,6 +82,5 @@ export function parse(csv: string, options: Options) {
     trim: true,
     skip_empty_lines: true,
   }) as RawRow[];
-  const marshaled = rawParsed.map((r) => marshalRow(r, options));
-  return marshaled.filter(Boolean) as NonNullable<(typeof marshaled)[number]>[];
+  return rawParsed.map((r) => marshalRow(r, options)).filter(Boolean);
 }

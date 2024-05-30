@@ -84,7 +84,7 @@ async function transactionsWithCategories<T extends { id: string }>(
   );
   const transactionsWithCategories = transactions.map((transaction) => ({
     ...transaction,
-    categories: categoriesMap[transaction.id],
+    categories: categoriesMap[transaction.id] || [],
   }));
   const includeIds = transactionOptions?.includeIds;
   return includeIds?.length
