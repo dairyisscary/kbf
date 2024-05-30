@@ -211,7 +211,9 @@ export default function Dashboard() {
             { label: "3 Years", value: "3-year" },
           ]}
           value={searchParams.timeline || DEFAULT_TIMELINE}
-          onChange={(timeline) => setSearchParams({ timeline })}
+          onChange={(timeline) => {
+            setSearchParams({ timeline });
+          }}
         />
         <TabGroup
           class="w-[min(45%,500px)]"

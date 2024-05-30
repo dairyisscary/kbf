@@ -80,7 +80,7 @@ export default function MassImport() {
         <FormFooter>
           <div class={clx("transition-opacity duration-300", !submitting.result && "opacity-0")}>
             {submitting.result &&
-              `Inserted ${submitting.result.insertedCount} new transaction(s) -- skipped ${submitting.result.skippedCount} duplicate transaction(s).`}
+              `Inserted ${submitting.result.insertedCount.toString()} new transaction(s) -- skipped ${submitting.result.skippedCount.toString()} duplicate transaction(s).`}
           </div>
           <Button type="submit">Import</Button>
         </FormFooter>

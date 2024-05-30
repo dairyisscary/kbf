@@ -15,13 +15,13 @@ type BaseFilters = {
 };
 
 const MASS_IMPORT_INPUT_SCHEMA = z.object({
-  csv: z.string().trim().nonempty(),
+  csv: z.string().trim().min(1),
   currency: z.enum(["euro", "usd"]),
   invertAmounts: z.preprocess((val) => val === "on" || val, z.boolean()).optional(),
   categoryIds: z.preprocess((val) => (val === undefined ? [] : val), z.array(z.string())),
 });
 const INPUT_SCHEMA = z.object({
-  description: z.string().trim().nonempty(),
+  description: z.string().trim().min(1),
   when: z.string().trim(),
   amount: z.coerce.number(),
   currency: z.enum(["euro", "usd"]),
@@ -205,7 +205,7 @@ export async function massImport(inputs: Record<string, unknown>) {
           dupeCheck.amount === amount && dupeCheck.when === when && dupeCheck.currency === currency,
       );
     });
-    if (nonDupedParsedTransactions?.length) {
+    if (nonDupedParsedTransactions.length) {
       const insertTransactions = nonDupedParsedTransactions.map((parsedTransaction) => ({
         id: v4(),
         description: parsedTransaction.description,
