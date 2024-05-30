@@ -21,7 +21,7 @@ export function routeData() {
   const [searchParams] = useSearchParams();
   const report = createServerData$(
     ([, timeline]) => {
-      const [count, grouping] = timeline.split("-") as [string, "month" | "year"];
+      const [count, grouping] = timeline!.split("-") as [string, "month" | "year"];
       return transactionDataForReporting({
         type: `by-${grouping}`,
         count: Number(count),
@@ -37,14 +37,14 @@ export function routeData() {
 
 function zipEuroIntoUsd(options: { euro: number[]; usd: number[] }): number[] {
   return options.usd.map((usd, index) => {
-    const euro = options.euro[index];
+    const euro = options.euro[index] || 0;
     return usd + euro * ONE_EURO_IN_USD;
   });
 }
 
 function zipUsdIntoEuro(options: { euro: number[]; usd: number[] }): number[] {
   return options.euro.map((euro, index) => {
-    const usd = options.usd[index];
+    const usd = options.usd[index] || 0;
     return euro + usd / ONE_EURO_IN_USD;
   });
 }
@@ -63,7 +63,8 @@ function addInLines(
         if (isIgnoredLookup.has(category.id)) {
           return accum;
         }
-        return accum + usd[index].spend - usd[index].income;
+        const at = usd[index] || { spend: 0, income: 0 };
+        return accum + at.spend - at.income;
       }, 0);
     }),
   };
@@ -76,7 +77,8 @@ function addInLines(
         if (isIgnoredLookup.has(category.id)) {
           return accum;
         }
-        return accum + euro[index].spend - euro[index].income;
+        const at = euro[index] || { spend: 0, income: 0 };
+        return accum + at.spend - at.income;
       }, 0);
     }),
   };

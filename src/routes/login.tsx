@@ -17,8 +17,8 @@ export default function Login() {
       },
       body: JSON.stringify(pealed),
     })
-      .then((r) => r.json())
-      .then(({ success, error }: { success: boolean; error?: string }) => {
+      .then((r) => r.json() as Promise<{ success: boolean; error?: string }>)
+      .then(({ success, error }) => {
         if (success) {
           const to = (pealed.redirectTo as string | null) || "/";
           return redirect(to);
