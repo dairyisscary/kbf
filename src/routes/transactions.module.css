@@ -19,16 +19,16 @@
   @apply mb-5 flex items-center gap-2;
 }
 
-.filters input {
+.filters > div > input {
   @apply bg-kbf-dark-purple;
 }
 
-.filters input,
+.filters > div > input,
 .filters > button,
 .filters > div > button {
   @apply border px-2 py-1 text-sm;
 }
 
-.activefilter {
+button.activefilter {
   @apply bg-kbf-action text-kbf-text-highlight;
 }

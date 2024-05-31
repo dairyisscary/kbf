@@ -1,12 +1,12 @@
 import { createSignal, createEffect, createUniqueId, Show, For } from "solid-js";
-import { useRouteData, Title } from "solid-start";
-import { createServerData$, createServerAction$ } from "solid-start/server";
+import { action, cache, createAsync, useAction, type RouteDefinition } from "@solidjs/router";
 
-import { getDocumentTitle } from "~/root";
+import { KbfSiteTitle } from "~/app";
 import { allCategoriesWithCounts, deleteCategory, addCategory, editCategory } from "~/category";
 import { CategoryColorPip, CategoryColorSelector } from "~/category/pip";
 import { pealFormData, FormFooter, Checkbox, FormRowWithId, Label } from "~/form";
 import { ConfirmingDeleteButton } from "~/form/confirm";
+import { useClearingSubmission } from "~/form/submission";
 import Table from "~/table";
 import Button from "~/button";
 import Modal from "~/modal";
@@ -14,27 +14,37 @@ import Icon from "~/icon";
 
 import Styles from "./categories.module.css";
 
-type Category = Awaited<ReturnType<typeof allCategoriesWithCounts>>[number];
+type CountedCategory = Awaited<ReturnType<typeof allCategoriesWithCounts>>[number];
 type ModalState =
   | false
   | { type: "add"; category?: undefined }
-  | { type: "edit"; category: Category };
+  | { type: "edit"; category: CountedCategory };
 
-export function routeData() {
-  return createServerData$(allCategoriesWithCounts);
-}
+const getAllCategories = cache(allCategoriesWithCounts, "categories");
 
-function AddEditModal(props: { onClose: () => void; editingCategory: undefined | Category }) {
-  const [submitting, { Form }] = createServerAction$((form: FormData) => {
-    const pealed = pealFormData(form);
-    pealed.predicates = (pealed.rulesText as string | undefined)?.split("/").filter(Boolean) || [];
-    return pealed.isEditingId
-      ? editCategory(pealed.isEditingId as string, pealed)
-      : addCategory(pealed);
-  });
-  const [deleting, doDelete] = createServerAction$((input: { id: string }) => {
-    return deleteCategory(input.id);
-  });
+export const route: RouteDefinition = {
+  load() {
+    void getAllCategories();
+  },
+};
+
+const deleteCategoryAction = action(deleteCategory, "deleteCategory");
+
+const addEditAction = action((form: FormData) => {
+  const pealed = pealFormData(form);
+  pealed.predicates = (pealed.rulesText as string | undefined)?.split("/").filter(Boolean) || [];
+  return pealed.isEditingId
+    ? editCategory(pealed.isEditingId as string, pealed)
+    : addCategory(pealed);
+}, "addEditCategory");
+
+function AddEditModal(props: {
+  onClose: () => void;
+  editingCategory: undefined | CountedCategory;
+}) {
+  const submitting = useClearingSubmission(addEditAction);
+  const doDelete = useAction(deleteCategoryAction);
+  const deleting = useClearingSubmission(deleteCategoryAction);
   createEffect(() => {
     if (submitting.result || deleting.result) {
       props.onClose();
@@ -47,7 +57,7 @@ function AddEditModal(props: { onClose: () => void; editingCategory: undefined |
   return (
     <Modal onClose={props.onClose}>
       <h1>{props.editingCategory ? "Edit" : "Add"} Category</h1>
-      <Form>
+      <form method="post" action={addEditAction}>
         <FormRowWithId>
           {(id) => (
             <>
@@ -114,7 +124,7 @@ function AddEditModal(props: { onClose: () => void; editingCategory: undefined |
             {(category) => (
               <ConfirmingDeleteButton
                 onDelete={() => {
-                  doDelete({ id: category().id }).catch(() => {});
+                  void doDelete(category().id);
                 }}
               >
                 {`Are you sure you want to delete ${category().name}?`}
@@ -126,7 +136,7 @@ function AddEditModal(props: { onClose: () => void; editingCategory: undefined |
           </Button>
           <Button type="submit">Save</Button>
         </FormFooter>
-      </Form>
+      </form>
     </Modal>
   );
 }
@@ -140,11 +150,11 @@ function Predicates(props: { values: string[] }) {
 }
 
 export default function Categories() {
-  const categories = useRouteData<typeof routeData>();
+  const categories = createAsync(() => getAllCategories());
   const [addEditModal, setAddEditModal] = createSignal<ModalState>(false);
   return (
     <>
-      <Title>{getDocumentTitle("Manage Categories")}</Title>
+      <KbfSiteTitle>Manage Categories</KbfSiteTitle>
       <header class="flex items-center justify-between gap-4 pb-8">
         <h1>Manage Categories</h1>
         <Button onClick={() => setAddEditModal({ type: "add" })}>

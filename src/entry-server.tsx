@@ -1,44 +1,30 @@
-import { redirect, type FetchEvent } from "solid-start";
-import {
-  createHandler,
-  renderAsync,
-  StartServer,
-  type MiddlewareInput,
-} from "solid-start/entry-server";
+// @refresh reload
+import { createHandler, StartServer } from "@solidjs/start/server";
 
-import { isValidSession, refreshToken } from "~/session";
+import Favicon from "~/favicon.png";
 
-function protection({ forward }: MiddlewareInput): (event: FetchEvent) => Promise<Response> {
-  return async (event) => {
-    const { request } = event;
-    const cookie = request.headers.get("Cookie");
-    const isValid = await isValidSession(cookie);
+const RELEASE_NAME = import.meta.env.PUBLIC_RELEASE_NAME;
 
-    const { searchParams, pathname } = new URL(request.url);
-    switch (pathname) {
-      case "/login":
-        return isValid ? redirect(searchParams.get("redirectTo") || "/") : forward(event);
-      case "/api/login":
-        // always allow this url
-        return forward(event);
-    }
-
-    if (isValid) {
-      const [response, newCookie] = await Promise.all([forward(event), refreshToken(cookie)]);
-      if (newCookie) {
-        response.headers.set("Set-Cookie", newCookie);
-      }
-      return response;
-    }
-
-    const loginSearchParams = new URLSearchParams({
-      redirectTo: `${pathname}?${searchParams.toString()}`,
-    });
-    return redirect(`/login?${loginSearchParams.toString()}`);
-  };
+function renderHTML() {
+  return (
+    <StartServer
+      document={({ assets, children, scripts }) => (
+        <html lang="en">
+          <head>
+            <meta charset="utf-8" />
+            <meta name="viewport" content="width=device-width,initial-scale=1" />
+            {RELEASE_NAME && <meta name="release-name" content={RELEASE_NAME} />}
+            <link rel="icon" href={Favicon} />
+            {assets}
+          </head>
+          <body>
+            <div id="kbf">{children}</div>
+            {scripts}
+          </body>
+        </html>
+      )}
+    />
+  );
 }
 
-export default createHandler(
-  protection,
-  renderAsync((event) => <StartServer event={event} />),
-);
+export default createHandler(renderHTML, { mode: "async" });

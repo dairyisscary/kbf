@@ -1,8 +1,7 @@
 import { createMemo, createSignal, For, Show } from "solid-js";
-import { Title, A, useRouteData, useSearchParams } from "solid-start";
-import { createServerData$ } from "solid-start/server";
+import { createAsync, cache, useSearchParams, A, type RouteDefinition } from "@solidjs/router";
 
-import { getDocumentTitle } from "~/root";
+import { KbfSiteTitle } from "~/app";
 import { transactionDataForReporting } from "~/transaction";
 import { allCategoriesByName } from "~/category";
 import { BarChart } from "~/chart";
@@ -17,23 +16,25 @@ type Strategy = "separate" | "merged-usd" | "merged-euro";
 const DEFAULT_TIMELINE = "6-month";
 const ONE_EURO_IN_USD = 1.1;
 
-export function routeData() {
-  const [searchParams] = useSearchParams();
-  const report = createServerData$(
-    ([, timeline]) => {
-      const [count, grouping] = timeline!.split("-") as [string, "month" | "year"];
-      return transactionDataForReporting({
-        type: `by-${grouping}`,
-        count: Number(count),
-      });
-    },
-    { key: () => ["transactions", searchParams.timeline || DEFAULT_TIMELINE] },
-  );
-  const allCategories = createServerData$(() =>
-    allCategoriesByName({ includeUncategorized: true, excludeIgnoredForBreakdown: true }),
-  );
-  return { report, allCategories };
-}
+const getAllCategoriesForReport = cache(
+  () => allCategoriesByName({ includeUncategorized: true, excludeIgnoredForBreakdown: true }),
+  "categories",
+);
+
+const getTransactionsForReport = cache((timeline: string | undefined) => {
+  const [count, grouping] = (timeline || DEFAULT_TIMELINE).split("-") as [string, "month" | "year"];
+  return transactionDataForReporting({
+    type: `by-${grouping}`,
+    count: Number(count),
+  });
+}, "transactions");
+
+export const route: RouteDefinition = {
+  load(args) {
+    void getAllCategoriesForReport();
+    void getTransactionsForReport(args.location.query.timeline);
+  },
+};
 
 function zipEuroIntoUsd(options: { euro: number[]; usd: number[] }): number[] {
   return options.usd.map((usd, index) => {
@@ -109,9 +110,9 @@ function Sums(props: {
 }
 
 export default function Dashboard() {
-  const { report, allCategories } = useRouteData<typeof routeData>();
-
   const [searchParams, setSearchParams] = useSearchParams();
+  const reportTransactions = createAsync(() => getTransactionsForReport(searchParams.timeline));
+  const allCategories = createAsync(() => getAllCategoriesForReport());
 
   const [currencyStrategy, setCurrencyStrategy] = createSignal<Strategy>("merged-usd");
 
@@ -138,7 +139,7 @@ export default function Dashboard() {
   };
 
   const graphData = createMemo(() => {
-    const rawData = report();
+    const rawData = reportTransactions();
     if (!rawData) {
       return null;
     }
@@ -200,9 +201,20 @@ export default function Dashboard() {
     return { labels: rawData.intervals.labels, datasets };
   });
 
+  const allCategoriesWithSums = createMemo(() => {
+    const reportingTransactions = reportTransactions();
+    if (!reportingTransactions) {
+      return undefined;
+    }
+    return allCategories()?.map((category) => ({
+      category,
+      sums: reportingTransactions.sums.categories.find((c) => c.category.id === category.id),
+    }));
+  });
+
   return (
     <>
-      <Title>{getDocumentTitle("Dashboard")}</Title>
+      <KbfSiteTitle>Dashboard</KbfSiteTitle>
       <h1>Dashboard</h1>
       <header class="my-8 flex items-center justify-between">
         <TabGroup
@@ -235,8 +247,8 @@ export default function Dashboard() {
 
             <h2 class="mb-4">Totals</h2>
             <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              <For each={allCategories()}>
-                {(category) => (
+              <For each={allCategoriesWithSums()}>
+                {({ category, sums }) => (
                   <div
                     class={clx(
                       "flex flex-col justify-between gap-7 rounded bg-kbf-light-purple p-3 transition-opacity duration-300",
@@ -255,9 +267,7 @@ export default function Dashboard() {
                         <Icon size="sm" name={ignored().has(category.id) ? "eye" : "eye-off"} />
                       </button>
                     </div>
-                    <Sums
-                      data={report()!.sums.categories.find((c) => c.category.id === category.id)}
-                    />
+                    <Sums data={sums} />
                   </div>
                 )}
               </For>

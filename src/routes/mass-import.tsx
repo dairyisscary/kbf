@@ -1,28 +1,32 @@
 import { createEffect, createSignal, Show } from "solid-js";
-import { useRouteData, Title } from "solid-start";
-import { createServerData$, createServerAction$ } from "solid-start/server";
+import { action, cache, createAsync, useSubmission, type RouteDefinition } from "@solidjs/router";
 
 import { formatCurrencySign } from "~/format";
 import { massImport } from "~/transaction";
 import { CategorySelectFormRow } from "~/transaction/pip";
 import { allCategoriesByName } from "~/category";
 import { pealFormData, FormFooter, FormRow, Checkbox, FormRowWithId, Label } from "~/form";
-import { getDocumentTitle } from "~/root";
+import { KbfSiteTitle } from "~/app";
 import Alert from "~/alert";
 import clx from "~/clx";
 import Button from "~/button";
 
-export function routeData() {
-  return createServerData$(() => allCategoriesByName());
-}
+const getAllCategories = cache(allCategoriesByName, "categories");
+
+export const route: RouteDefinition = {
+  load() {
+    void getAllCategories();
+  },
+};
+
+const massImportAction = action((formData: FormData) => {
+  return massImport(pealFormData(formData, ["categoryIds"]));
+}, "massImport");
 
 export default function MassImport() {
-  const allCategories = useRouteData<typeof routeData>();
+  const allCategories = createAsync(() => getAllCategories());
   const [currency, setCurrency] = createSignal<Parameters<typeof formatCurrencySign>[0]>("euro");
-  const [submitting, { Form }] = createServerAction$((form: FormData) => {
-    const pealed = pealFormData(form, ["categoryIds"]);
-    return massImport(pealed);
-  });
+  const submitting = useSubmission(massImportAction);
   let formRef: undefined | HTMLFormElement;
   const reset = () => Boolean(submitting.result && !submitting.error);
   createEffect(() => {
@@ -33,9 +37,9 @@ export default function MassImport() {
   });
   return (
     <>
-      <Title>{getDocumentTitle("Mass Import")}</Title>
+      <KbfSiteTitle>Mass Import</KbfSiteTitle>
       <h1>Mass Import</h1>
-      <Form ref={formRef}>
+      <form method="post" action={massImportAction} ref={formRef}>
         <Show when={submitting.error as null | Error}>
           {(error) => <Alert class="mt-6">{error().message}</Alert>}
         </Show>
@@ -84,7 +88,7 @@ export default function MassImport() {
           </div>
           <Button type="submit">Import</Button>
         </FormFooter>
-      </Form>
+      </form>
     </>
   );
 }
