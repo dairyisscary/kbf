@@ -9,9 +9,14 @@ in
   env = {
     # Avoid infinite recursion with `scripts.dev`.
     DEVENV_PROFILE = lib.mkForce "${config.env.DEVENV_DOTFILE}/profile";
-  } // lib.optionalAttrs config.services.postgres.enable {
+
+    # Dev database
     PGDATABASE = "kbf_dev";
-    PGMAX = 25;
+    PGMAX = "25";
+
+    # Dev sessions
+    ADMIN_PASSWORD = "ppdemo123";
+    SESSION_SECRET = "672519e3-6ff7-4afc-bc01-55d80221074a";
   };
 
   packages = [
@@ -48,7 +53,7 @@ in
     '';
   };
 
-  processes.start.exec = "pnpm start";
+  processes.devserver.exec = "pnpm exec vinxi dev";
 
   services.postgres = {
     enable = true;

@@ -8,11 +8,17 @@ import {
   type ComponentProps,
   type JSX,
 } from "solid-js";
-import { useRouteData, useSearchParams, Title } from "solid-start";
-import { createServerData$, createServerAction$ } from "solid-start/server";
+import {
+  createAsync,
+  cache,
+  action,
+  useAction,
+  useSearchParams,
+  type RouteDefinition,
+} from "@solidjs/router";
 import { subDays, startOfMonth, subMonths, endOfMonth, format } from "date-fns";
 
-import { getDocumentTitle } from "~/root";
+import { KbfSiteTitle } from "~/app";
 import {
   allTransactionsFromFilters,
   addTransaction,
@@ -22,6 +28,7 @@ import {
 import { allCategoriesByName } from "~/category";
 import { pealFormData, Checkbox, FormFooter, FormRowWithId, Label } from "~/form";
 import { ConfirmingDeleteButton } from "~/form/confirm";
+import { useClearingSubmission } from "~/form/submission";
 import Table from "~/table";
 import Button from "~/button";
 import Modal from "~/modal";
@@ -42,38 +49,51 @@ type ModalState =
   | { type: "add"; transaction?: undefined }
   | { type: "edit"; transaction: Transaction };
 
-export function routeData() {
-  const [searchParams] = useSearchParams();
-  const transactions = createServerData$(
-    ([, timeFrame, onOrAfter, onOrBefore, filterCategoryIds]) => {
-      const fmtDate = (date: Date) => format(date, "yyyy-MM-dd");
-      if (timeFrame === "last-60") {
-        onOrAfter = fmtDate(subDays(new Date(), 61));
-        onOrBefore = null;
-      } else if (timeFrame === "last-month") {
-        const firstOfLastMonth = startOfMonth(subMonths(new Date(), 1));
-        onOrAfter = fmtDate(firstOfLastMonth);
-        onOrBefore = fmtDate(endOfMonth(firstOfLastMonth));
-      }
-      return allTransactionsFromFilters({
-        onOrAfter,
-        onOrBefore,
-        categoryIds: filterCategoryIds?.split(","),
-      });
-    },
-    {
-      key: () => [
-        "transactions",
-        searchParams.timeFrame || "last-60",
-        searchParams.onOrAfter || null,
-        searchParams.onOrBefore || null,
-        searchParams.filterCategoryIds || null,
-      ],
-    },
-  );
-  const allCategories = createServerData$(() => allCategoriesByName());
-  return { transactions, allCategories };
+function smallIsoFormat(date: Date) {
+  return format(date, "yyyy-MM-dd");
 }
+
+const getTransactionsForListing = cache((params: Record<string, string | undefined>) => {
+  const categoryIds = params.filterCategoryIds?.split(",");
+  switch (params.timeFrame) {
+    case "custom":
+      return allTransactionsFromFilters({
+        onOrAfter: params.onOrAfter,
+        onOrBefore: params.onOrBefore,
+        categoryIds,
+      });
+    case "last-month": {
+      const firstOfLastMonth = startOfMonth(subMonths(new Date(), 1));
+      return allTransactionsFromFilters({
+        onOrAfter: smallIsoFormat(firstOfLastMonth),
+        onOrBefore: smallIsoFormat(endOfMonth(firstOfLastMonth)),
+        categoryIds,
+      });
+    }
+    case "last-60":
+    default:
+      return allTransactionsFromFilters({
+        onOrAfter: smallIsoFormat(subDays(new Date(), 61)),
+        categoryIds,
+      });
+  }
+}, "transactions");
+
+const addEditAction = action((form: FormData) => {
+  const pealed = pealFormData(form, ["categoryIds"]);
+  return pealed.isEditingId
+    ? editTransaction(pealed.isEditingId as string, pealed)
+    : addTransaction(pealed);
+}, "addEditTransaction");
+
+const getAllCategories = cache(allCategoriesByName, "categories");
+
+export const route: RouteDefinition = {
+  load(args) {
+    void getAllCategories();
+    void getTransactionsForListing(args.location.query);
+  },
+};
 
 function transactionSum(
   transactions: Transaction[] | undefined,
@@ -86,6 +106,8 @@ function transactionSum(
     return transaction.currency === currency ? accum + transaction.amount : accum;
   }, 0);
 }
+
+const deleteTransactionAction = action(deleteTransaction, "deleteTransaction");
 
 function FilterCategoryPopup(props: { onClose: () => void; children: JSX.Element }) {
   return (
@@ -126,15 +148,12 @@ function AddEditModal(props: {
   const [currency, setCurrency] = createSignal<Parameters<typeof formatCurrencySign>[0]>(
     props.editingTransaction?.currency || "euro",
   );
-  const [submitting, { Form }] = createServerAction$((form: FormData) => {
-    const pealed = pealFormData(form, ["categoryIds"]);
-    return pealed.isEditingId
-      ? editTransaction(pealed.isEditingId as string, pealed)
-      : addTransaction(pealed);
-  });
-  const [deleting, doDelete] = createServerAction$((input: { id: string }) => {
-    return deleteTransaction(input.id);
-  });
+
+  const submitting = useClearingSubmission(addEditAction);
+
+  const doDelete = useAction(deleteTransactionAction);
+  const deleting = useClearingSubmission(deleteTransactionAction);
+
   createEffect(() => {
     if (submitting.result || deleting.result) {
       props.onClose();
@@ -144,7 +163,7 @@ function AddEditModal(props: {
   return (
     <Modal onClose={props.onClose}>
       <h1>{props.editingTransaction ? "Edit" : "Add"} Transaction</h1>
-      <Form>
+      <form method="post" action={addEditAction}>
         <Show when={submitting.error as null | Error}>
           {(error) => <Alert class="mt-6">{error().message}</Alert>}
         </Show>
@@ -230,7 +249,7 @@ function AddEditModal(props: {
             {(transaction) => (
               <ConfirmingDeleteButton
                 onDelete={() => {
-                  doDelete({ id: transaction().id }).catch(() => {});
+                  void doDelete(transaction().id);
                 }}
               >
                 Are you sure you want to delete this transaction?
@@ -242,7 +261,7 @@ function AddEditModal(props: {
           </Button>
           <Button type="submit">Save</Button>
         </FormFooter>
-      </Form>
+      </form>
     </Modal>
   );
 }
@@ -368,11 +387,13 @@ function Filters(props: { allCategories: Category[] | undefined }) {
 }
 
 export default function Transactions() {
-  const { transactions, allCategories } = useRouteData<typeof routeData>();
+  const [searchParams] = useSearchParams();
+  const transactions = createAsync(() => getTransactionsForListing(searchParams));
+  const allCategories = createAsync(() => getAllCategories());
   const [addEditModal, setAddEditModal] = createSignal<ModalState>(false);
   return (
     <>
-      <Title>{getDocumentTitle("Manage Transactions")}</Title>
+      <KbfSiteTitle>Manage Transactions</KbfSiteTitle>
       <header class="flex items-center justify-between gap-4 pb-8">
         <h1>Manage Transactions</h1>
         <Button onClick={() => setAddEditModal({ type: "add" })}>

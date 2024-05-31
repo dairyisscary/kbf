@@ -1,6 +1,7 @@
 { lib
 , mkPnpmPackage
 , nodejs
+, releaseName
 }: mkPnpmPackage {
   inherit nodejs;
 
@@ -9,16 +10,21 @@
     fileset = lib.fileset.gitTracked ./.;
   };
 
+  env.PUBLIC_RELEASE_NAME = releaseName;
   buildInputs = [ nodejs ];
+  noDevDependencies = true;
+  installInPlace = true;
 
   installPhase = ''
-    mkdir -p $out/bin
+    runHook preInstall
 
-    cp -r package.json $out
-    cp -r dist/public $out/bin
+    mkdir -p $out/{opt,bin}
+    cp -r .output/{server,public} $out/opt
+    echo -e "#!${nodejs}/bin/node $out/opt/server/index.mjs" > $out/bin/kbf
+    chmod +x $out/bin/kbf
 
-    echo "#!${nodejs}/bin/node" > $out/bin/kbf.js
-    cat dist/server.js >> $out/bin/kbf.js
-    chmod +x $out/bin/kbf.js
+    runHook postInstall
   '';
+
+  meta.mainProgram = "kbf";
 }

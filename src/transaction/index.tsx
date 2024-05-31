@@ -1,6 +1,8 @@
+"use server";
 import { z } from "zod";
 import { v4 } from "uuid";
 
+import { checkSession } from "~/session";
 import { categoriesForTransactionIds } from "~/category";
 import { db, type DBTransaction } from "~/db";
 
@@ -95,6 +97,7 @@ async function transactionsWithCategories<T extends { id: string }>(
 }
 
 export async function allTransactionsFromFilters(filter?: BaseFilters) {
+  await checkSession();
   const transactions = await allTransactionQueryBase(filter).orderBy("when", "desc").execute();
   return transactionsWithCategories(transactions, undefined, { includeIds: filter?.categoryIds });
 }
@@ -102,6 +105,7 @@ export async function allTransactionsFromFilters(filter?: BaseFilters) {
 export async function transactionDataForReporting(
   reportingOptions: Parameters<typeof generateReportingData>[0],
 ) {
+  await checkSession();
   return generateReportingData(reportingOptions, async (baseFilter) => {
     return transactionsWithCategories(await allTransactionQueryBase(baseFilter).execute(), {
       excludeBreakdownIgnoredCategories: true,
@@ -110,6 +114,7 @@ export async function transactionDataForReporting(
 }
 
 export async function deleteTransaction(transactionId: string) {
+  await checkSession();
   await db.deleteFrom("transactions").where("id", "=", transactionId).executeTakeFirstOrThrow();
   return transactionId;
 }
@@ -134,6 +139,7 @@ async function insertCategoryRelations(
 }
 
 export async function editTransaction(transactionId: string, inputs: Record<string, unknown>) {
+  await checkSession();
   const now = new Date();
   const transaction = INPUT_SCHEMA.parse(inputs);
   await db.transaction().execute(async (trx) => {
@@ -158,6 +164,7 @@ export async function editTransaction(transactionId: string, inputs: Record<stri
 }
 
 export async function addTransaction(inputs: Record<string, unknown>) {
+  await checkSession();
   const now = new Date();
   const id = v4();
   const transaction = INPUT_SCHEMA.parse(inputs);
@@ -180,6 +187,7 @@ export async function addTransaction(inputs: Record<string, unknown>) {
 }
 
 export async function massImport(inputs: Record<string, unknown>) {
+  await checkSession();
   const { categoryIds, csv, currency, invertAmounts } = MASS_IMPORT_INPUT_SCHEMA.parse(inputs);
   const csvParsedTransactions = parse(csv, { invertAmounts });
   const now = new Date();

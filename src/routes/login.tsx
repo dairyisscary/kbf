@@ -1,43 +1,31 @@
 import { Show } from "solid-js";
-import { createRouteAction, redirect, useSearchParams } from "solid-start";
+import { useSearchParams, action, redirect, useSubmission } from "@solidjs/router";
 
-import { pealFormData, FormFooter, FormRowWithId, Label } from "~/form";
+import { login } from "~/session";
+import { FormFooter, FormRowWithId, Label } from "~/form";
 import Button from "~/button";
 import Alert from "~/alert";
 
+const loginAction = action(async (formData: FormData) => {
+  const success = await login({
+    username: formData.get("username") as string | null,
+    password: formData.get("password") as string | null,
+  });
+  if (success) {
+    throw redirect((formData.get("redirectTo") as string) || "/");
+  }
+  return new Error("That username and password pair is not correct.");
+}, "login");
+
 export default function Login() {
   const [searchParams] = useSearchParams();
-  const [submitting, submit] = createRouteAction(async (form: FormData) => {
-    const pealed = pealFormData(form);
-    return fetch("/api/login", {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(pealed),
-    })
-      .then((r) => r.json() as Promise<{ success: boolean; error?: string }>)
-      .then(({ success, error }) => {
-        if (success) {
-          const to = (pealed.redirectTo as string | null) || "/";
-          return redirect(to);
-        }
-        throw new Error(error || "Something went wrong");
-      })
-      .catch((error: unknown) => (error as Error).message);
-  });
+  const loggingIn = useSubmission(loginAction);
   return (
     <div class="mx-auto w-[min(600px,100%)]">
       <h1>Login</h1>
-      <form
-        onSubmit={(event) => {
-          event.preventDefault();
-          submit(new FormData(event.target as HTMLFormElement)).catch(() => {});
-        }}
-      >
-        <Show when={typeof submitting.result === "string"}>
-          <Alert class="mt-8">{submitting.result as string}</Alert>
+      <form method="post" action={loginAction}>
+        <Show when={loggingIn.result}>
+          {(result) => <Alert class="mt-8">{result().message}</Alert>}
         </Show>
         <FormRowWithId>
           {(id) => (

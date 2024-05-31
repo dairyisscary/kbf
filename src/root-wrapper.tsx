@@ -1,11 +1,30 @@
-import { Show, createEffect, createSignal, onCleanup, type JSX } from "solid-js";
-import { A, useMatch } from "solid-start";
+import {
+  Show,
+  createEffect,
+  createSignal,
+  onCleanup,
+  type JSX,
+  type ComponentProps,
+} from "solid-js";
+import { A, action, useAction, useMatch, useNavigate } from "@solidjs/router";
 
+import { logout } from "~/session";
 import clx from "~/clx";
 import Icon from "~/icon";
 import Favicon from "~/favicon.png";
 
 import Styles from "./root-wrapper.module.css";
+
+const logoutAction = action(() => logout(), "logout");
+
+function NavLinkContent(props: { title: string; iconName: ComponentProps<typeof Icon>["name"] }) {
+  return (
+    <>
+      <Icon name={props.iconName} />
+      <span>{props.title}</span>
+    </>
+  );
+}
 
 function BackToTop() {
   const [hidden, setHidden] = createSignal(true);
@@ -29,8 +48,26 @@ function BackToTop() {
         document.body.scrollIntoView({ behavior: "smooth" });
       }}
     >
-      <Icon name="arrow-up" />
-      <span>Back to Top</span>
+      <NavLinkContent iconName="arrow-up" title="Back to Top" />
+    </A>
+  );
+}
+
+function Logout() {
+  const doLogout = useAction(logoutAction);
+  const navigate = useNavigate();
+  return (
+    <A
+      class="mt-8"
+      href="/login"
+      onClick={(event) => {
+        event.preventDefault();
+        void doLogout().then(() => {
+          navigate("/login");
+        });
+      }}
+    >
+      <NavLinkContent iconName="log-out" title="Log out" />
     </A>
   );
 }
@@ -46,21 +83,15 @@ export default function Wrapper(props: { children: JSX.Element }) {
             <span>Dashboard</span>
           </A>
           <A href="/transactions">
-            <Icon name="database" />
-            <span>Transactions</span>
+            <NavLinkContent iconName="database" title="Transactions" />
           </A>
           <A href="/mass-import">
-            <Icon name="file-plus" />
-            <span>Mass Import</span>
+            <NavLinkContent iconName="file-plus" title="Mass Import" />
           </A>
           <A href="/categories">
-            <Icon name="layers" />
-            <span>Categories</span>
+            <NavLinkContent iconName="layers" title="Categories" />
           </A>
-          <A class="mt-8" href="/logout">
-            <Icon name="log-out" />
-            <span>Log out</span>
-          </A>
+          <Logout />
           <BackToTop />
         </nav>
       </Show>

@@ -22,6 +22,7 @@ export default config(
     },
     rules: {
       "@typescript-eslint/no-non-null-assertion": "off",
+      "@typescript-eslint/only-throw-error": "off",
     },
   },
   {

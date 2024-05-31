@@ -1,12 +1,11 @@
-import { Title } from "solid-start";
-import { HttpStatusCode } from "solid-start/server";
+import { HttpStatusCode } from "@solidjs/start";
 
-import { getDocumentTitle } from "~/root";
+import { KbfSiteTitle } from "~/app";
 
 export default function NotFound() {
   return (
     <>
-      <Title>{getDocumentTitle("Not Found")}</Title>
+      <KbfSiteTitle>Not Found</KbfSiteTitle>
       <HttpStatusCode code={404} />
       <h1>Page Not Found</h1>
     </>

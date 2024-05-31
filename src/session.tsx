@@ -1,53 +1,69 @@
-import { createCookieSessionStorage } from "solid-start";
+"use server";
+import { useSession } from "vinxi/http";
+import { redirect } from "@solidjs/router";
 import { isValid, isFuture, addHours } from "date-fns";
 
-type Session = Awaited<ReturnType<(typeof STORAGE)["getSession"]>>;
+type SessionData = { validUntil?: string };
+type Session = Awaited<ReturnType<typeof getSession>>;
 
-const VALID_HOURS = 24;
-const { ADMIN_PASSWORD, SESSION_SECRET } = process.env;
+const VALID_HOURS = 2;
+const { SESSION_SECRET, ADMIN_PASSWORD } = process.env;
 if (!ADMIN_PASSWORD || !SESSION_SECRET) {
   throw new Error("Missing important authentication secrets");
 }
-const STORAGE = createCookieSessionStorage({
-  cookie: {
-    name: "kbf-session",
-    secure: process.env.NODE_ENV === "production",
-    secrets: [SESSION_SECRET],
-    sameSite: "strict",
-    path: "/",
-    maxAge: 60 * 60 * VALID_HOURS, // 1 day
-    httpOnly: true,
-  },
-});
+
+function getSession() {
+  return useSession<SessionData>({
+    password: SESSION_SECRET!,
+    cookie: {
+      sameSite: "strict",
+      secure: import.meta.env.PROD,
+      httpOnly: true,
+      maxAge: 60 * 60 * VALID_HOURS,
+    },
+  });
+}
+
+function writeSessionDate(session: Session, validUntil: string | undefined) {
+  return session.update(() => ({ validUntil }));
+}
 
 function commitNewAuthDate(session: Session) {
-  const newAuthDate = addHours(new Date(), VALID_HOURS).toISOString();
-  session.set("validUntil", newAuthDate);
-  return STORAGE.commitSession(session);
+  return writeSessionDate(session, addHours(new Date(), VALID_HOURS).toISOString());
 }
 
 function getCookiesValidUntilDate(session: Session) {
-  const rawValidUntil = session.get("validUntil") as string | null;
+  const rawValidUntil = session.data.validUntil;
   const validUntilDate = rawValidUntil && new Date(rawValidUntil);
   return validUntilDate && isValid(validUntilDate) ? validUntilDate : null;
 }
 
-export async function logout(requestCookie: string | null) {
-  return STORAGE.destroySession(await STORAGE.getSession(requestCookie));
+export async function logout() {
+  await writeSessionDate(await getSession(), undefined);
 }
 
-export async function login(inputs: Record<string, unknown>, requestCookie: string | null) {
-  const valid = inputs.username === "admin" && ADMIN_PASSWORD && inputs.password === ADMIN_PASSWORD;
-  return valid ? commitNewAuthDate(await STORAGE.getSession(requestCookie)) : null;
+export async function login(options: {
+  username: string | null;
+  password: string | null;
+}): Promise<boolean> {
+  const valid = Boolean(
+    options.username === "admin" && ADMIN_PASSWORD && options.password === ADMIN_PASSWORD,
+  );
+  if (valid) {
+    await commitNewAuthDate(await getSession());
+  }
+  return valid;
 }
 
-export async function isValidSession(requestCookie: string | null) {
-  const validUntilDate = getCookiesValidUntilDate(await STORAGE.getSession(requestCookie));
-  return Boolean(validUntilDate && isFuture(validUntilDate));
+export async function checkSession() {
+  const validUntilDate = getCookiesValidUntilDate(await getSession());
+  if (!validUntilDate || !isFuture(validUntilDate)) {
+    throw redirect("/login");
+  }
 }
 
-export async function refreshToken(requestCookie: string | null) {
-  const session = await STORAGE.getSession(requestCookie);
+export async function refreshToken() {
+  const session = await getSession();
   const validUntilDate = getCookiesValidUntilDate(session);
   if (!validUntilDate) {
     return null;

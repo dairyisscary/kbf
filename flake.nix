@@ -17,6 +17,7 @@
 
   outputs = inputs:
     let
+      inherit (inputs) self;
       inherit (inputs.nixpkgs) lib;
       systemToPkgs = lib.genAttrs
         [ "x86_64-linux" "aarch64-darwin" ]
@@ -40,6 +41,7 @@
       packages = forEachSystem (system: pkgs: rec {
         kbf = pkgs.callPackage ./default.nix {
           nodejs = pkgs.nodejs_20;
+          releaseName = builtins.toString (self.shortRev or self.dirtyShortRev or self.lastModified or "unknown");
           inherit (inputs.pnpm2nix.packages.${system}) mkPnpmPackage;
         };
         default = kbf;

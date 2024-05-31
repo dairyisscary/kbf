@@ -1,7 +1,9 @@
+"use server";
 import { z } from "zod";
 import { v4 } from "uuid";
 
 import { db, type DBTransaction } from "~/db";
+import { checkSession } from "~/session";
 
 type TransactionCategoryFilters = {
   excludeBreakdownIgnoredCategories?: boolean;
@@ -71,6 +73,7 @@ export async function categoriesForTransactionIds(
   transactionIds: string[],
   filter?: TransactionCategoryFilters,
 ) {
+  await checkSession();
   const links = transactionIds.length
     ? await db
         .selectFrom("categories_transactions")
@@ -105,6 +108,7 @@ export async function allCategoriesByName(filter?: {
   includeUncategorized?: boolean;
   excludeIgnoredForBreakdown?: boolean;
 }) {
+  await checkSession();
   let query = db.selectFrom("categories").select(DEFAULT_SELECT).orderBy("name");
   if (filter?.excludeIgnoredForBreakdown) {
     query = query.where("ignored_for_breakdown_reporting", "=", false);
@@ -114,6 +118,7 @@ export async function allCategoriesByName(filter?: {
 }
 
 export async function allCategoriesWithCounts() {
+  await checkSession();
   const [categories, counts, predicates] = await Promise.all([
     allCategoriesByName(),
     countsOfTransactions(),
@@ -127,11 +132,12 @@ export async function allCategoriesWithCounts() {
 }
 
 export async function deleteCategory(categoryId: string) {
+  await checkSession();
   await db.deleteFrom("categories").where("id", "=", categoryId).executeTakeFirstOrThrow();
-  return categoryId;
 }
 
 export async function editCategory(categoryId: string, inputs: Record<string, unknown>) {
+  await checkSession();
   const now = new Date();
   const category = INPUT_SCHEMA.parse(inputs);
   await db.transaction().execute(async (trx) => {
@@ -152,6 +158,7 @@ export async function editCategory(categoryId: string, inputs: Record<string, un
 }
 
 export async function addCategory(inputs: Record<string, unknown>) {
+  await checkSession();
   const now = new Date();
   const categoryId = v4();
   const category = INPUT_SCHEMA.parse(inputs);
