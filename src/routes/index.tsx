@@ -243,7 +243,7 @@ export default function Dashboard() {
       <Show when={graphData()}>
         {(data) => (
           <>
-            <BarChart class="mb-12" height="clamp(500px,70vh,900px)" data={data()} />
+            <BarChart class="mb-12 h-[clamp(500px,70vh,900px)]" data={data()} />
 
             <h2 class="mb-4">Totals</h2>
             <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">

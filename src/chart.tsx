@@ -14,8 +14,6 @@ import {
   type DefaultDataPoint,
 } from "chart.js";
 
-import clx from "~/clx";
-
 Chart.register(
   BarController,
   LineController,
@@ -28,7 +26,7 @@ Chart.register(
 );
 Chart.defaults.font = { family: "Inter,sans-serif", size: 14 };
 Chart.defaults.color = "#FEFEFE";
-Chart.defaults.resizeDelay = 30;
+Chart.defaults.resizeDelay = 16;
 Chart.defaults.borderColor = "#272552";
 Chart.defaults.datasets.bar.borderRadius = 8;
 Chart.defaults.scales.category.grid = { display: false };
@@ -39,7 +37,6 @@ Chart.defaults.elements.line.tension = 0.3;
 
 type BarChartProps<Data, Label> = {
   data: ChartDataCustomTypesPerDataset<"bar" | "line", Data, Label>;
-  height: string;
   class?: string;
 };
 
@@ -47,8 +44,9 @@ export function BarChart<Data = DefaultDataPoint<"bar" | "line">, Label = unknow
   props: BarChartProps<Data, Label>,
 ) {
   return (
-    <div class={clx("relative mx-auto w-[99.9%]", props.class)} style={`height:${props.height}`}>
+    <div class={props.class}>
       <canvas
+        class="max-w-full"
         ref={(canvas: HTMLCanvasElement) => {
           let chart: undefined | Chart<"bar" | "line", Data, Label>;
           createEffect(() => {
