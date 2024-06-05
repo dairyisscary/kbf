@@ -1,7 +1,7 @@
 .wrapper {
   width: min(100%, 1800px);
   padding-inline: clamp(1rem, 1dvw, 2rem);
-  @apply mx-auto flex items-start py-12;
+  @apply mx-auto flex items-start gap-10 py-12;
 }
 
 .nav {
