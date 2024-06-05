@@ -95,7 +95,7 @@ export default function Wrapper(props: { children: JSX.Element }) {
           <BackToTop />
         </nav>
       </Show>
-      <main class="flex-1 pb-8 pl-10 pt-2">{props.children}</main>
+      <main class="flex-1 pb-8 pr-3 pt-2">{props.children}</main>
     </div>
   );
 }
