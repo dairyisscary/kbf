@@ -1,13 +1,13 @@
 { lib
 , stdenvNoCC
 , nodejs_20
-, pnpm_8
+, pnpm_9
 
 , version
 }:
 let
   nodejs = nodejs_20;
-  pnpm = pnpm_8;
+  pnpm = pnpm_9;
 
   NODE_ENV = "production";
 
@@ -27,7 +27,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     inherit (finalAttrs) pname;
     src = getSrc (fs.intersection (fs.unions [ ./package.json ./pnpm-lock.yaml ]));
     env = { inherit NODE_ENV; };
-    hash = "sha256-dLJ0Ya8PGznNcXndmvaXaM6uvAB+j8E4YyeKnBT4Cpc=";
+    hash = "sha256-YfuGDV5hwzdzU87/8/tr/F466l/bJ/S8q2fn1Z2FSz0=";
   };
 
   env = {
