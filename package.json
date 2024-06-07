@@ -2,9 +2,6 @@
   "name": "kbf",
   "private": true,
   "type": "module",
-  "scripts": {
-    "build": "vinxi build"
-  },
   "dependencies": {
     "@solidjs/meta": "^0.29.4",
     "@solidjs/router": "^0.13.5",

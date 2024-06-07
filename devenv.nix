@@ -1,7 +1,7 @@
 { config, pkgs, lib, self, ... }:
 let
   inherit (pkgs.stdenv) system;
-  inherit (self.packages.${system}) kbf;
+  inherit (self.packages.${system}.kbf) nodejs pnpm;
 in
 {
   dotenv.disableHint = true;
@@ -20,9 +20,9 @@ in
   };
 
   packages = [
-    kbf.nodejs
-    kbf.nodejs.pkgs.pnpm
-    kbf.nodejs.pkgs.typescript-language-server
+    nodejs
+    pnpm
+    nodejs.pkgs.typescript-language-server
   ];
 
   scripts = {
@@ -40,10 +40,10 @@ in
         "$DEVENV_ROOT/node_modules/.bin/esbuild" --platform=node --target=node20 "$@"
       }
 
-      rm -rf dist/scripts
-      local-esbuild --bundle --outfile=dist/scripts/migrate.cjs src/db/migrate.tsx
-      local-esbuild --outdir=dist/scripts/migrations src/db/migrations/*
-      node dist/scripts/migrate.cjs
+      rm -rf .output/scripts
+      local-esbuild --bundle --outfile=.output/scripts/migrate.cjs src/db/migrate.tsx
+      local-esbuild --outdir=.output/scripts/migrations src/db/migrations/*
+      node .output/scripts/migrate.cjs
 
       generate-db-types
     '';
