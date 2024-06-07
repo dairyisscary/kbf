@@ -8,11 +8,6 @@
       url = "github:cachix/devenv";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
-    pnpm2nix = {
-      url = "github:nzbr/pnpm2nix-nzbr";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
   outputs = inputs:
@@ -40,9 +35,7 @@
 
       packages = forEachSystem (system: pkgs: rec {
         kbf = pkgs.callPackage ./default.nix {
-          nodejs = pkgs.nodejs_20;
-          releaseName = builtins.toString (self.shortRev or self.dirtyShortRev or self.lastModified or "unknown");
-          inherit (inputs.pnpm2nix.packages.${system}) mkPnpmPackage;
+          version = self.shortRev or "dev";
         };
         default = kbf;
       });

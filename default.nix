@@ -1,19 +1,49 @@
 { lib
-, mkPnpmPackage
-, nodejs
-, releaseName
-}: mkPnpmPackage {
-  inherit nodejs;
+, stdenvNoCC
+, nodejs_20
+, pnpm_8
 
-  src = lib.fileset.toSource {
+, version
+}:
+let
+  nodejs = nodejs_20;
+  pnpm = pnpm_8;
+
+  NODE_ENV = "production";
+
+  fs = lib.fileset;
+  getSrc = mapFn: fs.toSource rec {
     root = ./.;
-    fileset = lib.fileset.gitTracked ./.;
+    fileset = mapFn (fs.gitTracked root);
+  };
+in
+stdenvNoCC.mkDerivation (finalAttrs: {
+  pname = "kbf";
+  inherit version;
+
+  src = getSrc lib.id;
+
+  pnpmDeps = pnpm.fetchDeps {
+    inherit (finalAttrs) pname;
+    src = getSrc (fs.intersection (fs.unions [ ./package.json ./pnpm-lock.yaml ]));
+    env = { inherit NODE_ENV; };
+    hash = "sha256-dLJ0Ya8PGznNcXndmvaXaM6uvAB+j8E4YyeKnBT4Cpc=";
   };
 
-  env.PUBLIC_RELEASE_NAME = releaseName;
+  env = {
+    inherit NODE_ENV;
+    PUBLIC_RELEASE_NAME = version;
+  };
+  nativeBuildInputs = [ pnpm.configHook ];
   buildInputs = [ nodejs ];
-  noDevDependencies = true;
-  installInPlace = true;
+
+  buildPhase = ''
+    runHook preBuild
+
+    pnpm exec vinxi build
+
+    runHook postBuild
+  '';
 
   installPhase = ''
     runHook preInstall
@@ -26,5 +56,9 @@
     runHook postInstall
   '';
 
+  passthru = {
+    inherit nodejs pnpm;
+  };
+
   meta.mainProgram = "kbf";
-}
+})

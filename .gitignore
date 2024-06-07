@@ -1,8 +1,7 @@
 .direnv/
 .devenv/
-.solid/
 .output/
 .vinxi/
 node_modules/
-result/
+result
 .env*.local
