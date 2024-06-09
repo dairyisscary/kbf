@@ -20,7 +20,7 @@ type ModalState =
   | { type: "add"; category?: undefined }
   | { type: "edit"; category: CountedCategory };
 
-const getAllCategories = cache(allCategoriesWithCounts, "categories");
+const getAllCategories = cache(allCategoriesWithCounts, "categoriesForListing");
 
 export const route: RouteDefinition = {
   load() {

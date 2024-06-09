@@ -18,7 +18,7 @@ const ONE_EURO_IN_USD = 1.1;
 
 const getAllCategoriesForReport = cache(
   () => allCategoriesByName({ includeUncategorized: true, excludeIgnoredForBreakdown: true }),
-  "categories",
+  "categoriesForReport",
 );
 
 const getTransactionsForReport = cache((timeline: string | undefined) => {
@@ -27,7 +27,7 @@ const getTransactionsForReport = cache((timeline: string | undefined) => {
     type: `by-${grouping}`,
     count: Number(count),
   });
-}, "transactions");
+}, "transactionsForReport");
 
 export const route: RouteDefinition = {
   load(args) {

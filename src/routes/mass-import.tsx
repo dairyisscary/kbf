@@ -11,7 +11,7 @@ import Alert from "~/alert";
 import clx from "~/clx";
 import Button from "~/button";
 
-const getAllCategories = cache(allCategoriesByName, "categories");
+const getAllCategories = cache(allCategoriesByName, "categoriesForMassImport");
 
 export const route: RouteDefinition = {
   load() {
