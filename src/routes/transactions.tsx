@@ -77,7 +77,7 @@ const getTransactionsForListing = cache((params: Record<string, string | undefin
         categoryIds,
       });
   }
-}, "transactions");
+}, "transactionsForListing");
 
 const addEditAction = action((form: FormData) => {
   const pealed = pealFormData(form, ["categoryIds"]);
@@ -86,7 +86,7 @@ const addEditAction = action((form: FormData) => {
     : addTransaction(pealed);
 }, "addEditTransaction");
 
-const getAllCategories = cache(allCategoriesByName, "categories");
+const getAllCategories = cache(allCategoriesByName, "categoriesForTransactions");
 
 export const route: RouteDefinition = {
   load(args) {
