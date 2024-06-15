@@ -16,7 +16,7 @@ export default config(
   {
     languageOptions: {
       parserOptions: {
-        project: true,
+        projectService: true,
         tsconfigRootDir: import.meta.dirname,
       },
     },
@@ -24,6 +24,10 @@ export default config(
       "@typescript-eslint/no-non-null-assertion": "off",
       "@typescript-eslint/only-throw-error": "off",
     },
+  },
+  {
+    files: ["*.config.js"],
+    ...configs.disableTypeChecked,
   },
   {
     ignores: readFileSync("./.gitignore", "utf8").split("\n").concat([".jj/"]),

@@ -41,11 +41,11 @@
         "pre-commit-hooks": "pre-commit-hooks"
       },
       "locked": {
-        "lastModified": 1717917954,
-        "narHash": "sha256-2p4dWAywA85r/4zDBQt8dLUErIVSitdDMEow5xxpU0g=",
+        "lastModified": 1723238470,
+        "narHash": "sha256-th7kebBibdBg+MB/c49uVD4ftEtXq1FJp4HddxUPeoc=",
         "owner": "cachix",
         "repo": "devenv",
-        "rev": "8dab95bb60b6ece337450d80cc67515429652876",
+        "rev": "25e48e98c19e9424d517a144db0d31a89536bf94",
         "type": "github"
       },
       "original": {
@@ -318,11 +318,11 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1717786204,
-        "narHash": "sha256-4q0s6m0GUcN7q+Y2DqD27iLvbcd1G50T2lv08kKxkSI=",
+        "lastModified": 1723175592,
+        "narHash": "sha256-M0xJ3FbDUc4fRZ84dPGx5VvgFsOzds77KiBMW/mMTnI=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "051f920625ab5aabe37c920346e3e69d7d34400e",
+        "rev": "5e0ca22929f3342b19569b21b2f3462f053e497b",
         "type": "github"
       },
       "original": {
