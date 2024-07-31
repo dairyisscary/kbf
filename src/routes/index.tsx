@@ -222,7 +222,7 @@ export default function Dashboard() {
           items={[
             { label: "6 Months", value: "6-month" },
             { label: "12 Months", value: "12-month" },
-            { label: "3 Years", value: "3-year" },
+            { label: "5 Years", value: "5-year" },
           ]}
           value={searchParams.timeline || DEFAULT_TIMELINE}
           onChange={(timeline) => {
