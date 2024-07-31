@@ -3,7 +3,10 @@ import {
   subMonths,
   subYears,
   eachMonthOfInterval,
+  isSameMonth,
+  endOfMonth,
   format as formatDate,
+  isSameYear,
 } from "date-fns";
 
 type ReportableTransaction = {
@@ -31,15 +34,16 @@ function makeCategorySum(
   return aggregate;
 }
 
-function makeIntervals(
-  intervalKeys: string[],
+function makeViewIntervals(
+  interval: Date[],
   transactions: ReportableTransaction[],
   currency: ReportableTransaction["currency"],
+  samePredicate: (a: Date | string, b: Date) => boolean,
 ) {
-  return intervalKeys.map((key) => {
+  return interval.map((keyDate) => {
     const aggregate = { income: 0, spend: 0 };
     for (const transaction of transactions) {
-      if (!transaction.when.startsWith(key) || transaction.currency !== currency) {
+      if (transaction.currency !== currency || !samePredicate(transaction.when, keyDate)) {
         continue;
       }
       if (transaction.amount >= 0) {
@@ -52,6 +56,32 @@ function makeIntervals(
   });
 }
 
+function getTransactionParams(grouping: Grouping) {
+  const now = new Date();
+  switch (grouping.type) {
+    case "by-month":
+      // For month, we don't include the current (incomplete) month
+      return {
+        humanFormat: "MMM yyyy",
+        interval: eachMonthOfInterval({
+          start: subMonths(now, grouping.count),
+          end: subMonths(now, 1),
+        }),
+        onOrBefore: endOfMonth(subMonths(now, 1)),
+        samePredicate: isSameMonth,
+      };
+    case "by-year":
+      return {
+        humanFormat: "yyyy",
+        interval: eachYearOfInterval({
+          start: subYears(now, grouping.count - 1),
+          end: now,
+        }),
+        samePredicate: isSameYear,
+      };
+  }
+}
+
 export async function generateReportingData(
   grouping: Grouping,
   getTransactions: (filter: {
@@ -59,29 +89,12 @@ export async function generateReportingData(
     onOrAfter?: string;
   }) => Promise<ReportableTransaction[]>,
 ) {
-  const groupingParams =
-    grouping.type === "by-year"
-      ? {
-          keyFormat: "yyyy-",
-          humanFormat: "yyyy",
-          subFn: subYears,
-          intervalFn: eachYearOfInterval,
-        }
-      : {
-          keyFormat: "yyyy-MM-",
-          humanFormat: "MMM yyyy",
-          subFn: subMonths,
-          intervalFn: eachMonthOfInterval,
-        };
-
-  const now = new Date();
-  const interval = groupingParams.intervalFn({
-    start: groupingParams.subFn(now, grouping.count - 1),
-    end: now,
-  });
+  const groupingParams = getTransactionParams(grouping);
+  const { interval } = groupingParams;
 
   const transactions = await getTransactions({
-    onOrAfter: formatDate(interval[0]!, "yyyy-MM-dd"),
+    onOrBefore: groupingParams.onOrBefore && formatDate(groupingParams.onOrBefore, "yyyy-MM-dd"),
+    onOrAfter: formatDate(groupingParams.interval[0]!, "yyyy-MM-dd"),
   });
 
   const allCategories = Array.from(
@@ -94,9 +107,6 @@ export async function generateReportingData(
     ),
   );
 
-  const intervalKeys = interval.map((anchorDate) =>
-    formatDate(anchorDate, groupingParams.keyFormat),
-  );
   const categoriesWithMatchingTransactions = allCategories.map((category) => ({
     category,
     transactions: transactions.filter((transaction) => {
@@ -109,8 +119,8 @@ export async function generateReportingData(
       labels: interval.map((anchorDate) => formatDate(anchorDate, groupingParams.humanFormat)),
       categories: categoriesWithMatchingTransactions.map(({ category, transactions }) => ({
         category,
-        euro: makeIntervals(intervalKeys, transactions, "euro"),
-        usd: makeIntervals(intervalKeys, transactions, "usd"),
+        euro: makeViewIntervals(interval, transactions, "euro", groupingParams.samePredicate),
+        usd: makeViewIntervals(interval, transactions, "usd", groupingParams.samePredicate),
       })),
     },
     sums: {
