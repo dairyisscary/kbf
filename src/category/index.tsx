@@ -33,6 +33,10 @@ function uniq(input: string[]): string[] {
   return Array.from(new Set(input));
 }
 
+function byName(a: { name: string }, b: { name: string }) {
+  return a.name.localeCompare(b.name);
+}
+
 async function addPredicates(trx: DBTransaction, categoryId: string, predicates: string[]) {
   if (predicates.length) {
     const rules = predicates.map((predicate) => ({
@@ -99,7 +103,7 @@ export async function categoriesForTransactionIds(
       const found = categories.find((category) => category.id === link.category_id)!;
       return excludeBreakdownCategories && found.ignoredForBreakdownReporting ? [] : [found];
     });
-    result[id] = catsForId.length ? catsForId : [UNCATEGORIZED_CATEGORY];
+    result[id] = catsForId.length ? catsForId.toSorted(byName) : [UNCATEGORIZED_CATEGORY];
   }
   return result;
 }
