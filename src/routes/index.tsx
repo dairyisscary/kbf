@@ -13,7 +13,7 @@ import { AmountPill } from "~/transaction/pip";
 
 type Strategy = "separate" | "merged-usd" | "merged-euro";
 
-const DEFAULT_TIMELINE = "6-month";
+const DEFAULT_TIMELINE = "year-to-date";
 const ONE_EURO_IN_USD = 1.1;
 
 const getAllCategoriesForReport = cache(
@@ -22,7 +22,11 @@ const getAllCategoriesForReport = cache(
 );
 
 const getTransactionsForReport = cache((timeline: string | undefined) => {
-  const [count, grouping] = (timeline || DEFAULT_TIMELINE).split("-") as [string, "month" | "year"];
+  timeline ||= DEFAULT_TIMELINE;
+  if (timeline === DEFAULT_TIMELINE) {
+    return transactionDataForReporting({ type: "year-to-date" });
+  }
+  const [count, grouping] = timeline.split("-") as [string, "month" | "year"];
   return transactionDataForReporting({
     type: `by-${grouping}`,
     count: Number(count),
@@ -220,7 +224,7 @@ export default function Dashboard() {
         <TabGroup
           class="w-[min(45%,500px)]"
           items={[
-            { label: "6 Months", value: "6-month" },
+            { label: "Year-to-Date", value: "year-to-date" },
             { label: "12 Months", value: "12-month" },
             { label: "5 Years", value: "5-year" },
           ]}

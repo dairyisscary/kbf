@@ -7,6 +7,7 @@ import {
   endOfMonth,
   format as formatDate,
   isSameYear,
+  startOfYear,
 } from "date-fns";
 
 type ReportableTransaction = {
@@ -15,10 +16,7 @@ type ReportableTransaction = {
   currency: "usd" | "euro";
   categories: { id: string; name: string; colorCode: number }[];
 };
-type Grouping = {
-  type: "by-month" | "by-year";
-  count: number;
-};
+type Grouping = { type: "year-to-date" } | { type: "by-month" | "by-year"; count: number };
 
 function makeCategorySum(
   transactions: ReportableTransaction[],
@@ -59,6 +57,17 @@ function makeViewIntervals(
 function getTransactionParams(grouping: Grouping) {
   const now = new Date();
   switch (grouping.type) {
+    case "year-to-date": {
+      const lastMonth = subMonths(now, 1);
+      return {
+        humanFormat: "MMMM",
+        interval: eachMonthOfInterval({
+          start: startOfYear(lastMonth),
+          end: lastMonth,
+        }),
+        samePredicate: isSameMonth,
+      };
+    }
     case "by-month":
       // For month, we don't include the current (incomplete) month
       return {
