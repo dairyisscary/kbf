@@ -1,7 +1,8 @@
-import { createMemo, createSignal, For, Show } from "solid-js";
+import { createMemo, createSignal, For, Show, type ComponentProps } from "solid-js";
 import { createAsync, cache, useSearchParams, A, type RouteDefinition } from "@solidjs/router";
 
 import { KbfSiteTitle } from "~/app";
+import { formatMoneyAmount } from "~/format";
 import { transactionDataForReporting } from "~/transaction";
 import { allCategoriesByName } from "~/category";
 import { BarChart } from "~/chart";
@@ -12,6 +13,8 @@ import { CategoryColorPip, getColorsForCode } from "~/category/pip";
 import { AmountPill } from "~/transaction/pip";
 
 type Strategy = "separate" | "merged-usd" | "merged-euro";
+type GraphProps = Pick<ComponentProps<typeof BarChart>, "data" | "options">;
+type Intervals = Awaited<ReturnType<typeof transactionDataForReporting>>["intervals"];
 
 const DEFAULT_TIMELINE = "year-to-date";
 const ONE_EURO_IN_USD = 1.1;
@@ -54,44 +57,88 @@ function zipUsdIntoEuro(options: { euro: number[]; usd: number[] }): number[] {
   });
 }
 
-function addInLines(
-  intervals: Awaited<ReturnType<typeof transactionDataForReporting>>["intervals"],
+function computeChartDatasets(
+  intervals: Intervals,
   currencyStrat: Strategy,
   isIgnoredLookup: Set<string>,
-) {
-  const usd = {
-    label: "Total USD",
-    type: "line" as const,
-    order: -1,
-    data: intervals.labels.map((intervalLabel, index) => {
-      return intervals.categories.reduce((accum, { category, usd }) => {
-        if (isIgnoredLookup.has(category.id)) {
-          return accum;
-        }
-        const at = usd[index] || { spend: 0, income: 0 };
-        return accum + at.spend - at.income;
-      }, 0);
-    }),
-  };
-  const euro = {
-    label: "Total Euro",
-    type: "line" as const,
-    order: -1,
-    data: intervals.labels.map((intervalLabel, index) => {
-      return intervals.categories.reduce((accum, { category, euro }) => {
-        if (isIgnoredLookup.has(category.id)) {
-          return accum;
-        }
-        const at = euro[index] || { spend: 0, income: 0 };
-        return accum + at.spend - at.income;
-      }, 0);
-    }),
-  };
-  return currencyStrat === "merged-usd"
-    ? [{ ...usd, data: zipEuroIntoUsd({ usd: usd.data, euro: euro.data }) }]
-    : currencyStrat === "merged-euro"
-      ? [{ ...euro, data: zipUsdIntoEuro({ usd: usd.data, euro: euro.data }) }]
-      : [usd, euro];
+): GraphProps["data"]["datasets"] {
+  return intervals.categories.flatMap(({ category, euro, usd }) => {
+    const hidden = isIgnoredLookup.has(category.id);
+    const [, backgroundColor] = getColorsForCode(category.colorCode);
+    const euroData = euro.map((interval) => interval.spend - interval.income);
+    const usdData = usd.map((interval) => interval.spend - interval.income);
+    if (currencyStrat === "merged-usd") {
+      return [
+        {
+          label: category.name,
+          type: "bar" as const,
+          stack: "usd",
+          data: zipEuroIntoUsd({ euro: euroData, usd: usdData }),
+          backgroundColor,
+          hidden,
+        },
+      ];
+    } else if (currencyStrat === "merged-euro") {
+      return [
+        {
+          label: category.name,
+          type: "bar" as const,
+          stack: "euro",
+          data: zipUsdIntoEuro({ euro: euroData, usd: usdData }),
+          backgroundColor,
+          hidden,
+        },
+      ];
+    }
+    return [
+      {
+        label: `€ ${category.name}`,
+        type: "bar" as const,
+        stack: "euro",
+        data: euroData,
+        backgroundColor,
+        hidden,
+      },
+      {
+        label: `$ ${category.name}`,
+        type: "bar" as const,
+        stack: "usd",
+        data: usdData,
+        backgroundColor,
+        hidden,
+      },
+    ];
+  });
+}
+
+function getTotalDatum(collection: { spend: number; income: number }[], index: number) {
+  const at = collection[index] || { spend: 0, income: 0 };
+  return at.spend - at.income;
+}
+
+function computeDatasetTotals(intervals: Intervals, isIgnoredLookup: Set<string>) {
+  return intervals.labels.map((label, index) => {
+    let totalEuro = 0;
+    let totalUsd = 0;
+    for (const { category, usd, euro } of intervals.categories) {
+      if (!isIgnoredLookup.has(category.id)) {
+        totalEuro += getTotalDatum(euro, index);
+        totalUsd += getTotalDatum(usd, index);
+      }
+    }
+    return {
+      euro: formatMoneyAmount({ amount: totalEuro, currency: "euro" }),
+      usd: formatMoneyAmount({ amount: totalUsd, currency: "usd" }),
+      mergedEuro: formatMoneyAmount({
+        amount: totalEuro + totalUsd / ONE_EURO_IN_USD,
+        currency: "euro",
+      }),
+      mergedUsd: formatMoneyAmount({
+        amount: totalUsd + totalEuro * ONE_EURO_IN_USD,
+        currency: "usd",
+      }),
+    };
+  });
 }
 
 function Sums(props: {
@@ -142,67 +189,44 @@ export default function Dashboard() {
     });
   };
 
-  const graphData = createMemo(() => {
-    const rawData = reportTransactions();
-    if (!rawData) {
+  const graphProps = createMemo((): GraphProps | null => {
+    const rawIntervals = reportTransactions()?.intervals;
+    if (!rawIntervals) {
       return null;
     }
     const isIgnoredLookup = ignored();
     const currencyStrat = currencyStrategy();
-    const categoryDatasets = rawData.intervals.categories.flatMap(({ category, euro, usd }) => {
-      const hidden = isIgnoredLookup.has(category.id);
-      const [, backgroundColor] = getColorsForCode(category.colorCode);
-      const euroData = euro.map((interval) => interval.spend - interval.income);
-      const usdData = usd.map((interval) => interval.spend - interval.income);
-      if (currencyStrat === "merged-usd") {
-        return [
-          {
-            label: category.name,
-            type: "bar" as const,
-            stack: "usd",
-            data: zipEuroIntoUsd({ euro: euroData, usd: usdData }),
-            backgroundColor,
-            hidden,
+    const currencyISSeperate = currencyStrat === "separate";
+    const datasets = computeChartDatasets(rawIntervals, currencyStrat, isIgnoredLookup);
+    const utmostDatasetIndex = datasets.length - 1;
+    const datasetTotals = computeDatasetTotals(rawIntervals, isIgnoredLookup);
+    return {
+      data: { labels: rawIntervals.labels, datasets },
+      options: {
+        layout: { padding: { top: 40 } },
+        plugins: {
+          datalabels: {
+            color: "white",
+            anchor: "end",
+            align: "top",
+            display({ datasetIndex }) {
+              return (
+                datasetIndex === utmostDatasetIndex ||
+                (currencyISSeperate && datasetIndex === utmostDatasetIndex - 1)
+              );
+            },
+            formatter(value, { dataIndex, dataset }) {
+              const key = currencyISSeperate
+                ? (dataset.stack as "euro" | "usd")
+                : currencyStrat === "merged-usd"
+                  ? "mergedUsd"
+                  : "mergedEuro";
+              return datasetTotals[dataIndex]![key];
+            },
           },
-        ];
-      } else if (currencyStrat === "merged-euro") {
-        return [
-          {
-            label: category.name,
-            type: "bar" as const,
-            stack: "euro",
-            data: zipUsdIntoEuro({ euro: euroData, usd: usdData }),
-            backgroundColor,
-            hidden,
-          },
-        ];
-      }
-      return [
-        {
-          label: `€ ${category.name}`,
-          type: "bar" as const,
-          stack: "euro",
-          data: euroData,
-          backgroundColor,
-          hidden,
         },
-        {
-          label: `$ ${category.name}`,
-          type: "bar" as const,
-          stack: "usd",
-          data: usdData,
-          backgroundColor,
-          hidden,
-        },
-      ];
-    });
-    const datasets = (
-      categoryDatasets as (
-        | (typeof categoryDatasets)[number]
-        | ReturnType<typeof addInLines>[number]
-      )[]
-    ).concat(addInLines(rawData.intervals, currencyStrat, isIgnoredLookup));
-    return { labels: rawData.intervals.labels, datasets };
+      },
+    };
   });
 
   const allCategoriesWithSums = createMemo(() => {
@@ -244,10 +268,14 @@ export default function Dashboard() {
           onChange={setCurrencyStrategy}
         />
       </header>
-      <Show when={graphData()}>
-        {(data) => (
+      <Show when={graphProps()}>
+        {(graph) => (
           <>
-            <BarChart class="mb-12 h-[clamp(500px,70vh,900px)]" data={data()} />
+            <BarChart
+              class="mb-14 h-[clamp(500px,70vh,900px)]"
+              data={graph().data}
+              options={graph().options}
+            />
 
             <h2 class="mb-4">Totals</h2>
             <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
