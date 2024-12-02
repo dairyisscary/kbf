@@ -13,7 +13,7 @@ nix build
 Via Nix shell:
 
 ```shell
-nix develop --impure
+nix develop --no-pure-eval
 # Or if you have direnv
 direnv allow
 ```
