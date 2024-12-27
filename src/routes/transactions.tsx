@@ -146,7 +146,7 @@ function AddEditModal(props: {
     props.editingTransaction?.amount ?? NaN,
   );
   const [currency, setCurrency] = createSignal<Parameters<typeof formatCurrencySign>[0]>(
-    props.editingTransaction?.currency || "euro",
+    props.editingTransaction?.currency || "usd",
   );
 
   const submitting = useClearingSubmission(addEditAction);

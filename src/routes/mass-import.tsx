@@ -25,14 +25,14 @@ const massImportAction = action((formData: FormData) => {
 
 export default function MassImport() {
   const allCategories = createAsync(() => getAllCategories());
-  const [currency, setCurrency] = createSignal<Parameters<typeof formatCurrencySign>[0]>("euro");
+  const [currency, setCurrency] = createSignal<Parameters<typeof formatCurrencySign>[0]>("usd");
   const submitting = useSubmission(massImportAction);
   let formRef: undefined | HTMLFormElement;
   const reset = () => Boolean(submitting.result && !submitting.error);
   createEffect(() => {
     if (reset()) {
       formRef!.reset();
-      setCurrency("euro");
+      setCurrency("usd");
     }
   });
   return (
