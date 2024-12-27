@@ -53,13 +53,13 @@ function smallIsoFormat(date: Date) {
   return format(date, "yyyy-MM-dd");
 }
 
-const getTransactionsForListing = cache((params: Record<string, string | undefined>) => {
-  const categoryIds = params.filterCategoryIds?.split(",");
+const getTransactionsForListing = cache((params: Record<string, string[] | string | undefined>) => {
+  const categoryIds = (params.filterCategoryIds as string | undefined)?.split(",");
   switch (params.timeFrame) {
     case "custom":
       return allTransactionsFromFilters({
-        onOrAfter: params.onOrAfter,
-        onOrBefore: params.onOrBefore,
+        onOrAfter: params.onOrAfter as string,
+        onOrBefore: params.onOrBefore as string,
         categoryIds,
       });
     case "last-month": {
@@ -287,7 +287,9 @@ function Filters(props: { allCategories: Category[] | undefined }) {
   };
 
   const [filterCategoriesOpen, setFilterCategoriesOpen] = createSignal(false);
-  const filterCategories = createMemo(() => searchParams.filterCategoryIds?.split(",") || []);
+  const filterCategories = createMemo(
+    () => (searchParams.filterCategoryIds as string | undefined)?.split(",") || [],
+  );
   return (
     <div class={Styles.filters}>
       <Button

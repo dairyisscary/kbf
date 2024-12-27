@@ -61,13 +61,3 @@ export async function checkSession() {
     throw redirect("/login");
   }
 }
-
-export async function refreshToken() {
-  const session = await getSession();
-  const validUntilDate = getCookiesValidUntilDate(session);
-  if (!validUntilDate) {
-    return null;
-  }
-  const refreshTime = addHours(validUntilDate, VALID_HOURS / -2);
-  return isFuture(refreshTime) ? null : commitNewAuthDate(session);
-}

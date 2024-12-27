@@ -26,7 +26,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     inherit (finalAttrs) pname;
     src = getSrc (fs.intersection (fs.unions [ ./package.json ./pnpm-lock.yaml ]));
     env = { inherit NODE_ENV; };
-    hash = "sha256-VM8Dac9Xk7O0VZ8rGp/SdzTOzV+zBfRHn5Ac2pKL4Js=";
+    hash = "sha256-foe/jPHuCMpEXIlRK7ci48//Uy/M7/lx1uYKx/zKTDE=";
   };
 
   env = {

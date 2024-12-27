@@ -39,7 +39,7 @@ const getTransactionsForReport = cache((timeline: string | undefined) => {
 export const route: RouteDefinition = {
   load(args) {
     void getAllCategoriesForReport();
-    void getTransactionsForReport(args.location.query.timeline);
+    void getTransactionsForReport(args.location.query.timeline as string | undefined);
   },
 };
 
@@ -162,7 +162,9 @@ function Sums(props: {
 
 export default function Dashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const reportTransactions = createAsync(() => getTransactionsForReport(searchParams.timeline));
+  const reportTransactions = createAsync(() =>
+    getTransactionsForReport(searchParams.timeline as string | undefined),
+  );
   const allCategories = createAsync(() => getAllCategoriesForReport());
 
   const [currencyStrategy, setCurrencyStrategy] = createSignal<Strategy>("merged-usd");
