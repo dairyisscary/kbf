@@ -37,7 +37,7 @@ in
     migrate.exec = ''
       set -e
       local-esbuild() {
-        "$DEVENV_ROOT/node_modules/.bin/esbuild" --platform=node --target=node20 "$@"
+        "$DEVENV_ROOT/node_modules/.bin/esbuild" --platform=node --target=node22 "$@"
       }
 
       rm -rf .output/scripts
