@@ -10,6 +10,8 @@ import {
   startOfYear,
 } from "date-fns";
 
+import { localizeDateFromDatabase } from "~/format";
+
 type ReportableTransaction = {
   when: string;
   amount: number;
@@ -36,12 +38,15 @@ function makeViewIntervals(
   interval: Date[],
   transactions: ReportableTransaction[],
   currency: ReportableTransaction["currency"],
-  samePredicate: (a: Date | string, b: Date) => boolean,
+  samePredicate: (a: Date, b: Date) => boolean,
 ) {
   return interval.map((keyDate) => {
     const aggregate = { income: 0, spend: 0 };
     for (const transaction of transactions) {
-      if (transaction.currency !== currency || !samePredicate(transaction.when, keyDate)) {
+      if (
+        transaction.currency !== currency ||
+        !samePredicate(localizeDateFromDatabase(transaction.when), keyDate)
+      ) {
         continue;
       }
       if (transaction.amount >= 0) {

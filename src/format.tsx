@@ -3,14 +3,18 @@ type Currency = "usd" | "euro";
 const EURO_FORMATTER = new Intl.NumberFormat("nl-NL", { currency: "EUR", style: "currency" });
 const USD_FORMATTER = new Intl.NumberFormat("en-US", { currency: "USD", style: "currency" });
 const DISPLAY_DATE_FORMATTERS = [
-  new Intl.DateTimeFormat("en", { day: "2-digit" }),
-  new Intl.DateTimeFormat("en", { month: "short" }),
-  new Intl.DateTimeFormat("en", { year: "numeric" }),
+  new Intl.DateTimeFormat("en-US", { day: "2-digit" }),
+  new Intl.DateTimeFormat("en-US", { month: "short" }),
+  new Intl.DateTimeFormat("en-US", { year: "numeric" }),
 ] as const;
+
+export function localizeDateFromDatabase(value: string): Date {
+  return new Date(`${value}T00:00:00.000`);
+}
 
 export function formatDate(value: string | null | undefined): string | null {
   if (value) {
-    const date = new Date(value); // XXX users timezone is different between server and client?
+    const date = localizeDateFromDatabase(value);
     return DISPLAY_DATE_FORMATTERS.map((f) => f.format(date)).join(" ");
   }
   return null;
