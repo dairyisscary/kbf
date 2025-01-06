@@ -19,7 +19,6 @@ type BaseFilters = {
 const MASS_IMPORT_INPUT_SCHEMA = z.object({
   csv: z.string().trim().min(1),
   currency: z.enum(["euro", "usd"]),
-  invertAmounts: z.preprocess((val) => val === "on" || val, z.boolean()).optional(),
   categoryIds: z.preprocess((val) => (val === undefined ? [] : val), z.array(z.string())),
 });
 const INPUT_SCHEMA = z.object({
@@ -188,8 +187,8 @@ export async function addTransaction(inputs: Record<string, unknown>) {
 
 export async function massImport(inputs: Record<string, unknown>) {
   await checkSession();
-  const { categoryIds, csv, currency, invertAmounts } = MASS_IMPORT_INPUT_SCHEMA.parse(inputs);
-  const csvParsedTransactions = parse(csv, { invertAmounts });
+  const { categoryIds, csv, currency } = MASS_IMPORT_INPUT_SCHEMA.parse(inputs);
+  const csvParsedTransactions = parse(csv);
   const now = new Date();
   return db.transaction().execute(async (trx) => {
     const dupesFromDb = await trx

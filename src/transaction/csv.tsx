@@ -1,23 +1,20 @@
 import { parse as csvParse } from "csv-parse/sync";
 
 type RawRow = Record<string, string | undefined>;
-type Options = {
-  invertAmounts?: boolean;
-};
 
 const ISO_DATE_REGEX = /^\d\d\d\d-\d\d-\d\d/;
 const CURRENCY_CHARS_REGEX = /[$,€]/g;
 
 function marshalDate(row: RawRow) {
-  // Date key is Wise all currencies, Legacy TD, and Bunq
+  // Date key is Wise all currencies and Bunq
   const baseDate = row["Date"];
-  // Transaction Date key is TD and Chase
+  // Transaction Date key is Chase
   const rawDate = baseDate || row["Transaction Date"];
   if (!rawDate) {
     return null;
   }
 
-  // Legacy TD and bunq is just ISO.
+  // Bunq is just ISO.
   const isoMatch = rawDate.match(ISO_DATE_REGEX);
   if (isoMatch) {
     return isoMatch[0];
@@ -39,24 +36,21 @@ function marshalDate(row: RawRow) {
 }
 
 function marshalDescription(rawRow: RawRow) {
-  // Chase and Wise are Description, TD is Merchant Name
+  // Chase and Wise are Description
   // Bunq has both Description and Name, so Name is higher presedence
-  return rawRow["Name"] || rawRow["Description"] || rawRow["Merchant Name"] || null;
+  return rawRow["Name"] || rawRow["Description"] || null;
 }
 
-function marshalAmount(rawRow: RawRow, invert: boolean | undefined) {
+function marshalAmount(rawRow: RawRow) {
   const raw = rawRow["Amount"]?.replace(CURRENCY_CHARS_REGEX, "");
   if (!raw) {
     return null;
   }
   const num = Number(raw);
-  if (Number.isNaN(num)) {
-    return null;
-  }
-  return invert ? num * -1 : num;
+  return Number.isNaN(num) ? null : num;
 }
 
-function marshalRow(rawRow: RawRow, { invertAmounts }: Options) {
+function marshalRow(rawRow: RawRow) {
   const when = marshalDate(rawRow);
   if (!when) {
     return null;
@@ -67,7 +61,7 @@ function marshalRow(rawRow: RawRow, { invertAmounts }: Options) {
     return null;
   }
 
-  const amount = marshalAmount(rawRow, invertAmounts);
+  const amount = marshalAmount(rawRow);
   // Zero amount falsy but that's okay. Transactions shouldn't be zero amount
   if (!amount) {
     return null;
@@ -76,11 +70,11 @@ function marshalRow(rawRow: RawRow, { invertAmounts }: Options) {
   return { when, description, amount };
 }
 
-export function parse(csv: string, options: Options) {
+export function parse(csv: string) {
   const rawParsed = csvParse(csv, {
     columns: true,
     trim: true,
     skip_empty_lines: true,
   }) as RawRow[];
-  return rawParsed.map((r) => marshalRow(r, options)).filter(Boolean);
+  return rawParsed.map(marshalRow).filter(Boolean);
 }

@@ -5,7 +5,7 @@ import { formatCurrencySign } from "~/format";
 import { massImport } from "~/transaction";
 import { CategorySelectFormRow } from "~/transaction/pip";
 import { allCategoriesByName } from "~/category";
-import { pealFormData, FormFooter, FormRow, Checkbox, FormRowWithId, Label } from "~/form";
+import { pealFormData, FormFooter, FormRow, FormRowWithId, Label } from "~/form";
 import { KbfSiteTitle } from "~/app";
 import Alert from "~/alert";
 import clx from "~/clx";
@@ -72,14 +72,6 @@ export default function MassImport() {
           name="categoryIds"
           label="Mass Tag Categories"
         />
-
-        <FormRowWithId>
-          {(id) => (
-            <Checkbox name="invertAmounts" id={id}>
-              Invert Amounts in CSV (TD Bank lists debits as positive values)
-            </Checkbox>
-          )}
-        </FormRowWithId>
 
         <FormFooter>
           <div class={clx("transition-opacity duration-300", !submitting.result && "opacity-0")}>
