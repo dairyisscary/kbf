@@ -10,7 +10,7 @@ import {
 } from "solid-js";
 import {
   createAsync,
-  cache,
+  query,
   action,
   useAction,
   useSearchParams,
@@ -53,7 +53,7 @@ function smallIsoFormat(date: Date) {
   return format(date, "yyyy-MM-dd");
 }
 
-const getTransactionsForListing = cache((params: Record<string, string[] | string | undefined>) => {
+const getTransactionsForListing = query((params: Record<string, string[] | string | undefined>) => {
   const categoryIds = (params.filterCategoryIds as string | undefined)?.split(",");
   switch (params.timeFrame) {
     case "custom":
@@ -86,7 +86,7 @@ const addEditAction = action((form: FormData) => {
     : addTransaction(pealed);
 }, "addEditTransaction");
 
-const getAllCategories = cache(allCategoriesByName, "categoriesForTransactions");
+const getAllCategories = query(allCategoriesByName, "categoriesForTransactions");
 
 export const route: RouteDefinition = {
   load(args) {

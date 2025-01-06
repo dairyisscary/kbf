@@ -1,5 +1,5 @@
 import { createEffect, createSignal, Show } from "solid-js";
-import { action, cache, createAsync, useSubmission, type RouteDefinition } from "@solidjs/router";
+import { action, query, createAsync, useSubmission, type RouteDefinition } from "@solidjs/router";
 
 import { formatCurrencySign } from "~/format";
 import { massImport } from "~/transaction";
@@ -11,7 +11,7 @@ import Alert from "~/alert";
 import clx from "~/clx";
 import Button from "~/button";
 
-const getAllCategories = cache(allCategoriesByName, "categoriesForMassImport");
+const getAllCategories = query(allCategoriesByName, "categoriesForMassImport");
 
 export const route: RouteDefinition = {
   load() {

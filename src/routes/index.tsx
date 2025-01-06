@@ -1,5 +1,5 @@
 import { createMemo, createSignal, For, Show, type ComponentProps } from "solid-js";
-import { createAsync, cache, useSearchParams, A, type RouteDefinition } from "@solidjs/router";
+import { createAsync, query, useSearchParams, A, type RouteDefinition } from "@solidjs/router";
 
 import { KbfSiteTitle } from "~/app";
 import { formatMoneyAmount } from "~/format";
@@ -19,12 +19,12 @@ type Intervals = Awaited<ReturnType<typeof transactionDataForReporting>>["interv
 const DEFAULT_TIMELINE = "year-to-date";
 const ONE_EURO_IN_USD = 1.1;
 
-const getAllCategoriesForReport = cache(
+const getAllCategoriesForReport = query(
   () => allCategoriesByName({ includeUncategorized: true, excludeIgnoredForBreakdown: true }),
   "categoriesForReport",
 );
 
-const getTransactionsForReport = cache((timeline: string | undefined) => {
+const getTransactionsForReport = query((timeline: string | undefined) => {
   timeline ||= DEFAULT_TIMELINE;
   if (timeline === DEFAULT_TIMELINE) {
     return transactionDataForReporting({ type: "year-to-date" });

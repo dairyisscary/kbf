@@ -1,5 +1,5 @@
 import { createSignal, createEffect, createUniqueId, Show, For } from "solid-js";
-import { action, cache, createAsync, useAction, type RouteDefinition } from "@solidjs/router";
+import { action, query, createAsync, useAction, type RouteDefinition } from "@solidjs/router";
 
 import { KbfSiteTitle } from "~/app";
 import { allCategoriesWithCounts, deleteCategory, addCategory, editCategory } from "~/category";
@@ -20,7 +20,7 @@ type ModalState =
   | { type: "add"; category?: undefined }
   | { type: "edit"; category: CountedCategory };
 
-const getAllCategories = cache(allCategoriesWithCounts, "categoriesForListing");
+const getAllCategories = query(allCategoriesWithCounts, "categoriesForListing");
 
 export const route: RouteDefinition = {
   load() {
