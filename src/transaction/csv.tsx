@@ -6,7 +6,7 @@ const ISO_DATE_REGEX = /^\d\d\d\d-\d\d-\d\d/;
 const CURRENCY_CHARS_REGEX = /[$,€]/g;
 
 function marshalDate(row: RawRow) {
-  // Date key is Wise all currencies and Bunq
+  // Date key is Wise all currencies, Fidelity, and Bunq
   const baseDate = row["Date"];
   // Transaction Date key is Chase
   const rawDate = baseDate || row["Transaction Date"];
@@ -14,7 +14,7 @@ function marshalDate(row: RawRow) {
     return null;
   }
 
-  // Bunq is just ISO.
+  // Bunq and Fideltiy are just ISO.
   const isoMatch = rawDate.match(ISO_DATE_REGEX);
   if (isoMatch) {
     return isoMatch[0];
@@ -38,6 +38,7 @@ function marshalDate(row: RawRow) {
 function marshalDescription(rawRow: RawRow) {
   // Chase and Wise are Description
   // Bunq has both Description and Name, so Name is higher presedence
+  // Fidelity is Name
   return rawRow["Name"] || rawRow["Description"] || null;
 }
 
