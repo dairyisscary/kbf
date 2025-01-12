@@ -1,3 +1,7 @@
+import { format } from "date-fns";
+
+import { localizeDate } from "~/date";
+
 type Currency = "usd" | "euro";
 
 const EURO_FORMATTER = new Intl.NumberFormat("nl-NL", { currency: "EUR", style: "currency" });
@@ -8,13 +12,9 @@ const DISPLAY_DATE_FORMATTERS = [
   new Intl.DateTimeFormat("en-US", { year: "numeric" }),
 ] as const;
 
-export function localizeDateFromDatabase(value: string): Date {
-  return new Date(`${value}T00:00:00.000`);
-}
-
 export function formatDate(value: string | null | undefined): string | null {
   if (value) {
-    const date = localizeDateFromDatabase(value);
+    const date = localizeDate(value);
     return DISPLAY_DATE_FORMATTERS.map((f) => f.format(date)).join(" ");
   }
   return null;
@@ -22,6 +22,10 @@ export function formatDate(value: string | null | undefined): string | null {
 
 export function formatDateForInput(value: string | null | undefined): string | undefined {
   return value || undefined;
+}
+
+export function formatDateOnly(value: Date) {
+  return format(value, "yyyy-MM-dd");
 }
 
 export function formatMoneyAmount(

@@ -16,7 +16,7 @@ import {
   useSearchParams,
   type RouteDefinition,
 } from "@solidjs/router";
-import { subDays, startOfMonth, subMonths, endOfMonth, format } from "date-fns";
+import { subDays, startOfMonth, subMonths, endOfMonth } from "date-fns";
 
 import { KbfSiteTitle } from "~/app";
 import {
@@ -35,7 +35,7 @@ import Modal from "~/modal";
 import Icon from "~/icon";
 import Alert from "~/alert";
 import clx from "~/clx";
-import { formatDate, formatDateForInput, formatCurrencySign } from "~/format";
+import { formatDate, formatDateOnly, formatDateForInput, formatCurrencySign } from "~/format";
 import { AmountPill, CategoryItems, CategorySelectFormRow } from "~/transaction/pip";
 import { CategoryPill } from "~/category/pip";
 
@@ -49,10 +49,6 @@ type ModalState =
   | { type: "add"; transaction?: undefined }
   | { type: "edit"; transaction: Transaction };
 
-function smallIsoFormat(date: Date) {
-  return format(date, "yyyy-MM-dd");
-}
-
 const getTransactionsForListing = query((params: Record<string, string[] | string | undefined>) => {
   const categoryIds = (params.filterCategoryIds as string | undefined)?.split(",");
   switch (params.timeFrame) {
@@ -65,15 +61,15 @@ const getTransactionsForListing = query((params: Record<string, string[] | strin
     case "last-month": {
       const firstOfLastMonth = startOfMonth(subMonths(new Date(), 1));
       return allTransactionsFromFilters({
-        onOrAfter: smallIsoFormat(firstOfLastMonth),
-        onOrBefore: smallIsoFormat(endOfMonth(firstOfLastMonth)),
+        onOrAfter: formatDateOnly(firstOfLastMonth),
+        onOrBefore: formatDateOnly(endOfMonth(firstOfLastMonth)),
         categoryIds,
       });
     }
     case "last-60":
     default:
       return allTransactionsFromFilters({
-        onOrAfter: smallIsoFormat(subDays(new Date(), 61)),
+        onOrAfter: formatDateOnly(subDays(new Date(), 61)),
         categoryIds,
       });
   }

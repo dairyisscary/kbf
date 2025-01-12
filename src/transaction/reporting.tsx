@@ -10,7 +10,7 @@ import {
   startOfYear,
 } from "date-fns";
 
-import { localizeDateFromDatabase } from "~/format";
+import { localizeDate } from "~/date";
 
 type ReportableTransaction = {
   when: string;
@@ -45,7 +45,7 @@ function makeViewIntervals(
     for (const transaction of transactions) {
       if (
         transaction.currency !== currency ||
-        !samePredicate(localizeDateFromDatabase(transaction.when), keyDate)
+        !samePredicate(localizeDate(transaction.when), keyDate)
       ) {
         continue;
       }
