@@ -26,16 +26,17 @@ in
   ];
 
   scripts = {
-    prettier.exec = ''
+    prettier.exec = /* lang bash */ ''
       set -e
       "$DEVENV_ROOT/node_modules/.bin/prettier" "$@"
     '';
-    dev.exec = ''
+    dev.exec = /* lang bash */ ''
       set -e
       exec "${config.procfileScript}" "$@"
     '';
-    migrate.exec = ''
+    migrate.exec = /* lang bash */ ''
       set -e
+
       local-esbuild() {
         "$DEVENV_ROOT/node_modules/.bin/esbuild" --platform=node --target=node22 "$@"
       }
@@ -43,11 +44,12 @@ in
       rm -rf .output/scripts
       local-esbuild --bundle --outfile=.output/scripts/migrate.cjs src/db/migrate.tsx
       local-esbuild --outdir=.output/scripts/migrations src/db/migrations/*
-      node .output/scripts/migrate.cjs
+
+      node .output/scripts/migrate.cjs "$@"
 
       generate-db-types
     '';
-    generate-db-types.exec = ''
+    generate-db-types.exec = /* lang bash */ ''
       set -e
       pnpm exec kysely-codegen --dialect postgres --url "postgres://@/$PGDATABASE"
     '';
