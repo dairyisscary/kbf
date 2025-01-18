@@ -1,4 +1,5 @@
 import { createEffect, onCleanup, type ComponentProps } from "solid-js";
+
 import clx from "~/clx";
 
 import Styles from "./modal.module.css";

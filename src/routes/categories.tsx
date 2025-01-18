@@ -17,7 +17,7 @@ import Styles from "./categories.module.css";
 type CountedCategory = Awaited<ReturnType<typeof allCategoriesWithCounts>>[number];
 type ModalState =
   | false
-  | { type: "add"; category?: undefined }
+  | { type: "add"; category?: never }
   | { type: "edit"; category: CountedCategory };
 
 const getAllCategories = query(allCategoriesWithCounts, "categoriesForListing");

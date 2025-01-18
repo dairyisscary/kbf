@@ -163,6 +163,7 @@ function AddEditModal(props: {
         <Show when={submitting.error as null | Error}>
           {(error) => <Alert class="mt-6">{error().message}</Alert>}
         </Show>
+
         <FormRowWithId>
           {(id) => (
             <>
