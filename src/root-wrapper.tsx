@@ -72,6 +72,10 @@ function Logout() {
   );
 }
 
+function Divider() {
+  return <div aria-hidden="true" class="my-4 h-px bg-kbf-accent-border" />;
+}
+
 export default function Wrapper(props: { children: JSX.Element }) {
   const isLogin = useMatch(() => "/login");
   return (
@@ -82,6 +86,8 @@ export default function Wrapper(props: { children: JSX.Element }) {
             <img src={Favicon} alt="" />
             <span>Dashboard</span>
           </A>
+
+          <Divider />
           <A href="/transactions">
             <NavLinkContent iconName="database" title="Transactions" />
           </A>
@@ -90,6 +96,11 @@ export default function Wrapper(props: { children: JSX.Element }) {
           </A>
           <A href="/categories">
             <NavLinkContent iconName="layers" title="Categories" />
+          </A>
+
+          <Divider />
+          <A href="/asset-snapshots">
+            <NavLinkContent iconName="camera" title="Snapshots" />
           </A>
           <A href="/asset-snapshot-kinds">
             <NavLinkContent iconName="layers" title="Snapshot Kinds" />

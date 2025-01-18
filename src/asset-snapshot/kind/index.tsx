@@ -59,7 +59,11 @@ export async function deleteAssetSnapshotKind(assetSnapshotKindId: string) {
   return assetSnapshotKindId;
 }
 
-export async function allAssetSnapshotKinds() {
+export async function allAssetSnapshotKinds(ids?: string[]) {
   await checkSession();
-  return db.selectFrom("asset_snapshot_kinds").select(DEFAULT_SELECT).orderBy("name").execute();
+  let select = db.selectFrom("asset_snapshot_kinds").select(DEFAULT_SELECT);
+  if (ids?.length) {
+    select = select.where("id", "in", [...new Set(ids)]);
+  }
+  return select.orderBy("name").execute();
 }

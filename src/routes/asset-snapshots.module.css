@@ -1,0 +1,6 @@
+.table {
+  th:last-child,
+  td:last-child {
+    @apply text-right;
+  }
+}
