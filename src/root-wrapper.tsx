@@ -91,6 +91,9 @@ export default function Wrapper(props: { children: JSX.Element }) {
           <A href="/categories">
             <NavLinkContent iconName="layers" title="Categories" />
           </A>
+          <A href="/asset-snapshot-kinds">
+            <NavLinkContent iconName="layers" title="Snapshot Kinds" />
+          </A>
           <Logout />
           <BackToTop />
         </nav>
