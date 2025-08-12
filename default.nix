@@ -1,12 +1,12 @@
 { lib
 , stdenvNoCC
 , nodejs_22
-, pnpm_9
+, pnpm_10
 , version
 }:
 let
   nodejs = nodejs_22;
-  pnpm = pnpm_9;
+  pnpm = pnpm_10;
 
   NODE_ENV = "production";
 
@@ -26,7 +26,8 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     inherit (finalAttrs) pname;
     src = getSrc (fs.intersection (fs.unions [ ./package.json ./pnpm-lock.yaml ]));
     env = { inherit NODE_ENV; };
-    hash = "sha256-ERgL9iC8WKYO+pL2wtBUxWH+EIRk/L+wS5H4Rakg2yk=";
+    fetcherVersion = 2;
+    hash = "sha256-C5XeZhbC2rRvYv+fK2hg0RahVJSuwmJn4mOcKtNzdtQ=";
   };
 
   env = {
