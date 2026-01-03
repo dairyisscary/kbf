@@ -1,12 +1,14 @@
 { lib
 , stdenvNoCC
-, nodejs_22
+, nodejs_24
 , pnpm_10
+, pnpmConfigHook
+, fetchPnpmDeps
 , version
 }:
 let
-  nodejs = nodejs_22;
-  pnpm = pnpm_10;
+  nodejs = nodejs_24;
+  pnpm = pnpm_10.override { inherit nodejs; };
 
   NODE_ENV = "production";
 
@@ -22,19 +24,20 @@ stdenvNoCC.mkDerivation (finalAttrs: {
 
   src = getSrc lib.id;
 
-  pnpmDeps = pnpm.fetchDeps {
+  pnpmDeps = fetchPnpmDeps {
     inherit (finalAttrs) pname;
+    inherit pnpm;
     src = getSrc (fs.intersection (fs.unions [ ./package.json ./pnpm-lock.yaml ]));
     env = { inherit NODE_ENV; };
     fetcherVersion = 2;
-    hash = "sha256-C5XeZhbC2rRvYv+fK2hg0RahVJSuwmJn4mOcKtNzdtQ=";
+    hash = "sha256-J0zMbk5aobDlasNqQ8e11rlAEQfUsV75UKhtSSjhGx0=";
   };
 
   env = {
     inherit NODE_ENV;
     PUBLIC_RELEASE_NAME = version;
   };
-  nativeBuildInputs = [ pnpm.configHook ];
+  nativeBuildInputs = [ pnpm pnpmConfigHook ];
   buildInputs = [ nodejs ];
 
   buildPhase = ''
