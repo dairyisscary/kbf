@@ -1,33 +1,31 @@
-{ lib
-, stdenvNoCC
-, nodejs_24
-, pnpm_10
-, pnpmConfigHook
-, fetchPnpmDeps
-, version
-}:
+{ flake, pkgs, ... }:
 let
-  nodejs = nodejs_24;
-  pnpm = pnpm_10.override { inherit nodejs; };
+  inherit (pkgs) lib;
+
+  nodejs = pkgs.nodejs_24;
+  pnpm = pkgs.pnpm_10.override { inherit nodejs; };
 
   NODE_ENV = "production";
 
   fs = lib.fileset;
   getSrc = mapFn: fs.toSource rec {
-    root = ./.;
+    root = ./../..;
     fileset = mapFn (fs.gitTracked root);
   };
 in
-stdenvNoCC.mkDerivation (finalAttrs: {
+pkgs.stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "kbf";
-  inherit version;
+  version = flake.shortRev or "dev";
 
   src = getSrc lib.id;
 
-  pnpmDeps = fetchPnpmDeps {
+  pnpmDeps = pkgs.fetchPnpmDeps {
     inherit (finalAttrs) pname;
     inherit pnpm;
-    src = getSrc (fs.intersection (fs.unions [ ./package.json ./pnpm-lock.yaml ]));
+    src = getSrc (fs.intersection (fs.unions [
+      ./../../package.json
+      ./../../pnpm-lock.yaml
+    ]));
     env = { inherit NODE_ENV; };
     fetcherVersion = 2;
     hash = "sha256-J0zMbk5aobDlasNqQ8e11rlAEQfUsV75UKhtSSjhGx0=";
@@ -35,9 +33,9 @@ stdenvNoCC.mkDerivation (finalAttrs: {
 
   env = {
     inherit NODE_ENV;
-    PUBLIC_RELEASE_NAME = version;
+    PUBLIC_RELEASE_NAME = finalAttrs.version;
   };
-  nativeBuildInputs = [ pnpm pnpmConfigHook ];
+  nativeBuildInputs = [ pnpm pkgs.pnpmConfigHook ];
   buildInputs = [ nodejs ];
 
   buildPhase = ''
