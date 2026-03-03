@@ -171,7 +171,7 @@ export default function Dashboard() {
 
   const [ignored, setIgnored] = createSignal(new Set<string>());
   const toggleIgnore = (categoryId: string, event: MouseEvent) => {
-    const ctrlClicked = Boolean(event.ctrlKey || event.metaKey);
+    const ctrlClicked = event.ctrlKey || event.metaKey;
     setIgnored((current) => {
       if (ctrlClicked) {
         return new Set(

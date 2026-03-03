@@ -72,10 +72,10 @@ function marshalRow(rawRow: RawRow) {
 }
 
 export function parse(csv: string) {
-  const rawParsed = csvParse(csv, {
+  const rawParsed = csvParse<RawRow>(csv, {
     columns: true,
     trim: true,
     skip_empty_lines: true,
-  }) as RawRow[];
+  });
   return rawParsed.map(marshalRow).filter(Boolean);
 }

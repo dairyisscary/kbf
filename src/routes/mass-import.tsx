@@ -27,7 +27,7 @@ export default function MassImport() {
   const allCategories = createAsync(() => getAllCategories());
   const [currency, setCurrency] = createSignal<Parameters<typeof formatCurrencySign>[0]>("usd");
   const submitting = useSubmission(massImportAction);
-  let formRef: undefined | HTMLFormElement;
+  let formRef: undefined | HTMLFormElement; // eslint-disable-line no-unassigned-vars
   const reset = () => Boolean(submitting.result && !submitting.error);
   createEffect(() => {
     if (reset()) {

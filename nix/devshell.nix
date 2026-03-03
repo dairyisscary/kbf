@@ -40,7 +40,7 @@ let
         set -e
 
         local-esbuild() {
-          "$DEVENV_ROOT/node_modules/.bin/esbuild" --platform=node --target=node${lib.versions.major nodejs.version} "$@"
+          "$DEVENV_ROOT/node_modules/esbuild/bin/esbuild" --platform=node --target=node${lib.versions.major nodejs.version} "$@"
         }
 
         rm -rf .output/scripts

@@ -1,17 +1,11 @@
-import { createEffect, createSignal, Show, type JSX } from "solid-js";
+import { createSignal, Show, type JSX } from "solid-js";
 
 import Modal from "~/modal";
 import Button from "~/button";
 import Icon from "~/icon";
 
 export function ConfirmingDeleteButton(props: { children: JSX.Element; onDelete: () => void }) {
-  let cancelRef: HTMLButtonElement | undefined;
   const [open, setOpen] = createSignal(false);
-  createEffect(() => {
-    if (open()) {
-      cancelRef?.focus();
-    }
-  });
   return (
     <>
       <Button variant="cancel" onClick={() => setOpen(true)}>

@@ -1,6 +1,6 @@
 "use server";
-import { z } from "zod";
 import { v4 } from "uuid";
+import * as z from "zod";
 
 import { db, type DBTransaction } from "~/db";
 import { checkSession } from "~/session";

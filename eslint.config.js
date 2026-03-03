@@ -1,18 +1,14 @@
-// @ts-check
-
 import { readFileSync } from "node:fs";
 import ESLintJS from "@eslint/js";
-import { config, configs } from "typescript-eslint";
+import { defineConfig, globalIgnores } from "eslint/config";
+import { configs } from "typescript-eslint";
 
-export default config(
+export default defineConfig(
+  globalIgnores(readFileSync("./.gitignore", "utf8").split("\n").concat([".jj/"])),
+
   ESLintJS.configs.recommended,
-  {
-    files: ["**/*.cjs"],
-    languageOptions: {
-      globals: { module: false },
-    },
-  },
-  ...configs.strictTypeChecked,
+
+  configs.strictTypeChecked,
   {
     languageOptions: {
       parserOptions: {
@@ -26,10 +22,7 @@ export default config(
     },
   },
   {
-    files: ["*.config.js"],
+    files: ["./*.config.js"],
     ...configs.disableTypeChecked,
-  },
-  {
-    ignores: readFileSync("./.gitignore", "utf8").split("\n").concat([".jj/"]),
   },
 );

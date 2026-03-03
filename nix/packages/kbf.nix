@@ -5,8 +5,6 @@ let
   nodejs = pkgs.nodejs_24;
   pnpm = pkgs.pnpm_10.override { inherit nodejs; };
 
-  NODE_ENV = "production";
-
   fs = lib.fileset;
   getSrc = mapFn: fs.toSource rec {
     root = ./../..;
@@ -20,21 +18,24 @@ pkgs.stdenvNoCC.mkDerivation (finalAttrs: {
   src = getSrc lib.id;
 
   pnpmDeps = pkgs.fetchPnpmDeps {
-    inherit (finalAttrs) pname;
+    inherit (finalAttrs) pname pnpmInstallFlags;
     inherit pnpm;
     src = getSrc (fs.intersection (fs.unions [
       ./../../package.json
       ./../../pnpm-lock.yaml
     ]));
-    env = { inherit NODE_ENV; };
+    env = { inherit (finalAttrs.env) NODE_ENV; };
     fetcherVersion = 2;
-    hash = "sha256-J0zMbk5aobDlasNqQ8e11rlAEQfUsV75UKhtSSjhGx0=";
+    hash = "sha256-lpArEvWJ/8od7Lmc4/Kj9ZDHwTvRIjQpVB//XtmW9rc=";
   };
 
+  pnpmInstallFlags = [ "--prod" ];
+
   env = {
-    inherit NODE_ENV;
+    NODE_ENV = "production";
     PUBLIC_RELEASE_NAME = finalAttrs.version;
   };
+
   nativeBuildInputs = [ pnpm pkgs.pnpmConfigHook ];
   buildInputs = [ nodejs ];
 

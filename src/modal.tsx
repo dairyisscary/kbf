@@ -6,7 +6,7 @@ import Styles from "./modal.module.css";
 type Props = ComponentProps<"dialog"> & { onClose: () => void };
 
 export default function Modal(props: Props) {
-  let dialogRef: HTMLDialogElement | undefined;
+  let dialogRef: HTMLDialogElement | undefined; // eslint-disable-line no-unassigned-vars
   createEffect(() => {
     const { body } = document;
     const keydownCb = (event: KeyboardEvent) => {
