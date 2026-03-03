@@ -26,9 +26,10 @@ pkgs.stdenvNoCC.mkDerivation (finalAttrs: {
       ./../../package.json
       ./../../pnpm-lock.yaml
     ]));
+    pnpmInstallFlags = [ "--prod" ];
     env = { inherit NODE_ENV; };
     fetcherVersion = 2;
-    hash = "sha256-J0zMbk5aobDlasNqQ8e11rlAEQfUsV75UKhtSSjhGx0=";
+    hash = "sha256-lPNK/KfEOVUPpHnS6zIZNa4mJDpINTbG2DacLtbRps0=";
   };
 
   env = {

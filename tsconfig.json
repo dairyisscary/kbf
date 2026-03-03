@@ -3,7 +3,7 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "jsxImportSource": "solid-js",
-    "module": "esnext",
+    "module": "preserve",
     "moduleDetection": "force",
     "moduleResolution": "bundler",
     "noEmit": true,
