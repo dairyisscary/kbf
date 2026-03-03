@@ -12,8 +12,6 @@ import Button from "~/button";
 import Modal from "~/modal";
 import Icon from "~/icon";
 
-import Styles from "./categories.module.css";
-
 type CountedCategory = Awaited<ReturnType<typeof allCategoriesWithCounts>>[number];
 type ModalState =
   | false
@@ -162,7 +160,7 @@ export default function Categories() {
         </Button>
       </header>
       <Table
-        class={Styles.table}
+        class="[&_tbody_td]:first:not-only:w-0 [&_tbody_td]:first:not-only:min-w-fit"
         headers={["Color", "Name", "Mass Import Rules", "Transaction Count"]}
         each={categories()}
         onRowClick={(category) => {

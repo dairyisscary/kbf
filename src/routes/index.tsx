@@ -285,7 +285,7 @@ export default function Dashboard() {
                 {({ category, sums }) => (
                   <div
                     class={clx(
-                      "flex flex-col justify-between gap-7 rounded bg-kbf-light-purple p-3 transition-opacity duration-300",
+                      "flex flex-col justify-between gap-7 rounded-sm bg-kbf-light-purple p-3 transition-opacity duration-300",
                       ignored().has(category.id) && "opacity-40",
                     )}
                   >

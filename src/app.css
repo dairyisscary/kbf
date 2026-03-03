@@ -1,6 +1,32 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --animate-fade-in: fade-in 0.5s ease;
+
+  --color-kbf-dark-purple: #17153a;
+  --color-kbf-light-purple: #211f48;
+  --color-kbf-accent-border: #272552;
+  --color-kbf-text-main: #b5b5c2;
+  --color-kbf-text-highlight: #fefefe;
+  --color-kbf-text-accent: #6c6aea;
+  --color-kbf-action-alt: #a30d79;
+  --color-kbf-action: #ca1395;
+  --color-kbf-action-highlight: #64b6ac;
+
+  --font-sans:
+    Inter, ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+    "Segoe UI Symbol", "Noto Color Emoji";
+
+  --stroke-cap-default: "butt";
+  --stroke-join-clip: "miter-clip";
+  --stroke-join-default: "miter";
+
+  @keyframes fade-in {
+    0% {
+      opacity: 0;
+    }
+  }
+}
 
 @layer base {
   body,
@@ -26,13 +52,18 @@
   button,
   input {
     @apply rounded-md transition duration-300;
-    @apply ring-kbf-action-highlight focus:outline-none focus:ring-2;
+    @apply ring-kbf-action-highlight focus:ring-2 focus:outline-hidden;
   }
 
   textarea,
   button,
   input {
     @apply px-4 py-3;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    @apply cursor-pointer;
   }
 
   input::placeholder {
@@ -65,5 +96,40 @@
   input[type="text"]:focus,
   input[type="date"]:focus {
     @apply text-kbf-text-highlight;
+  }
+
+  table {
+    @apply w-full overflow-x-scroll;
+  }
+
+  th {
+    @apply text-left font-medium;
+  }
+
+  th,
+  td {
+    @apply px-4 py-2.5;
+  }
+}
+
+@layer components {
+  .kbf-pill {
+    @apply inline-block rounded border border-kbf-dark-purple px-2.5 py-1 font-medium whitespace-nowrap;
+  }
+}
+
+@utility stroke-cap-* {
+  stroke-linecap: --value("butt", "round", "square", --stroke-cap-*);
+}
+
+@utility stroke-join-* {
+  stroke-linejoin: --value("arcs", "bevel", "miter", "round", --stroke-join-*);
+}
+
+@utility kbf-clamped-wrap-* {
+  & {
+    width: min(100%, calc(--value(integer) * 1px));
+    padding-inline: clamp(--spacing(4), 1dvw, --spacing(8));
+    @apply mx-auto;
   }
 }

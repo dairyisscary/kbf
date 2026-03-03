@@ -2,16 +2,14 @@ import { createSignal, For, createEffect, type JSX, type ComponentProps } from "
 
 import { formatMoneyAmount } from "~/format";
 import clx from "~/clx";
-import RootStyles from "~/root-wrapper.module.css";
 import { FormRow, Label } from "~/form";
-import { CategoryPill } from "~/category/pip";
+import { CategoryPill, SelectableCategoryPill } from "~/category/pip";
 
 export function AmountPill(props: { transaction: { amount: number; currency: "usd" | "euro" } }) {
   return (
     <span
       class={clx(
-        "font-mono first-letter:pr-0.5",
-        RootStyles.pill,
+        "kbf-pill font-mono first-letter:pr-0.5",
         props.transaction.amount >= 0
           ? "bg-kbf-action-highlight text-kbf-dark-purple"
           : "bg-kbf-text-accent text-kbf-text-highlight",
@@ -68,7 +66,7 @@ export function CategorySelectFormRow(props: {
       <CategoryItems>
         <For each={props.allCategories}>
           {(category) => (
-            <CategoryPill
+            <SelectableCategoryPill
               category={category}
               onClick={toggleCategory}
               selected={selectedCategoryIds().includes(category.id)}

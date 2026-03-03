@@ -1,11 +1,7 @@
-import { splitProps, Show, For, type ComponentProps } from "solid-js";
-import { Dynamic } from "solid-js/web";
+import { splitProps, For, type ComponentProps } from "solid-js";
 
 import clx from "~/clx";
 import Icon from "~/icon";
-import RootStyles from "~/root-wrapper.module.css";
-
-import Styles from "./pip.module.css";
 
 type PipProps = ComponentProps<"span"> & {
   code: number;
@@ -16,6 +12,10 @@ type SelectorProps = {
   onChange: (newValue: number) => void;
   value: number | undefined | null;
   size?: PipProps["size"];
+};
+type PillableCategory = { name: string; colorCode: number };
+type CategoryPillProps<C extends PillableCategory> = {
+  category: C;
 };
 
 const SELECTOR = Array.from({ length: 12 }).map((_, index) => index);
@@ -54,17 +54,16 @@ export function getColorsForCode(
 }
 
 function getPipStyle(code: number) {
-  const [fgColorType, backgroundHex] = getColorsForCode(code);
-  return `background-color:${backgroundHex};color:${
-    fgColorType === "light" ? "#FEFEFE" : "#17153A"
-  }`;
+  const [foregroundColorType, backgroundValue] = getColorsForCode(code);
+  const foregroundValue = foregroundColorType === "light" ? "#FEFEFE" : "#17153A";
+  return `background-color:${backgroundValue};color:${foregroundValue}`;
 }
 
 function getPipClass(size?: PipProps["size"], block?: boolean) {
   return clx(
     block ? "flex" : "inline-flex",
     "items-center justify-center rounded-full",
-    size === "sm" ? "h-4 w-4" : "h-8 w-8",
+    size === "sm" ? "size-4" : "size-8",
   );
 }
 
@@ -89,8 +88,12 @@ export function CategoryColorSelector(props: SelectorProps) {
             class={getPipClass(props.size)}
             style={getPipStyle(code)}
             onClick={[props.onChange, code]}
+            aria-pressed={props.value === code}
           >
-            <Icon name="check" class={clx(Styles.pip, props.value === code && Styles.pipsel)} />
+            <Icon
+              name="check"
+              class="opacity-0 transition-opacity duration-300 in-aria-pressed:opacity-100"
+            />
           </button>
         )}
       </For>
@@ -98,26 +101,36 @@ export function CategoryColorSelector(props: SelectorProps) {
   );
 }
 
-export function CategoryPill<C extends { name: string; colorCode: number }>(props: {
-  onClick?: (category: C, event: MouseEvent) => void;
-  category: C;
-  class?: string;
-  selected?: boolean | null | undefined;
-}) {
+const CATEGORY_PILL_CX = "kbf-pill text-lg";
+
+export function SelectableCategoryPill<C extends PillableCategory>(
+  props: CategoryPillProps<C> & {
+    onClick: (category: C, event: MouseEvent) => void;
+    selected: boolean;
+  },
+) {
   return (
-    <Dynamic
-      component={props.onClick ? "button" : "span"}
-      type={props.onClick && "button"}
-      onClick={props.onClick && [props.onClick, props.category]}
-      class={clx(RootStyles.pill, "text-lg")}
+    <button
+      type="button"
+      class={clx(CATEGORY_PILL_CX, "relative transition-[padding] duration-300 aria-pressed:pl-8")}
+      onClick={[props.onClick, props.category]}
+      aria-pressed={props.selected}
       style={getPipStyle(props.category.colorCode)}
     >
-      <span class={clx(Styles.pill, props.selected && Styles.pillsel)}>
-        <Show when={props.onClick}>
-          <Icon name="check-square" />
-        </Show>
-        {props.category.name}
-      </span>
-    </Dynamic>
+      <Icon
+        name="check-square"
+        size="sm"
+        class="absolute top-1/2 left-0 -translate-y-1/2 opacity-0 transition-[opacity,left] duration-300 in-aria-pressed:left-2.5 in-aria-pressed:opacity-100"
+      />
+      {props.category.name}
+    </button>
+  );
+}
+
+export function CategoryPill<C extends PillableCategory>(props: CategoryPillProps<C>) {
+  return (
+    <span class={CATEGORY_PILL_CX} style={getPipStyle(props.category.colorCode)}>
+      {props.category.name}
+    </span>
   );
 }

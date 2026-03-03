@@ -39,8 +39,6 @@ import { formatDate, formatDateOnly, formatDateForInput, formatCurrencySign } fr
 import { AmountPill, CategoryItems, CategorySelectFormRow } from "~/transaction/pip";
 import { CategoryPill } from "~/category/pip";
 
-import Styles from "./transactions.module.css";
-
 type Transaction = Awaited<ReturnType<typeof allTransactionsFromFilters>>[number];
 type Category = Awaited<ReturnType<typeof allCategoriesByName>>[number];
 type TimeFrame = "last-60" | "custom" | "last-month";
@@ -126,7 +124,7 @@ function FilterCategoryPopup(props: { onClose: () => void; children: JSX.Element
           document.removeEventListener("keydown", keyCallback);
         });
       }}
-      class="absolute right-0 top-full z-10 mt-2 grid h-[400px] w-[700px] grid-cols-2 gap-2 overflow-y-auto rounded border border-kbf-action bg-kbf-light-purple p-4"
+      class="absolute top-full right-0 z-10 mt-2 grid h-[400px] w-[700px] grid-cols-2 gap-2 overflow-y-auto rounded-sm border border-kbf-action bg-kbf-light-purple p-4"
     >
       {props.children}
     </div>
@@ -183,7 +181,7 @@ function AddEditModal(props: {
           {(id) => (
             <>
               <Label for={id}>Amount</Label>
-              <div class={clx(Styles.amountrow, "relative flex gap-3")}>
+              <div class="group relative flex gap-3">
                 <Button
                   class="aspect-square text-xl"
                   onClick={() => setCurrency((c) => (c === "euro" ? "usd" : "euro"))}
@@ -203,12 +201,7 @@ function AddEditModal(props: {
                   required
                   onInput={(event) => setAmountFormat(Number(event.target.value))}
                 />
-                <div
-                  class={clx(
-                    Styles.formatamount,
-                    "absolute right-0 top-0 transition-opacity duration-300",
-                  )}
-                >
+                <div class="absolute top-0 right-0 opacity-0 transition-opacity duration-300 group-has-focus-within:opacity-100">
                   <AmountPill transaction={{ currency: currency(), amount: amountFormat() }} />
                 </div>
               </div>
@@ -270,6 +263,9 @@ function CategoriesCell(props: { categories: ComponentProps<typeof CategoryPill>
   );
 }
 
+const FILTER_CONTROL_CX = "border! px-3 py-2 text-sm";
+const FILTER_INPUT_CX = clx(FILTER_CONTROL_CX, "bg-kbf-dark-purple");
+
 function Filters(props: { allCategories: Category[] | undefined }) {
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -287,24 +283,27 @@ function Filters(props: { allCategories: Category[] | undefined }) {
     () => (searchParams.filterCategoryIds as string | undefined)?.split(",") || [],
   );
   return (
-    <div class={Styles.filters}>
+    <div class="mb-7 flex items-center gap-3">
       <Button
         variant="cancel"
-        class={clx(isNonCustomTimeFrameSelected("last-60") && Styles.activefilter)}
+        class={FILTER_CONTROL_CX}
+        aria-pressed={isNonCustomTimeFrameSelected("last-60")}
         onClick={[setTimeFrameClosed, "last-60"]}
       >
         Last 60 Days
       </Button>
       <Button
         variant="cancel"
-        class={clx(isNonCustomTimeFrameSelected("last-month") && Styles.activefilter)}
+        class={FILTER_CONTROL_CX}
+        aria-pressed={isNonCustomTimeFrameSelected("last-month")}
         onClick={[setTimeFrameClosed, "last-month"]}
       >
         Last Month
       </Button>
       <Button
         variant="cancel"
-        class={clx(customOpen() && Styles.activefilter)}
+        class={FILTER_CONTROL_CX}
+        aria-pressed={customOpen()}
         onClick={() => {
           setCustomOpen(true);
           if (searchParams.onOrAfter || searchParams.onOrBefore) {
@@ -315,6 +314,7 @@ function Filters(props: { allCategories: Category[] | undefined }) {
         Custom
       </Button>
       <div
+        aria-hidden="true"
         class={clx(
           "transition-opacity duration-300 md:flex-row",
           !customOpen() && "pointer-events-none opacity-0",
@@ -332,6 +332,7 @@ function Filters(props: { allCategories: Category[] | undefined }) {
           type="date"
           autocomplete="off"
           name="onOrAfter"
+          class={FILTER_INPUT_CX}
           tabIndex={customOpen() ? undefined : -1}
           value={searchParams.onOrAfter}
           onChange={(event) => {
@@ -342,6 +343,7 @@ function Filters(props: { allCategories: Category[] | undefined }) {
           type="date"
           autocomplete="off"
           name="onOrBefore"
+          class={FILTER_INPUT_CX}
           tabIndex={customOpen() ? undefined : -1}
           value={searchParams.onOrBefore}
           onChange={(event) => {
@@ -350,7 +352,11 @@ function Filters(props: { allCategories: Category[] | undefined }) {
         />
       </div>
       <div class="relative ml-auto">
-        <Button variant="cancel" class="" onClick={() => setFilterCategoriesOpen((o) => !o)}>
+        <Button
+          variant="cancel"
+          class={FILTER_CONTROL_CX}
+          onClick={() => setFilterCategoriesOpen((o) => !o)}
+        >
           {filterCategories().length
             ? `(${filterCategories().length.toString()}) Selected Categories`
             : "Categories"}
@@ -400,7 +406,7 @@ export default function Transactions() {
       </header>
       <Filters allCategories={allCategories()} />
       <Table
-        class={Styles.table}
+        class="mb-16 [&_td]:last:not-only:text-right [&_th]:last:text-right"
         headers={["Date", "Description", "Categories", "Amount"]}
         each={transactions()}
         onRowClick={(transaction) => {

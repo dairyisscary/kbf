@@ -2,8 +2,6 @@ import IconSprite from "feather-icons/dist/feather-sprite.svg";
 
 import clx from "~/clx";
 
-import Styles from "./icon.module.css";
-
 type IconName =
   | "activity"
   | "airplay"
@@ -297,11 +295,11 @@ type Size = "md" | "lg" | "sm";
 function getSize(size: Size | undefined) {
   switch (size) {
     case "lg":
-      return "h-8 w-8";
+      return "size-8";
     case "sm":
-      return "h-4 w-4";
+      return "size-4";
     default:
-      return "h-6 w-6";
+      return "size-6";
   }
 }
 
@@ -309,9 +307,8 @@ export default function Icon(props: { name: IconName; class?: string; size?: Siz
   return (
     <svg
       class={clx(
-        Styles.icon,
         getSize(props.size),
-        "fill-none stroke-current stroke-2",
+        "shrink-0 fill-none stroke-current stroke-2 stroke-cap-round stroke-join-round",
         props.class,
       )}
     >

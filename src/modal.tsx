@@ -1,9 +1,6 @@
 import { createEffect, onCleanup, type ComponentProps } from "solid-js";
-import clx from "~/clx";
 
-import Styles from "./modal.module.css";
-
-type Props = ComponentProps<"dialog"> & { onClose: () => void };
+type Props = Omit<ComponentProps<"dialog">, "class"> & { onClose: () => void };
 
 export default function Modal(props: Props) {
   let dialogRef: HTMLDialogElement | undefined; // eslint-disable-line no-unassigned-vars
@@ -24,5 +21,11 @@ export default function Modal(props: Props) {
       dialogRef!.close();
     });
   });
-  return <dialog ref={dialogRef} {...props} class={clx(Styles.modal, props.class)} />;
+  return (
+    <dialog
+      ref={dialogRef}
+      {...props}
+      class="kbf-clamped-wrap-800 my-auto bg-transparent py-12 backdrop:animate-fade-in backdrop:bg-kbf-dark-purple/60 backdrop:backdrop-blur open:animate-fade-in"
+    />
+  );
 }
