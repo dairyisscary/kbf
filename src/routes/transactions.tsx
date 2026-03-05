@@ -18,7 +18,7 @@ import {
 } from "@solidjs/router";
 import { subDays, startOfMonth, subMonths, endOfMonth } from "date-fns";
 
-import { KbfSiteTitle } from "~/app";
+import { KbfSiteTitle } from "~/meta";
 import {
   allTransactionsFromFilters,
   addTransaction,

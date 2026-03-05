@@ -1,7 +1,7 @@
 import { createMemo, createSignal, For, Show, type ComponentProps } from "solid-js";
 import { createAsync, query, useSearchParams, A, type RouteDefinition } from "@solidjs/router";
 
-import { KbfSiteTitle } from "~/app";
+import { KbfSiteTitle } from "~/meta";
 import { formatMoneyAmount } from "~/format";
 import { transactionDataForReporting } from "~/transaction";
 import { allCategoriesByName } from "~/category";

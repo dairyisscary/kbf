@@ -1,7 +1,7 @@
 import { createSignal, createEffect, createUniqueId, Show, For } from "solid-js";
 import { action, query, createAsync, useAction, type RouteDefinition } from "@solidjs/router";
 
-import { KbfSiteTitle } from "~/app";
+import { KbfSiteTitle } from "~/meta";
 import { allCategoriesWithCounts, deleteCategory, addCategory, editCategory } from "~/category";
 import { CategoryColorPip, CategoryColorSelector } from "~/category/pip";
 import { pealFormData, FormFooter, Checkbox, FormRowWithId, Label } from "~/form";

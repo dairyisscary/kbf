@@ -6,7 +6,7 @@ import { massImport } from "~/transaction";
 import { CategorySelectFormRow } from "~/transaction/pip";
 import { allCategoriesByName } from "~/category";
 import { pealFormData, FormFooter, FormRow, FormRowWithId, Label } from "~/form";
-import { KbfSiteTitle } from "~/app";
+import { KbfSiteTitle } from "~/meta";
 import Alert from "~/alert";
 import clx from "~/clx";
 import Button from "~/button";
