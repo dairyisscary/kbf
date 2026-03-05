@@ -1,9 +1,9 @@
 import { createSignal, For, createEffect, type JSX, type ComponentProps } from "solid-js";
 
-import { formatMoneyAmount } from "~/format";
+import { CategoryPill, SelectableCategoryPill } from "~/category/pip";
 import clx from "~/clx";
 import { FormRow, Label } from "~/form";
-import { CategoryPill, SelectableCategoryPill } from "~/category/pip";
+import { formatMoneyAmount } from "~/format";
 
 export function AmountPill(props: { transaction: { amount: number; currency: "usd" | "euro" } }) {
   return (

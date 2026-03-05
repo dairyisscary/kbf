@@ -1,15 +1,15 @@
-import { createEffect, createSignal, Show } from "solid-js";
 import { action, query, createAsync, useSubmission, type RouteDefinition } from "@solidjs/router";
+import { createEffect, createSignal, Show } from "solid-js";
 
+import Alert from "~/alert";
+import Button from "~/button";
+import { allCategoriesByName } from "~/category";
+import clx from "~/clx";
+import { pealFormData, FormFooter, FormRow, FormRowWithId, Label } from "~/form";
 import { formatCurrencySign } from "~/format";
+import { KbfSiteTitle } from "~/meta";
 import { massImport } from "~/transaction";
 import { CategorySelectFormRow } from "~/transaction/pip";
-import { allCategoriesByName } from "~/category";
-import { pealFormData, FormFooter, FormRow, FormRowWithId, Label } from "~/form";
-import { KbfSiteTitle } from "~/meta";
-import Alert from "~/alert";
-import clx from "~/clx";
-import Button from "~/button";
 
 const getAllCategories = query(allCategoriesByName, "categoriesForMassImport");
 

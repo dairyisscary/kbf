@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+
 import ESLintJS from "@eslint/js";
 import { defineConfig, globalIgnores } from "eslint/config";
 import { configs } from "typescript-eslint";

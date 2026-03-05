@@ -1,5 +1,3 @@
-import { createEffect, onCleanup } from "solid-js";
-import { reconcile } from "solid-js/store";
 import {
   Chart,
   BarController,
@@ -12,6 +10,8 @@ import {
   type ChartOptions,
 } from "chart.js";
 import ChartDataLabels from "chartjs-plugin-datalabels";
+import { createEffect, onCleanup } from "solid-js";
+import { reconcile } from "solid-js/store";
 
 Chart.register(BarController, BarElement, CategoryScale, LinearScale, ChartDataLabels, Tooltip);
 Chart.defaults.font = { family: "Inter,sans-serif", size: 14 };

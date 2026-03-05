@@ -1,5 +1,5 @@
-import { onCleanup } from "solid-js";
 import { useSubmission } from "@solidjs/router";
+import { onCleanup } from "solid-js";
 
 export function useClearingSubmission(action: Parameters<typeof useSubmission>[0]) {
   const submission = useSubmission(action);

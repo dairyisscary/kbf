@@ -1,5 +1,6 @@
-import * as path from "node:path";
 import { promises as fs } from "node:fs";
+import * as path from "node:path";
+
 import { Migrator, FileMigrationProvider, MigrationResultSet } from "kysely";
 
 import { db } from "~/db";

@@ -1,4 +1,13 @@
 import {
+  createAsync,
+  query,
+  action,
+  useAction,
+  useSearchParams,
+  type RouteDefinition,
+} from "@solidjs/router";
+import { subDays, startOfMonth, subMonths, endOfMonth } from "date-fns";
+import {
   createSignal,
   onCleanup,
   createMemo,
@@ -8,36 +17,27 @@ import {
   type ComponentProps,
   type JSX,
 } from "solid-js";
-import {
-  createAsync,
-  query,
-  action,
-  useAction,
-  useSearchParams,
-  type RouteDefinition,
-} from "@solidjs/router";
-import { subDays, startOfMonth, subMonths, endOfMonth } from "date-fns";
 
+import Alert from "~/alert";
+import Button from "~/button";
+import { allCategoriesByName } from "~/category";
+import { CategoryPill } from "~/category/pip";
+import clx from "~/clx";
+import { pealFormData, Checkbox, FormFooter, FormRowWithId, Label } from "~/form";
+import { ConfirmingDeleteButton } from "~/form/confirm";
+import { useClearingSubmission } from "~/form/submission";
+import { formatDate, formatDateOnly, formatDateForInput, formatCurrencySign } from "~/format";
+import Icon from "~/icon";
 import { KbfSiteTitle } from "~/meta";
+import Modal from "~/modal";
+import Table from "~/table";
 import {
   allTransactionsFromFilters,
   addTransaction,
   editTransaction,
   deleteTransaction,
 } from "~/transaction";
-import { allCategoriesByName } from "~/category";
-import { pealFormData, Checkbox, FormFooter, FormRowWithId, Label } from "~/form";
-import { ConfirmingDeleteButton } from "~/form/confirm";
-import { useClearingSubmission } from "~/form/submission";
-import Table from "~/table";
-import Button from "~/button";
-import Modal from "~/modal";
-import Icon from "~/icon";
-import Alert from "~/alert";
-import clx from "~/clx";
-import { formatDate, formatDateOnly, formatDateForInput, formatCurrencySign } from "~/format";
 import { AmountPill, CategoryItems, CategorySelectFormRow } from "~/transaction/pip";
-import { CategoryPill } from "~/category/pip";
 
 type Transaction = Awaited<ReturnType<typeof allTransactionsFromFilters>>[number];
 type Category = Awaited<ReturnType<typeof allCategoriesByName>>[number];

@@ -1,16 +1,16 @@
-import { createSignal, createEffect, createUniqueId, Show, For } from "solid-js";
 import { action, query, createAsync, useAction, type RouteDefinition } from "@solidjs/router";
+import { createSignal, createEffect, createUniqueId, Show, For } from "solid-js";
 
-import { KbfSiteTitle } from "~/meta";
+import Button from "~/button";
 import { allCategoriesWithCounts, deleteCategory, addCategory, editCategory } from "~/category";
 import { CategoryColorPip, CategoryColorSelector } from "~/category/pip";
 import { pealFormData, FormFooter, Checkbox, FormRowWithId, Label } from "~/form";
 import { ConfirmingDeleteButton } from "~/form/confirm";
 import { useClearingSubmission } from "~/form/submission";
-import Table from "~/table";
-import Button from "~/button";
-import Modal from "~/modal";
 import Icon from "~/icon";
+import { KbfSiteTitle } from "~/meta";
+import Modal from "~/modal";
+import Table from "~/table";
 
 type CountedCategory = Awaited<ReturnType<typeof allCategoriesWithCounts>>[number];
 type ModalState =

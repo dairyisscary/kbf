@@ -2,9 +2,9 @@
 import { v4 } from "uuid";
 import * as z from "zod";
 
-import { checkSession } from "~/session";
 import { categoriesForTransactionIds } from "~/category";
 import { db, type DBTransaction } from "~/db";
+import { checkSession } from "~/session";
 
 import { parse } from "./csv";
 import { generateReportingData } from "./reporting";

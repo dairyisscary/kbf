@@ -31,7 +31,7 @@ generate-db-types
 migrate
 
 # Format
-prettier -w .
+nix fmt .
 
 # Lint
 pnpm exec eslint .

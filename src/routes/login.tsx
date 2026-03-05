@@ -1,10 +1,10 @@
-import { Show } from "solid-js";
 import { useSearchParams, action, redirect, useSubmission } from "@solidjs/router";
+import { Show } from "solid-js";
 
-import { login } from "~/session";
-import { FormFooter, FormRowWithId, Label } from "~/form";
-import Button from "~/button";
 import Alert from "~/alert";
+import Button from "~/button";
+import { FormFooter, FormRowWithId, Label } from "~/form";
+import { login } from "~/session";
 
 const loginAction = action(async (formData: FormData) => {
   const success = await login({

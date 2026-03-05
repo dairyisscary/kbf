@@ -1,0 +1,10 @@
+{
+  "proseWrap": "always",
+  "sortImports": {
+    "internalPattern": ["~/"]
+  },
+  "sortTailwindcss": {
+    "functions": ["clx", "clsx"],
+    "stylesheet": "./src/app.css"
+  }
+}

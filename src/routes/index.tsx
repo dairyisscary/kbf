@@ -1,15 +1,15 @@
-import { createMemo, createSignal, For, Show, type ComponentProps } from "solid-js";
 import { createAsync, query, useSearchParams, A, type RouteDefinition } from "@solidjs/router";
+import { createMemo, createSignal, For, Show, type ComponentProps } from "solid-js";
 
-import { KbfSiteTitle } from "~/meta";
-import { formatMoneyAmount } from "~/format";
-import { transactionDataForReporting } from "~/transaction";
 import { allCategoriesByName } from "~/category";
-import { BarChart } from "~/chart";
-import Icon from "~/icon";
-import clx from "~/clx";
-import TabGroup from "~/tab-group";
 import { CategoryColorPip, getColorsForCode } from "~/category/pip";
+import { BarChart } from "~/chart";
+import clx from "~/clx";
+import { formatMoneyAmount } from "~/format";
+import Icon from "~/icon";
+import { KbfSiteTitle } from "~/meta";
+import TabGroup from "~/tab-group";
+import { transactionDataForReporting } from "~/transaction";
 import { AmountPill } from "~/transaction/pip";
 
 type Strategy = "separate" | "merged-usd" | "merged-euro";

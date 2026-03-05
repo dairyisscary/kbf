@@ -1,7 +1,7 @@
 "use server";
-import { useSession } from "vinxi/http";
 import { redirect } from "@solidjs/router";
 import { isValid, isPast, addSeconds } from "date-fns";
+import { useSession } from "vinxi/http";
 
 type SessionData = { validUntil?: string };
 type Session = Awaited<ReturnType<typeof getSession>>;

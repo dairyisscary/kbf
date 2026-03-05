@@ -1,26 +1,66 @@
-{ pkgs, pname, ... }:
+{ perSystem, pkgs, pname, ... }:
 let
+  inherit (pkgs) lib treefmt;
+
+  inherit (perSystem.self) oxfmt;
+
   treefmtConfigFile = (pkgs.formats.toml { }).generate "treefmt.toml" {
-    formatter.nix = {
-      command = "nixpkgs-fmt";
+    formatter.deadnix = {
+      command = lib.getExe pkgs.deadnix;
+      args = [ "--edit" ];
       includes = [ "*.nix" ];
     };
+
+    formatter.nixpkgs-fmt = {
+      command = lib.getExe pkgs.nixpkgs-fmt;
+      includes = [ "*.nix" ];
+      priority = 1; # Happens _after_ deadnix
+    };
+
+    formatter.oxfmt = {
+      command = lib.getExe oxfmt;
+      includes = [
+        "*.cjs"
+        "*.css"
+        "*.html"
+        "*.js"
+        "*.json"
+        "*.jsx"
+        "*.md"
+        "*.mjs"
+        "*.ts"
+        "*.tsx"
+        "*.yaml"
+        "*.yml"
+      ];
+    };
   };
-  runtimeInputs = [
-    pkgs.deadnix
-    pkgs.nixpkgs-fmt
-    pkgs.treefmt
-  ];
 in
-pkgs.writeShellApplication {
+pkgs.stdenvNoCC.mkDerivation {
   name = pname;
 
-  inherit runtimeInputs;
+  nativeBuildInputs = [
+    pkgs.makeBinaryWrapper
+  ];
 
-  text = ''
-    deadnix --edit "$@"
-    treefmt --config-file "${treefmtConfigFile}" "$@"
+  dontUnpack = true;
+  dontConfigure = true;
+  dontBuild = true;
+
+  installPhase = ''
+    runHook preInstall
+
+    mkdir -p $out/bin
+
+    makeWrapper "${lib.getExe treefmt}" "$out/bin/treefmt" \
+      --append-flags "--config-file ${treefmtConfigFile}"
+
+    runHook postInstall
   '';
 
-  meta.description = "Format KBF";
+  passthru = {
+    inherit oxfmt;
+  };
+
+  inherit (treefmt) meta;
 }

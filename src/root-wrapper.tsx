@@ -1,3 +1,4 @@
+import { A, action, useAction, useMatch, useNavigate } from "@solidjs/router";
 import {
   Show,
   createEffect,
@@ -6,12 +7,11 @@ import {
   type JSX,
   type ComponentProps,
 } from "solid-js";
-import { A, action, useAction, useMatch, useNavigate } from "@solidjs/router";
 
-import { logout } from "~/session";
 import clx from "~/clx";
-import Icon from "~/icon";
 import Favicon from "~/favicon.png";
+import Icon from "~/icon";
+import { logout } from "~/session";
 
 const logoutAction = action(() => logout(), "logout");
 

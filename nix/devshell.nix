@@ -21,6 +21,7 @@ let
       nodejs
       pnpm
       nodejs.pkgs.typescript-language-server
+      perSystem.self.formatter.passthru.oxfmt
     ];
 
     processes.devserver.exec = "pnpm exec vinxi dev";
@@ -50,11 +51,6 @@ let
         node .output/scripts/migrate.cjs "$@"
 
         generate-db-types
-      '';
-
-      prettier.exec = /* lang bash */ ''
-        set -e
-        exec "$DEVENV_ROOT/node_modules/.bin/prettier" "$@"
       '';
     };
 

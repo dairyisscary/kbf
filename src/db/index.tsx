@@ -1,6 +1,6 @@
-import PG from "pg";
 import { Kysely, PostgresDialect, type Transaction } from "kysely";
 import type { DB, Transactions } from "kysely-codegen";
+import PG from "pg";
 
 type KBFDatabase = Omit<DB, "transactions"> & {
   transactions: Omit<Transactions, "when"> & {
