@@ -112,7 +112,10 @@ export function SelectableCategoryPill<C extends PillableCategory>(
   return (
     <button
       type="button"
-      class={clx(CATEGORY_PILL_CX, "relative transition-[padding] duration-300 aria-pressed:pl-8")}
+      class={clx(
+        CATEGORY_PILL_CX,
+        "relative ring-0 ring-kbf-text-main transition-[padding] duration-300 aria-pressed:pl-8 aria-pressed:ring-2",
+      )}
       onClick={[props.onClick, props.category]}
       aria-pressed={props.selected}
       style={getPipStyle(props.category.colorCode)}
