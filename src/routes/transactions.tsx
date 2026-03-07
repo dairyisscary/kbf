@@ -143,6 +143,13 @@ function AddEditModal(props: {
     props.editingTransaction?.currency || "usd",
   );
 
+  const selectableCategories = createMemo(() => {
+    const editingTransactionCategoryIds = props.editingTransaction?.categories.map((c) => c.id);
+    return props.allCategories.filter((category) => {
+      return !category.archived || editingTransactionCategoryIds?.includes(category.id);
+    });
+  });
+
   const submitting = useClearingSubmission(addEditAction);
 
   const doDelete = useAction(deleteTransactionAction);
@@ -226,7 +233,7 @@ function AddEditModal(props: {
         </FormRowWithId>
 
         <CategorySelectFormRow
-          allCategories={props.allCategories}
+          allCategories={selectableCategories()}
           initCategories={props.editingTransaction?.categories}
           name="categoryIds"
         />

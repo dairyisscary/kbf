@@ -48,7 +48,9 @@ async function insertCategoryRelationsForMassImport(
 ) {
   const rules = await trx
     .selectFrom("mass_import_rules")
-    .select(["category_id", "predicate"])
+    .innerJoin("categories", "categories.id", "mass_import_rules.category_id")
+    .select(["mass_import_rules.category_id", "mass_import_rules.predicate"])
+    .where("categories.archived", "=", false)
     .execute();
   const processedRules = rules.map((rule) => ({
     category_id: rule.category_id,

@@ -15,10 +15,12 @@ const INPUT_SCHEMA = z.object({
   predicates: z.array(z.string()),
   colorCode: z.coerce.number().min(0).max(MAX_COLOR_CODE),
   ignoredForBreakdownReporting: z.preprocess((val) => val === "on" || val, z.boolean()).optional(),
+  archived: z.preprocess((val) => val === "on" || val, z.boolean()).optional(),
 });
 const DEFAULT_SELECT = [
   "id",
   "name",
+  "archived",
   "color_code as colorCode",
   "ignored_for_breakdown_reporting as ignoredForBreakdownReporting",
 ] as const;
@@ -26,6 +28,7 @@ const UNCATEGORIZED_CATEGORY = {
   id: "uncategorized",
   name: "Uncategorized",
   colorCode: -1,
+  archived: false,
   ignoredForBreakdownReporting: false,
 };
 
@@ -110,12 +113,16 @@ export async function categoriesForTransactionIds(
 
 export async function allCategoriesByName(filter?: {
   includeUncategorized?: boolean;
+  excludeArchived?: boolean;
   excludeIgnoredForBreakdown?: boolean;
 }) {
   await checkSession();
   let query = db.selectFrom("categories").select(DEFAULT_SELECT).orderBy("name");
   if (filter?.excludeIgnoredForBreakdown) {
     query = query.where("ignored_for_breakdown_reporting", "=", false);
+  }
+  if (filter?.excludeArchived) {
+    query = query.where("archived", "=", false);
   }
   const results = await query.execute();
   return filter?.includeUncategorized ? results.concat(UNCATEGORIZED_CATEGORY) : results;
@@ -150,6 +157,7 @@ export async function editCategory(categoryId: string, inputs: Record<string, un
       .set({
         name: category.name,
         color_code: category.colorCode,
+        archived: Boolean(category.archived),
         ignored_for_breakdown_reporting: Boolean(category.ignoredForBreakdownReporting),
         updated_at: now,
       })
@@ -173,6 +181,7 @@ export async function addCategory(inputs: Record<string, unknown>) {
         id: categoryId,
         name: category.name,
         color_code: category.colorCode,
+        archived: Boolean(category.archived),
         ignored_for_breakdown_reporting: Boolean(category.ignoredForBreakdownReporting),
         inserted_at: now,
         updated_at: now,

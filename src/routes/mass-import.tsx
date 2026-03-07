@@ -11,7 +11,10 @@ import { KbfSiteTitle } from "~/meta";
 import { massImport } from "~/transaction";
 import { CategorySelectFormRow } from "~/transaction/pip";
 
-const getAllCategories = query(allCategoriesByName, "categoriesForMassImport");
+const getAllCategories = query(
+  () => allCategoriesByName({ excludeArchived: true }),
+  "categoriesForMassImport",
+);
 
 export const route: RouteDefinition = {
   load() {

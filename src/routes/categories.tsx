@@ -105,6 +105,14 @@ function AddEditModal(props: {
 
         <FormRowWithId>
           {(id) => (
+            <Checkbox name="archived" checked={props.editingCategory?.archived ?? false} id={id}>
+              Archived (Hidden from transaction creation)
+            </Checkbox>
+          )}
+        </FormRowWithId>
+
+        <FormRowWithId>
+          {(id) => (
             <Checkbox
               name="ignoredForBreakdownReporting"
               checked={props.editingCategory?.ignoredForBreakdownReporting}
@@ -169,7 +177,12 @@ export default function Categories() {
       >
         {(category) => [
           <CategoryColorPip block code={category.colorCode} />,
-          <span class="text-kbf-text-highlight">{category.name}</span>,
+          <>
+            <span class={category.archived ? "line-through" : "text-kbf-text-highlight"}>
+              {category.name}
+            </span>
+            {category.archived && " (Archived)"}
+          </>,
           <Predicates values={category.predicates} />,
           category.transactionCount,
         ]}
