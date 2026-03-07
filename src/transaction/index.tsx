@@ -55,19 +55,17 @@ async function insertCategoryRelationsForMassImport(
     predicate: rule.predicate.toLowerCase(),
   }));
   const relations = transactions.flatMap((transaction) => {
-    const hardcodedRelations = hardcodedCategoryIds.map((categoryId) => ({
+    // Use a Set to ensure we only add each category at most once.
+    const categoriesToAdd = new Set<string>(hardcodedCategoryIds);
+    for (const rule of processedRules) {
+      if (transaction.description.toLowerCase().includes(rule.predicate)) {
+        categoriesToAdd.add(rule.category_id);
+      }
+    }
+    return Array.from(categoriesToAdd).map((categoryId) => ({
       category_id: categoryId,
       transaction_id: transaction.id,
     }));
-    const matchedRelations = processedRules
-      .filter((rule) => {
-        return (
-          !hardcodedCategoryIds.includes(rule.category_id) &&
-          transaction.description.toLowerCase().includes(rule.predicate)
-        );
-      })
-      .map((rule) => ({ category_id: rule.category_id, transaction_id: transaction.id }));
-    return hardcodedRelations.concat(matchedRelations);
   });
   if (relations.length) {
     await trx.insertInto("categories_transactions").values(relations).execute();
