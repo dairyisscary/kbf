@@ -160,7 +160,7 @@ export default function Categories() {
         </Button>
       </header>
       <Table
-        class="[&_tbody_td]:first:not-only:w-0 [&_tbody_td]:first:not-only:min-w-fit"
+        class="[&_td]:first:not-only:w-0 [&_td]:first:not-only:min-w-fit [&_td]:last:not-only:text-right [&_td]:last:not-only:font-mono [&_th]:last:text-right"
         headers={["Color", "Name", "Mass Import Rules", "Transaction Count"]}
         each={categories()}
         onRowClick={(category) => {

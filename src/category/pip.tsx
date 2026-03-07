@@ -62,7 +62,7 @@ function getPipStyle(code: number) {
 function getPipClass(size?: PipProps["size"], block?: boolean) {
   return clx(
     block ? "flex" : "inline-flex",
-    "items-center justify-center rounded-full",
+    "items-center justify-center rounded-full border border-kbf-dark-purple",
     size === "sm" ? "size-4" : "size-8",
   );
 }
