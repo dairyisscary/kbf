@@ -2,7 +2,7 @@
 import { v4 } from "uuid";
 import * as z from "zod";
 
-import { categoriesForTransactionIds } from "~/category";
+import { categoriesForTransactionIds, type CategoryFilter } from "~/category";
 import { db, type DBTransaction } from "~/db";
 import { checkSession } from "~/session";
 
@@ -76,12 +76,12 @@ async function insertCategoryRelationsForMassImport(
 
 async function transactionsWithCategories<T extends { id: string }>(
   transactions: T[],
-  options?: Parameters<typeof categoriesForTransactionIds>[1],
+  filter?: CategoryFilter,
   transactionOptions?: { includeIds?: string[] },
 ): Promise<(T & { categories: Categories })[]> {
   const categoriesMap = await categoriesForTransactionIds(
     transactions.map((t) => t.id),
-    options,
+    filter,
   );
   const transactionsWithCategories = transactions.map((transaction) => ({
     ...transaction,
@@ -103,12 +103,11 @@ export async function allTransactionsFromFilters(filter?: BaseFilters) {
 
 export async function transactionDataForReporting(
   reportingOptions: Parameters<typeof generateReportingData>[0],
+  filter?: CategoryFilter,
 ) {
   await checkSession();
   return generateReportingData(reportingOptions, async (baseFilter) => {
-    return transactionsWithCategories(await allTransactionQueryBase(baseFilter).execute(), {
-      excludeBreakdownIgnoredCategories: true,
-    });
+    return transactionsWithCategories(await allTransactionQueryBase(baseFilter).execute(), filter);
   });
 }
 

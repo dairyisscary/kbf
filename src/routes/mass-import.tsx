@@ -5,7 +5,14 @@ import Alert from "~/alert";
 import Button from "~/button";
 import { allCategoriesByName } from "~/category";
 import clx from "~/clx";
-import { pealFormData, FormFooter, FormRow, FormRowWithId, Label } from "~/form";
+import {
+  pealFormData,
+  FormFooter,
+  FormRow,
+  FormRowWithId,
+  Label,
+  NonInteractiveLabel,
+} from "~/form";
 import { formatCurrencySign } from "~/format";
 import { KbfSiteTitle } from "~/meta";
 import { massImport } from "~/transaction";
@@ -57,7 +64,7 @@ export default function MassImport() {
         </FormRowWithId>
 
         <FormRow>
-          <Label>Currency Type</Label>
+          <NonInteractiveLabel>Currency Type</NonInteractiveLabel>
           <div>
             <Button
               class="text-xl"
@@ -71,9 +78,16 @@ export default function MassImport() {
 
         <CategorySelectFormRow
           reset={reset()}
-          allCategories={allCategories() || []}
+          allCategories={allCategories()?.filter((c) => c.kind === "payment") || []}
           name="categoryIds"
-          label="Mass Tag Categories"
+          label="Payment"
+        />
+
+        <CategorySelectFormRow
+          reset={reset()}
+          allCategories={allCategories()?.filter((c) => c.kind === "basic") || []}
+          name="categoryIds"
+          label="Categories"
         />
 
         <FormFooter>

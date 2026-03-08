@@ -7,16 +7,7 @@ import {
   type RouteDefinition,
 } from "@solidjs/router";
 import { subDays, startOfMonth, subMonths, endOfMonth } from "date-fns";
-import {
-  createSignal,
-  onCleanup,
-  createMemo,
-  createEffect,
-  For,
-  Show,
-  type ComponentProps,
-  type JSX,
-} from "solid-js";
+import { createSignal, onCleanup, createMemo, createEffect, For, Show, type JSX } from "solid-js";
 
 import Alert from "~/alert";
 import Button from "~/button";
@@ -37,7 +28,7 @@ import {
   editTransaction,
   deleteTransaction,
 } from "~/transaction";
-import { AmountPill, CategoryItems, CategorySelectFormRow } from "~/transaction/pip";
+import { AmountPill, CategoryPipItems, CategorySelectFormRow } from "~/transaction/pip";
 
 type Transaction = Awaited<ReturnType<typeof allTransactionsFromFilters>>[number];
 type Category = Awaited<ReturnType<typeof allCategoriesByName>>[number];
@@ -233,9 +224,17 @@ function AddEditModal(props: {
         </FormRowWithId>
 
         <CategorySelectFormRow
-          allCategories={selectableCategories()}
+          allCategories={selectableCategories().filter((c) => c.kind === "payment")}
           initCategories={props.editingTransaction?.categories}
           name="categoryIds"
+          label="Payment"
+        />
+
+        <CategorySelectFormRow
+          allCategories={selectableCategories().filter((c) => c.kind === "basic")}
+          initCategories={props.editingTransaction?.categories}
+          name="categoryIds"
+          label="Categories"
         />
 
         <input name="isEditingId" type="hidden" value={props.editingTransaction?.id || ""} />
@@ -259,14 +258,6 @@ function AddEditModal(props: {
         </FormFooter>
       </form>
     </Modal>
-  );
-}
-
-function CategoriesCell(props: { categories: ComponentProps<typeof CategoryPill>["category"][] }) {
-  return (
-    <CategoryItems>
-      <For each={props.categories}>{(category) => <CategoryPill category={category} />}</For>
-    </CategoryItems>
   );
 }
 
@@ -413,7 +404,7 @@ export default function Transactions() {
       </header>
       <Filters allCategories={allCategories()} />
       <Table
-        class="mb-16 [&_td]:last:not-only:text-right [&_th]:last:text-right"
+        class="mb-16 [&_td]:first:not-only:w-0 [&_td]:first:not-only:font-mono [&_td]:first:not-only:whitespace-nowrap [&_td]:last:not-only:text-right [&_th]:first:not-only:min-w-fit [&_th]:last:text-right"
         headers={["Date", "Description", "Categories", "Amount"]}
         each={transactions()}
         onRowClick={(transaction) => {
@@ -423,7 +414,7 @@ export default function Transactions() {
         {(transaction) => [
           formatDate(transaction.when),
           <span class="break-all text-kbf-text-highlight">{transaction.description}</span>,
-          <CategoriesCell categories={transaction.categories} />,
+          <CategoryPipItems categories={transaction.categories} />,
           <AmountPill transaction={transaction} />,
         ]}
       </Table>

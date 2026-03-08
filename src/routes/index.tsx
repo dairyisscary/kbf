@@ -1,7 +1,7 @@
 import { createAsync, query, useSearchParams, A, type RouteDefinition } from "@solidjs/router";
 import { createMemo, createSignal, For, Show, type ComponentProps } from "solid-js";
 
-import { allCategoriesByName } from "~/category";
+import { allCategoriesByName, type CategoryFilter } from "~/category";
 import { CategoryColorPip, getColorsForCode } from "~/category/pip";
 import { BarChart } from "~/chart";
 import clx from "~/clx";
@@ -18,22 +18,23 @@ type Intervals = Awaited<ReturnType<typeof transactionDataForReporting>>["interv
 
 const DEFAULT_TIMELINE = "year-to-date";
 const ONE_EURO_IN_USD = 1.1;
+const CATEGORY_FILTER: CategoryFilter = { includeKinds: ["basic"] };
 
 const getAllCategoriesForReport = query(
-  () => allCategoriesByName({ includeUncategorized: true, excludeIgnoredForBreakdown: true }),
+  () => allCategoriesByName({ includeUncategorized: true, ...CATEGORY_FILTER }),
   "categoriesForReport",
 );
 
 const getTransactionsForReport = query((timeline: string | undefined) => {
   timeline ||= DEFAULT_TIMELINE;
   if (timeline === DEFAULT_TIMELINE) {
-    return transactionDataForReporting({ type: "year-to-date" });
+    return transactionDataForReporting({ type: "year-to-date" }, CATEGORY_FILTER);
   }
   const [count, grouping] = timeline.split("-") as [string, "month" | "year"];
-  return transactionDataForReporting({
-    type: `by-${grouping}`,
-    count: Number(count),
-  });
+  return transactionDataForReporting(
+    { type: `by-${grouping}`, count: Number(count) },
+    CATEGORY_FILTER,
+  );
 }, "transactionsForReport");
 
 export const route: RouteDefinition = {

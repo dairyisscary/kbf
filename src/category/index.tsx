@@ -1,12 +1,15 @@
 "use server";
+import type { SelectQueryBuilder } from "kysely";
+import type { CategoryKind } from "kysely-codegen";
 import { v4 } from "uuid";
 import * as z from "zod";
 
-import { db, type DBTransaction } from "~/db";
+import { db, type KBFDatabase, type DBTransaction } from "~/db";
 import { checkSession } from "~/session";
 
-type TransactionCategoryFilters = {
-  excludeBreakdownIgnoredCategories?: boolean;
+export type CategoryFilter = {
+  includeKinds?: CategoryKind[];
+  excludeArchived?: boolean;
 };
 
 const MAX_COLOR_CODE = 11;
@@ -14,30 +17,37 @@ const INPUT_SCHEMA = z.object({
   name: z.string().trim().min(1),
   predicates: z.array(z.string()),
   colorCode: z.coerce.number().min(0).max(MAX_COLOR_CODE),
-  ignoredForBreakdownReporting: z.preprocess((val) => val === "on" || val, z.boolean()).optional(),
+  kind: z.enum(["basic", "payment"]),
   archived: z.preprocess((val) => val === "on" || val, z.boolean()).optional(),
 });
-const DEFAULT_SELECT = [
-  "id",
-  "name",
-  "archived",
-  "color_code as colorCode",
-  "ignored_for_breakdown_reporting as ignoredForBreakdownReporting",
-] as const;
+const DEFAULT_SELECT = ["id", "name", "archived", "kind", "color_code as colorCode"] as const;
 const UNCATEGORIZED_CATEGORY = {
   id: "uncategorized",
   name: "Uncategorized",
   colorCode: -1,
   archived: false,
-  ignoredForBreakdownReporting: false,
+  kind: "basic" as const,
 };
 
-function uniq(input: string[]): string[] {
+function uniq<T>(input: T[]): T[] {
   return Array.from(new Set(input));
 }
 
 function byName(a: { name: string }, b: { name: string }) {
   return a.name.localeCompare(b.name);
+}
+
+function addFilters<Cols>(
+  query: SelectQueryBuilder<KBFDatabase, "categories", Cols>,
+  filter: CategoryFilter | undefined,
+) {
+  if (filter?.includeKinds?.length) {
+    query = query.where("kind", "in", uniq(filter.includeKinds));
+  }
+  if (filter?.excludeArchived) {
+    query = query.where("archived", "=", false);
+  }
+  return query;
 }
 
 async function addPredicates(trx: DBTransaction, categoryId: string, predicates: string[]) {
@@ -78,7 +88,7 @@ async function countsOfTransactions() {
 
 export async function categoriesForTransactionIds(
   transactionIds: string[],
-  filter?: TransactionCategoryFilters,
+  filter?: CategoryFilter,
 ) {
   await checkSession();
   const links = transactionIds.length
@@ -88,43 +98,42 @@ export async function categoriesForTransactionIds(
         .where("transaction_id", "in", uniq(transactionIds))
         .execute()
     : [];
-  const categories = links.length
-    ? await db
-        .selectFrom("categories")
-        .select(DEFAULT_SELECT)
-        .where("id", "in", uniq(links.map((r) => r.category_id)))
-        .execute()
-    : [];
 
-  const excludeBreakdownCategories = Boolean(filter?.excludeBreakdownIgnoredCategories);
+  const categoriesQuery = links.length
+    ? addFilters(
+        db
+          .selectFrom("categories")
+          .select(DEFAULT_SELECT)
+          .where("id", "in", uniq(links.map((r) => r.category_id))),
+        filter,
+      )
+    : undefined;
+  const categories = categoriesQuery ? await categoriesQuery.execute() : [];
+
   const result: Record<string, typeof categories> = {};
-  for (const id of transactionIds) {
+  for (const transactionId of transactionIds) {
     const catsForId = links.flatMap((link) => {
-      if (link.transaction_id !== id) {
+      if (link.transaction_id !== transactionId) {
         return [];
       }
-      const found = categories.find((category) => category.id === link.category_id)!;
-      return excludeBreakdownCategories && found.ignoredForBreakdownReporting ? [] : [found];
+      const found = categories.find((category) => category.id === link.category_id);
+      return found ? [found] : [];
     });
-    result[id] = catsForId.length ? catsForId.toSorted(byName) : [UNCATEGORIZED_CATEGORY];
+    result[transactionId] = catsForId.length
+      ? catsForId.toSorted(byName)
+      : [UNCATEGORIZED_CATEGORY];
   }
   return result;
 }
 
-export async function allCategoriesByName(filter?: {
-  includeUncategorized?: boolean;
-  excludeArchived?: boolean;
-  excludeIgnoredForBreakdown?: boolean;
-}) {
+export async function allCategoriesByName(
+  filter?: { includeUncategorized?: boolean } & CategoryFilter,
+) {
   await checkSession();
-  let query = db.selectFrom("categories").select(DEFAULT_SELECT).orderBy("name");
-  if (filter?.excludeIgnoredForBreakdown) {
-    query = query.where("ignored_for_breakdown_reporting", "=", false);
-  }
-  if (filter?.excludeArchived) {
-    query = query.where("archived", "=", false);
-  }
-  const results = await query.execute();
+  const results = await addFilters(
+    db.selectFrom("categories").select(DEFAULT_SELECT).orderBy("name"),
+    filter,
+  ).execute();
   return filter?.includeUncategorized ? results.concat(UNCATEGORIZED_CATEGORY) : results;
 }
 
@@ -158,7 +167,7 @@ export async function editCategory(categoryId: string, inputs: Record<string, un
         name: category.name,
         color_code: category.colorCode,
         archived: Boolean(category.archived),
-        ignored_for_breakdown_reporting: Boolean(category.ignoredForBreakdownReporting),
+        kind: category.kind,
         updated_at: now,
       })
       .where("id", "=", categoryId)
@@ -182,7 +191,7 @@ export async function addCategory(inputs: Record<string, unknown>) {
         name: category.name,
         color_code: category.colorCode,
         archived: Boolean(category.archived),
-        ignored_for_breakdown_reporting: Boolean(category.ignoredForBreakdownReporting),
+        kind: category.kind,
         inserted_at: now,
         updated_at: now,
       })

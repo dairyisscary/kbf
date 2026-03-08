@@ -1,8 +1,14 @@
+import type { CategoryKind } from "kysely-codegen";
 import { createSignal, For, createEffect, type JSX, type ComponentProps } from "solid-js";
 
-import { CategoryPill, SelectableCategoryPill } from "~/category/pip";
+import {
+  CategoryColorPip,
+  CategoryKindIcon,
+  CategoryPill,
+  SelectableCategoryPill,
+} from "~/category/pip";
 import clx from "~/clx";
-import { FormRow, Label } from "~/form";
+import { FormRow, NonInteractiveLabel } from "~/form";
 import { formatMoneyAmount } from "~/format";
 
 export function AmountPill(props: { transaction: { amount: number; currency: "usd" | "euro" } }) {
@@ -20,8 +26,27 @@ export function AmountPill(props: { transaction: { amount: number; currency: "us
   );
 }
 
-export function CategoryItems(props: { children: JSX.Element }) {
+export function CategoryPillItems(props: { children: JSX.Element }) {
   return <div class="flex flex-wrap items-start gap-2">{props.children}</div>;
+}
+
+export function CategoryPipItems(props: {
+  categories: { name: string; kind: CategoryKind; colorCode: number }[];
+}) {
+  return (
+    <div class="flex flex-wrap items-start gap-5">
+      <For each={props.categories}>
+        {(category) => (
+          <span class="inline-flex items-center gap-2 whitespace-nowrap">
+            <CategoryColorPip code={category.colorCode}>
+              <CategoryKindIcon kind={category.kind} size="sm" />
+            </CategoryColorPip>
+            {category.name}
+          </span>
+        )}
+      </For>
+    </div>
+  );
 }
 
 function getInitSelectionIds(
@@ -39,7 +64,7 @@ function getInitSelectionIds(
 export function CategorySelectFormRow(props: {
   allCategories: ({ id: string } & ComponentProps<typeof CategoryPill>["category"])[];
   reset?: boolean;
-  label?: JSX.Element;
+  label: JSX.Element;
   name: string;
   initCategories?: { id: string }[];
 }) {
@@ -62,8 +87,8 @@ export function CategorySelectFormRow(props: {
 
   return (
     <FormRow>
-      <Label>{props.label || "Categories"}</Label>
-      <CategoryItems>
+      <NonInteractiveLabel>{props.label}</NonInteractiveLabel>
+      <CategoryPillItems>
         <For each={props.allCategories}>
           {(category) => (
             <SelectableCategoryPill
@@ -73,7 +98,7 @@ export function CategorySelectFormRow(props: {
             />
           )}
         </For>
-      </CategoryItems>
+      </CategoryPillItems>
       <For each={selectedCategoryIds()}>
         {(categoryId) => <input type="hidden" name={props.name} value={categoryId} />}
       </For>

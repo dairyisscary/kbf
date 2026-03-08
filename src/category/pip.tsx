@@ -1,3 +1,4 @@
+import type { CategoryKind } from "kysely-codegen";
 import { splitProps, For, type ComponentProps } from "solid-js";
 
 import clx from "~/clx";
@@ -65,6 +66,12 @@ function getPipClass(size?: PipProps["size"], block?: boolean) {
     "items-center justify-center rounded-full border border-kbf-dark-purple",
     size === "sm" ? "size-4" : "size-8",
   );
+}
+
+export function CategoryKindIcon(
+  props: Pick<ComponentProps<typeof Icon>, "size"> & { kind: CategoryKind },
+) {
+  return <Icon size={props.size} name={props.kind === "payment" ? "credit-card" : "bar-chart-2"} />;
 }
 
 export function CategoryColorPip(props: PipProps) {

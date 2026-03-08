@@ -3,8 +3,16 @@ import { createSignal, createEffect, createUniqueId, Show, For } from "solid-js"
 
 import Button from "~/button";
 import { allCategoriesWithCounts, deleteCategory, addCategory, editCategory } from "~/category";
-import { CategoryColorPip, CategoryColorSelector } from "~/category/pip";
-import { pealFormData, FormFooter, Checkbox, FormRowWithId, Label } from "~/form";
+import { CategoryColorPip, CategoryColorSelector, CategoryKindIcon } from "~/category/pip";
+import {
+  pealFormData,
+  FormFooter,
+  Checkbox,
+  FormRowWithId,
+  Label,
+  RadioTabs,
+  FieldSet,
+} from "~/form";
 import { ConfirmingDeleteButton } from "~/form/confirm";
 import { useClearingSubmission } from "~/form/submission";
 import Icon from "~/icon";
@@ -17,6 +25,11 @@ type ModalState =
   | false
   | { type: "add"; category?: undefined }
   | { type: "edit"; category: CountedCategory };
+
+const KIND_OPTIONS = [
+  { value: "basic", label: "Basic" },
+  { value: "payment", label: "Payment" },
+] as const;
 
 const getAllCategories = query(allCategoriesWithCounts, "categoriesForListing");
 
@@ -105,20 +118,21 @@ function AddEditModal(props: {
 
         <FormRowWithId>
           {(id) => (
-            <Checkbox name="archived" checked={props.editingCategory?.archived ?? false} id={id}>
-              Archived (Hidden from transaction creation)
-            </Checkbox>
+            <FieldSet legend="Kind">
+              <RadioTabs
+                id={id}
+                name="kind"
+                options={KIND_OPTIONS}
+                initValue={props.editingCategory?.kind || "basic"}
+              />
+            </FieldSet>
           )}
         </FormRowWithId>
 
         <FormRowWithId>
           {(id) => (
-            <Checkbox
-              name="ignoredForBreakdownReporting"
-              checked={props.editingCategory?.ignoredForBreakdownReporting}
-              id={id}
-            >
-              Exclude this category from breakdown reporting
+            <Checkbox name="archived" checked={props.editingCategory?.archived ?? false} id={id}>
+              Archived (Hidden from transaction creation)
             </Checkbox>
           )}
         </FormRowWithId>
@@ -169,14 +183,16 @@ export default function Categories() {
       </header>
       <Table
         class="[&_td]:first:not-only:w-0 [&_td]:first:not-only:min-w-fit [&_td]:last:not-only:text-right [&_td]:last:not-only:font-mono [&_th]:last:text-right"
-        headers={["Color", "Name", "Mass Import Rules", "Transaction Count"]}
+        headers={["Class", "Name", "Mass Import Rules", "Transaction Count"]}
         each={categories()}
         onRowClick={(category) => {
           setAddEditModal({ type: "edit", category });
         }}
       >
         {(category) => [
-          <CategoryColorPip block code={category.colorCode} />,
+          <CategoryColorPip block code={category.colorCode}>
+            <CategoryKindIcon size="sm" kind={category.kind} />
+          </CategoryColorPip>,
           <>
             <span class={category.archived ? "line-through" : "text-kbf-text-highlight"}>
               {category.name}

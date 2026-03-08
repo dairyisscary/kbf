@@ -1,10 +1,17 @@
-import { createUniqueId, type JSX, type ComponentProps } from "solid-js";
+import { createUniqueId, type JSX, type ComponentProps, For, createMemo, untrack } from "solid-js";
 
 import clx from "~/clx";
 import Icon from "~/icon";
 
+const LABEL_CX = "text-lg font-medium";
+const CLICK_LABEL_CX = clx(LABEL_CX, "cursor-pointer");
+
 export function Label(props: ComponentProps<"label">) {
-  return <label {...props} class={clx("cursor-pointer text-lg font-medium", props.class)} />;
+  return <label {...props} class={clx(CLICK_LABEL_CX, props.class)} />;
+}
+
+export function NonInteractiveLabel(props: ComponentProps<"span">) {
+  return <span {...props} class={clx(LABEL_CX, props.class)} />;
 }
 
 export function FormRow(props: Omit<ComponentProps<"div">, "class">) {
@@ -63,5 +70,53 @@ export function FormFooter(props: { children: JSX.Element }) {
     <footer class="flex items-center justify-end gap-4 border-t border-kbf-accent-border pt-8">
       {props.children}
     </footer>
+  );
+}
+
+export function RadioTabs<V extends string>(props: {
+  id?: string;
+  name: string;
+  initValue: V;
+  options: ReadonlyArray<{ value: V; label: JSX.Element }>;
+}) {
+  return (
+    <div class="flex items-stretch rounded-md border-2 border-kbf-light-purple bg-kbf-light-purple">
+      <For each={props.options}>
+        {(option) => {
+          const id = createMemo(() => `${props.id || "radio-tabs"}-${option.value}`);
+          return (
+            <div class="flex-1 rounded-md text-center ring-kbf-action-highlight transition duration-300 ring-inset has-checked:bg-kbf-action has-checked:text-kbf-text-highlight has-focus-within:ring-2">
+              <input
+                ref={(element) => {
+                  if (untrack(() => props.initValue === option.value)) {
+                    element.checked = true;
+                  }
+                }}
+                type="radio"
+                class="sr-only"
+                id={id()}
+                name={props.name}
+                value={option.value}
+              />
+              <label
+                class={clx(CLICK_LABEL_CX, "block size-full px-4 py-3 text-center")}
+                for={id()}
+              >
+                {option.label}
+              </label>
+            </div>
+          );
+        }}
+      </For>
+    </div>
+  );
+}
+
+export function FieldSet(props: { legend: string; children: JSX.Element }) {
+  return (
+    <fieldset class="space-y-3">
+      <legend class={LABEL_CX}>{props.legend}</legend>
+      {props.children}
+    </fieldset>
   );
 }
