@@ -31,14 +31,5 @@
     "kysely-codegen": "^0.20.0",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.56.1"
-  },
-  "pnpm": {
-    "ignoredBuiltDependencies": [
-      "core-js"
-    ],
-    "onlyBuiltDependencies": [
-      "@parcel/watcher",
-      "esbuild"
-    ]
   }
 }

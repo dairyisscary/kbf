@@ -3,7 +3,7 @@ let
   inherit (pkgs) lib;
 
   nodejs = pkgs.nodejs_24;
-  pnpm = pkgs.pnpm_10.override { inherit nodejs; };
+  pnpm = pkgs.pnpm_11.override { inherit nodejs; };
 
   fs = lib.fileset;
   getSrc = mapFn: fs.toSource rec {
@@ -23,10 +23,11 @@ pkgs.stdenvNoCC.mkDerivation (finalAttrs: {
     src = getSrc (fs.intersection (fs.unions [
       ./../../package.json
       ./../../pnpm-lock.yaml
+      ./../../pnpm-workspace.yaml
     ]));
     env = { inherit (finalAttrs.env) NODE_ENV; };
-    fetcherVersion = 2;
-    hash = "sha256-TC7TughRm47BYEpG3IplgJ9QyF3fRWpYWBnZgi9B8cU=";
+    fetcherVersion = 3;
+    hash = "sha256-npoUXG6Nh3+SJsq4ng/B6Gj6xH+E/4G7xkhrHUZuOT0=";
   };
 
   pnpmInstallFlags = [ "--prod" ];
