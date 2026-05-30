@@ -4,32 +4,32 @@
   "type": "module",
   "dependencies": {
     "@solidjs/meta": "^0.29.4",
-    "@solidjs/router": "^0.15.4",
+    "@solidjs/router": "^0.16.1",
     "@solidjs/start": "^1.0.10",
-    "@tailwindcss/vite": "^4.2.1",
+    "@tailwindcss/vite": "^4.3.0",
     "chart.js": "4.5.0",
     "chartjs-plugin-datalabels": "^2.2.0",
     "clsx": "^2.1.1",
-    "csv-parse": "^6.1.0",
-    "date-fns": "^4.1.0",
+    "csv-parse": "^6.2.1",
+    "date-fns": "^4.3.0",
     "feather-icons": "^4.29.2",
-    "kysely": "^0.28.11",
-    "pg": "^8.20.0",
-    "solid-js": "^1.9.11",
-    "tailwindcss": "^4.2.1",
-    "uuid": "^13.0.0",
+    "kysely": "^0.29.2",
+    "pg": "^8.21.0",
+    "solid-js": "^1.9.13",
+    "tailwindcss": "^4.3.0",
+    "uuid": "^14.0.0",
     "vinxi": "^0.5.11",
-    "zod": "^4.3.6"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@total-typescript/ts-reset": "^0.6.1",
-    "@types/node": "^24.11.0",
-    "@types/pg": "^8.18.0",
-    "esbuild": "^0.27.3",
-    "eslint": "^10.0.2",
+    "@types/node": "^24.12.4",
+    "@types/pg": "^8.20.0",
+    "esbuild": "^0.28.0",
+    "eslint": "^10.4.1",
     "kysely-codegen": "^0.20.0",
-    "typescript": "~5.9.3",
-    "typescript-eslint": "^8.56.1"
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.60.0"
   }
 }

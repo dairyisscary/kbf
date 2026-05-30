@@ -1,7 +1,7 @@
 import { promises as fs } from "node:fs";
 import * as path from "node:path";
 
-import { Migrator, FileMigrationProvider, MigrationResultSet } from "kysely";
+import { Migrator, FileMigrationProvider, MigrationResultSet } from "kysely/migration";
 
 import { db } from "~/db";
 
