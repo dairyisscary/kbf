@@ -102,6 +102,9 @@ export default function Wrapper(props: { children: JSX.Element }) {
           </A>
 
           <Divider />
+          <A href="/asset-snapshots" class={ANCHOR_CX}>
+            <NavLinkContent iconName="git-merge" title="Asset Snapshots" />
+          </A>
           <A href="/assets" class={ANCHOR_CX}>
             <NavLinkContent iconName="layers" title="Assets" />
           </A>
