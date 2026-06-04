@@ -1,29 +1,19 @@
-import { action, query, createAsync, useAction, type RouteDefinition } from "@solidjs/router";
-import { createSignal, createEffect, createUniqueId, Show, For } from "solid-js";
+import { action, query, createAsync, type RouteDefinition } from "@solidjs/router";
+import { createSignal, createUniqueId, Show, For } from "solid-js";
 
 import Button from "~/button";
 import { allCategoriesWithCounts, deleteCategory, addCategory, editCategory } from "~/category";
 import { CategoryColorPip, CategoryColorSelector, CategoryKindIcon } from "~/category/pip";
-import {
-  pealFormData,
-  FormFooter,
-  Checkbox,
-  FormRowWithId,
-  Label,
-  RadioTabs,
-  FieldSet,
-} from "~/form";
-import { ConfirmingDeleteButton } from "~/form/confirm";
-import { useClearingSubmission } from "~/form/submission";
+import { pealFormData, Checkbox, FormRowWithId, Label, RadioTabs, FieldSet } from "~/form";
+import { CrudModal } from "~/form/crud-modal";
 import Icon from "~/icon";
 import { KbfSiteTitle } from "~/meta";
-import Modal from "~/modal";
 import Table from "~/table";
 
 type CountedCategory = Awaited<ReturnType<typeof allCategoriesWithCounts>>[number];
 type ModalState =
   | false
-  | { type: "add"; category?: undefined }
+  | { type: "add"; category?: never }
   | { type: "edit"; category: CountedCategory };
 
 const KIND_OPTIONS = [
@@ -53,111 +43,91 @@ function AddEditModal(props: {
   onClose: () => void;
   editingCategory: undefined | CountedCategory;
 }) {
-  const submitting = useClearingSubmission(addEditAction);
-  const doDelete = useAction(deleteCategoryAction);
-  const deleting = useClearingSubmission(deleteCategoryAction);
-  createEffect(() => {
-    if (submitting.result || deleting.result) {
-      props.onClose();
-    }
-  });
-
   const [selectedColorCode, setSelectedColorCode] = createSignal(props.editingCategory?.colorCode);
   const rulesDescriptionId = createUniqueId();
-
   return (
-    <Modal onClose={props.onClose}>
-      <h1>{props.editingCategory ? "Edit" : "Add"} Category</h1>
-      <form method="post" action={addEditAction}>
-        <FormRowWithId>
-          {(id) => (
-            <>
-              <Label for={id}>Name</Label>
-              <input
-                id={id}
-                type="text"
-                name="name"
-                autocomplete="off"
-                value={props.editingCategory?.name || ""}
-                required
-              />
-            </>
-          )}
-        </FormRowWithId>
+    <CrudModal
+      action={addEditAction}
+      onClose={props.onClose}
+      header={`${props.editingCategory ? "Edit" : "Add"} Category`}
+      delete={
+        props.editingCategory && {
+          id: props.editingCategory.id,
+          action: deleteCategoryAction,
+          confirmingButtonChildren: `Are you sure you want to delete the "${props.editingCategory.name}" category?`,
+        }
+      }
+    >
+      <FormRowWithId>
+        {(id) => (
+          <>
+            <Label for={id}>Name</Label>
+            <input
+              id={id}
+              type="text"
+              name="name"
+              autocomplete="off"
+              value={props.editingCategory?.name || ""}
+              required
+            />
+          </>
+        )}
+      </FormRowWithId>
 
-        <FormRowWithId>
-          {(id) => (
-            <>
-              <Label for={id}>Color Code</Label>
-              <CategoryColorSelector onChange={setSelectedColorCode} value={selectedColorCode()} />
-              <input type="hidden" id={id} name="colorCode" value={selectedColorCode() || ""} />
-            </>
-          )}
-        </FormRowWithId>
+      <FormRowWithId>
+        {(id) => (
+          <>
+            <Label for={id}>Color Code</Label>
+            <CategoryColorSelector onChange={setSelectedColorCode} value={selectedColorCode()} />
+            <input type="hidden" id={id} name="colorCode" value={selectedColorCode() || ""} />
+          </>
+        )}
+      </FormRowWithId>
 
-        <FormRowWithId>
-          {(id) => (
-            <>
-              <Label for={id}>Mass Import Rules</Label>
-              <p id={rulesDescriptionId} class="mb-1 text-sm">
-                Every mass-imported transaction will automatically receive this category if it
-                contains any of these forward-slash (/) separated search strings (case-insensitive).
-              </p>
-              <input
-                id={id}
-                type="text"
-                name="rulesText"
-                autocomplete="off"
-                placeholder="ex. delivery/market street/businessname"
-                aria-describedby={rulesDescriptionId}
-                value={props.editingCategory?.predicates.join("/") || ""}
-              />
-            </>
-          )}
-        </FormRowWithId>
+      <FormRowWithId>
+        {(id) => (
+          <>
+            <Label for={id}>Mass Import Rules</Label>
+            <p id={rulesDescriptionId} class="mb-1 text-sm">
+              Every mass-imported transaction will automatically receive this category if it
+              contains any of these forward-slash (/) separated search strings (case-insensitive).
+            </p>
+            <input
+              id={id}
+              type="text"
+              name="rulesText"
+              autocomplete="off"
+              placeholder="ex. delivery/market street/businessname"
+              aria-describedby={rulesDescriptionId}
+              value={props.editingCategory?.predicates.join("/") || ""}
+            />
+          </>
+        )}
+      </FormRowWithId>
 
-        <FormRowWithId>
-          {(id) => (
-            <FieldSet legend="Kind">
-              <RadioTabs
-                id={id}
-                name="kind"
-                options={KIND_OPTIONS}
-                initValue={props.editingCategory?.kind || "basic"}
-              />
-            </FieldSet>
-          )}
-        </FormRowWithId>
+      <FormRowWithId>
+        {(id) => (
+          <FieldSet legend="Kind">
+            <RadioTabs
+              id={id}
+              name="kind"
+              options={KIND_OPTIONS}
+              initValue={props.editingCategory?.kind || "basic"}
+            />
+          </FieldSet>
+        )}
+      </FormRowWithId>
 
-        <FormRowWithId>
-          {(id) => (
-            <Checkbox name="archived" checked={props.editingCategory?.archived ?? false} id={id}>
-              Archived (Hidden from transaction creation)
-            </Checkbox>
-          )}
-        </FormRowWithId>
+      <FormRowWithId>
+        {(id) => (
+          <Checkbox name="archived" checked={props.editingCategory?.archived ?? false} id={id}>
+            Archived (Hidden from transaction creation)
+          </Checkbox>
+        )}
+      </FormRowWithId>
 
-        <input name="isEditingId" type="hidden" value={props.editingCategory?.id || ""} />
-
-        <FormFooter>
-          <Show when={props.editingCategory}>
-            {(category) => (
-              <ConfirmingDeleteButton
-                onDelete={() => {
-                  void doDelete(category().id);
-                }}
-              >
-                {`Are you sure you want to delete ${category().name}?`}
-              </ConfirmingDeleteButton>
-            )}
-          </Show>
-          <Button onclick={props.onClose} class="ml-auto" variant="cancel">
-            Cancel
-          </Button>
-          <Button type="submit">Save</Button>
-        </FormFooter>
-      </form>
-    </Modal>
+      <input name="isEditingId" type="hidden" value={props.editingCategory?.id || ""} />
+    </CrudModal>
   );
 }
 

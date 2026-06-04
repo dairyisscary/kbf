@@ -1,26 +1,16 @@
-import {
-  createAsync,
-  query,
-  action,
-  useAction,
-  useSearchParams,
-  type RouteDefinition,
-} from "@solidjs/router";
+import { createAsync, query, action, useSearchParams, type RouteDefinition } from "@solidjs/router";
 import { subDays, startOfMonth, subMonths, endOfMonth } from "date-fns";
-import { createSignal, onCleanup, createMemo, createEffect, For, Show, type JSX } from "solid-js";
+import { createSignal, onCleanup, createMemo, For, Show, type JSX } from "solid-js";
 
-import Alert from "~/alert";
 import Button from "~/button";
 import { allCategoriesByName } from "~/category";
 import { CategoryPill } from "~/category/pip";
 import clx from "~/clx";
-import { pealFormData, Checkbox, FormFooter, FormRowWithId, Label } from "~/form";
-import { ConfirmingDeleteButton } from "~/form/confirm";
-import { useClearingSubmission } from "~/form/submission";
+import { pealFormData, Checkbox, FormRowWithId, Label } from "~/form";
+import { CrudModal } from "~/form/crud-modal";
 import { formatDate, formatDateOnly, formatDateForInput, formatCurrencySign } from "~/format";
 import Icon from "~/icon";
 import { KbfSiteTitle } from "~/meta";
-import Modal from "~/modal";
 import Table from "~/table";
 import {
   allTransactionsFromFilters,
@@ -35,7 +25,7 @@ type Category = Awaited<ReturnType<typeof allCategoriesByName>>[number];
 type TimeFrame = "last-60" | "custom" | "last-month";
 type ModalState =
   | false
-  | { type: "add"; transaction?: undefined }
+  | { type: "add"; transaction?: never }
   | { type: "edit"; transaction: Transaction };
 
 const getTransactionsForListing = query((params: Record<string, string[] | string | undefined>) => {
@@ -141,123 +131,99 @@ function AddEditModal(props: {
     });
   });
 
-  const submitting = useClearingSubmission(addEditAction);
-
-  const doDelete = useAction(deleteTransactionAction);
-  const deleting = useClearingSubmission(deleteTransactionAction);
-
-  createEffect(() => {
-    if (submitting.result || deleting.result) {
-      props.onClose();
-    }
-  });
-
   return (
-    <Modal onClose={props.onClose}>
-      <h1>{props.editingTransaction ? "Edit" : "Add"} Transaction</h1>
-      <form method="post" action={addEditAction}>
-        <Show when={submitting.error as null | Error}>
-          {(error) => <Alert class="mt-6">{error().message}</Alert>}
-        </Show>
-        <FormRowWithId>
-          {(id) => (
-            <>
-              <Label for={id}>Description</Label>
-              <input
-                id={id}
-                type="text"
-                name="description"
-                autocomplete="off"
-                value={props.editingTransaction?.description || ""}
-                required
-              />
-            </>
-          )}
-        </FormRowWithId>
+    <CrudModal
+      action={addEditAction}
+      delete={
+        props.editingTransaction && {
+          action: deleteTransactionAction,
+          id: props.editingTransaction.id,
+          confirmingButtonChildren: `Are you sure you want to delete the "${props.editingTransaction.description}" transaction?`,
+        }
+      }
+      header={`${props.editingTransaction ? "Edit" : "Add"} Transaction`}
+      onClose={props.onClose}
+    >
+      <FormRowWithId>
+        {(id) => (
+          <>
+            <Label for={id}>Description</Label>
+            <input
+              id={id}
+              type="text"
+              name="description"
+              autocomplete="off"
+              value={props.editingTransaction?.description || ""}
+              required
+            />
+          </>
+        )}
+      </FormRowWithId>
 
-        <FormRowWithId>
-          {(id) => (
-            <>
-              <Label for={id}>Amount</Label>
-              <div class="group relative flex gap-3">
-                <Button
-                  class="aspect-square text-xl"
-                  onClick={() => setCurrency((c) => (c === "euro" ? "usd" : "euro"))}
-                >
-                  {formatCurrencySign(currency())}
-                </Button>
-                <input type="hidden" name="currency" value={currency()} />
-                <input
-                  id={id}
-                  autocomplete="off"
-                  class="w-full flex-1"
-                  type="text"
-                  name="amount"
-                  inputmode="numeric"
-                  pattern="-?[0-9]+(\.[0-9]{0,2})?"
-                  value={props.editingTransaction?.amount || ""}
-                  required
-                  onInput={(event) => setAmountFormat(Number(event.target.value))}
-                />
-                <div class="absolute top-0 right-0 opacity-0 transition-opacity duration-300 group-has-focus-within:opacity-100">
-                  <AmountPill transaction={{ currency: currency(), amount: amountFormat() }} />
-                </div>
-              </div>
-            </>
-          )}
-        </FormRowWithId>
-
-        <FormRowWithId>
-          {(id) => (
-            <>
-              <Label for={id}>When</Label>
-              <input
-                id={id}
-                type="date"
-                autocomplete="off"
-                name="when"
-                value={formatDateForInput(props.editingTransaction?.when)}
-                required
-              />
-            </>
-          )}
-        </FormRowWithId>
-
-        <CategorySelectFormRow
-          allCategories={selectableCategories().filter((c) => c.kind === "payment")}
-          initCategories={props.editingTransaction?.categories}
-          name="categoryIds"
-          label="Payment"
-        />
-
-        <CategorySelectFormRow
-          allCategories={selectableCategories().filter((c) => c.kind === "basic")}
-          initCategories={props.editingTransaction?.categories}
-          name="categoryIds"
-          label="Categories"
-        />
-
-        <input name="isEditingId" type="hidden" value={props.editingTransaction?.id || ""} />
-
-        <FormFooter>
-          <Show when={props.editingTransaction}>
-            {(transaction) => (
-              <ConfirmingDeleteButton
-                onDelete={() => {
-                  void doDelete(transaction().id);
-                }}
+      <FormRowWithId>
+        {(id) => (
+          <>
+            <Label for={id}>Amount</Label>
+            <div class="group relative flex gap-3">
+              <Button
+                class="aspect-square text-xl"
+                onClick={() => setCurrency((c) => (c === "euro" ? "usd" : "euro"))}
               >
-                Are you sure you want to delete this transaction?
-              </ConfirmingDeleteButton>
-            )}
-          </Show>
-          <Button onclick={props.onClose} class="ml-auto" variant="cancel">
-            Cancel
-          </Button>
-          <Button type="submit">Save</Button>
-        </FormFooter>
-      </form>
-    </Modal>
+                {formatCurrencySign(currency())}
+              </Button>
+              <input type="hidden" name="currency" value={currency()} />
+              <input
+                id={id}
+                autocomplete="off"
+                class="w-full flex-1"
+                type="text"
+                name="amount"
+                inputmode="numeric"
+                pattern="-?[0-9]+(\.[0-9]{0,2})?"
+                value={props.editingTransaction?.amount ?? ""}
+                required
+                onInput={(event) => setAmountFormat(Number(event.target.value))}
+              />
+              <div class="absolute top-0 right-0 opacity-0 transition-opacity duration-300 group-has-focus-within:opacity-100">
+                <AmountPill transaction={{ currency: currency(), amount: amountFormat() }} />
+              </div>
+            </div>
+          </>
+        )}
+      </FormRowWithId>
+
+      <FormRowWithId>
+        {(id) => (
+          <>
+            <Label for={id}>When</Label>
+            <input
+              id={id}
+              type="date"
+              autocomplete="off"
+              name="when"
+              value={formatDateForInput(props.editingTransaction?.when)}
+              required
+            />
+          </>
+        )}
+      </FormRowWithId>
+
+      <CategorySelectFormRow
+        allCategories={selectableCategories().filter((c) => c.kind === "payment")}
+        initCategories={props.editingTransaction?.categories}
+        name="categoryIds"
+        label="Payment"
+      />
+
+      <CategorySelectFormRow
+        allCategories={selectableCategories().filter((c) => c.kind === "basic")}
+        initCategories={props.editingTransaction?.categories}
+        name="categoryIds"
+        label="Categories"
+      />
+
+      <input name="isEditingId" type="hidden" value={props.editingTransaction?.id || ""} />
+    </CrudModal>
   );
 }
 

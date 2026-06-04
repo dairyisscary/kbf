@@ -154,6 +154,7 @@ export async function allCategoriesWithCounts() {
 export async function deleteCategory(categoryId: string) {
   await checkSession();
   await db.deleteFrom("categories").where("id", "=", categoryId).executeTakeFirstOrThrow();
+  return categoryId;
 }
 
 export async function editCategory(categoryId: string, inputs: Record<string, unknown>) {
