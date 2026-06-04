@@ -18,6 +18,10 @@ export function FormRow(props: Omit<ComponentProps<"div">, "class">) {
   return <div {...props} class="my-14 flex flex-col gap-3" />;
 }
 
+export function FormRowDivider() {
+  return <div class="my-14 h-px bg-kbf-accent-border" aria-hidden="true" />;
+}
+
 export function FormRowWithId(
   props: Omit<ComponentProps<typeof FormRow>, "children"> & {
     children: (id: string) => ComponentProps<typeof FormRow>["children"];

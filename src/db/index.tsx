@@ -1,9 +1,12 @@
 import { Kysely, PostgresDialect, type Transaction } from "kysely";
-import type { DB, Transactions } from "kysely-codegen";
+import type { AssetSnapshots, DB, Transactions } from "kysely-codegen";
 import PG from "pg";
 
-export type KBFDatabase = Omit<DB, "transactions"> & {
+export type KBFDatabase = Omit<DB, "transactions" | "asset_snapshots"> & {
   transactions: Omit<Transactions, "when"> & {
+    when: string;
+  };
+  asset_snapshots: Omit<AssetSnapshots, "when"> & {
     when: string;
   };
 };
