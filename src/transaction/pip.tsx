@@ -71,19 +71,20 @@ export function CategorySelectFormRow(props: {
   const [selectedCategoryIds, setSelectedCategoryIds] = createSignal(
     getInitSelectionIds(props.allCategories, props.initCategories),
   );
-  const toggleCategory = ({ id }: { id: string }) => {
+  const toggleCategory = ({ id }: { id: string }, event: MouseEvent) => {
     setSelectedCategoryIds((current) => {
-      return current.includes(id) ? current.filter((c) => c !== id) : current.concat(id);
+      if (event.ctrlKey) {
+        return current.includes(id) ? current.filter((c) => c !== id) : current.concat(id);
+      }
+      return current.includes(id) ? [] : [id];
     });
   };
 
-  if (props.reset !== undefined) {
-    createEffect(() => {
-      if (props.reset) {
-        setSelectedCategoryIds(getInitSelectionIds(props.allCategories, props.initCategories));
-      }
-    });
-  }
+  createEffect(() => {
+    if (props.reset) {
+      setSelectedCategoryIds(getInitSelectionIds(props.allCategories, props.initCategories));
+    }
+  });
 
   return (
     <FormRow>
