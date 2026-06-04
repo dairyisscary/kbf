@@ -2,7 +2,7 @@ import IconSprite from "feather-icons/dist/feather-sprite.svg";
 
 import clx from "~/clx";
 
-type IconName =
+export type IconName =
   | "activity"
   | "airplay"
   | "alert-circle"

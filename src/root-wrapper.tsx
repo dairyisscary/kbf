@@ -1,16 +1,9 @@
 import { A, action, useAction, useMatch, useNavigate } from "@solidjs/router";
-import {
-  Show,
-  createEffect,
-  createSignal,
-  onCleanup,
-  type JSX,
-  type ComponentProps,
-} from "solid-js";
+import { Show, createEffect, createSignal, onCleanup, type JSX } from "solid-js";
 
 import clx from "~/clx";
 import Favicon from "~/favicon.png";
-import Icon from "~/icon";
+import Icon, { type IconName } from "~/icon";
 import { logout } from "~/session";
 
 const logoutAction = action(() => logout(), "logout");
@@ -23,7 +16,7 @@ const ANCHOR_TEXT_CX = clx(
   "group-hover/nav-anchor:block group-focus/nav-anchor:block",
 );
 
-function NavLinkContent(props: { title: string; iconName: ComponentProps<typeof Icon>["name"] }) {
+function NavLinkContent(props: { title: string; iconName: IconName }) {
   return (
     <>
       <Icon name={props.iconName} />
@@ -82,6 +75,10 @@ function Logout() {
   );
 }
 
+function Divider() {
+  return <div aria-hidden="true" class="my-4 h-px bg-kbf-accent-border" />;
+}
+
 export default function Wrapper(props: { children: JSX.Element }) {
   const isLogin = useMatch(() => "/login");
   return (
@@ -92,6 +89,8 @@ export default function Wrapper(props: { children: JSX.Element }) {
             <img src={Favicon} class="size-6" alt="" />
             <span class={ANCHOR_TEXT_CX}>Dashboard</span>
           </A>
+
+          <Divider />
           <A href="/transactions" class={ANCHOR_CX}>
             <NavLinkContent iconName="database" title="Transactions" />
           </A>
@@ -99,8 +98,14 @@ export default function Wrapper(props: { children: JSX.Element }) {
             <NavLinkContent iconName="file-plus" title="Mass Import" />
           </A>
           <A href="/categories" class={ANCHOR_CX}>
-            <NavLinkContent iconName="layers" title="Categories" />
+            <NavLinkContent iconName="tag" title="Categories" />
           </A>
+
+          <Divider />
+          <A href="/assets" class={ANCHOR_CX}>
+            <NavLinkContent iconName="layers" title="Assets" />
+          </A>
+
           <Logout />
           <BackToTop />
         </nav>
