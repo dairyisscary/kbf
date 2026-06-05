@@ -25,6 +25,7 @@ export default defineConfig(
     rules: {
       "@typescript-eslint/no-non-null-assertion": "off",
       "@typescript-eslint/only-throw-error": "off",
+      "no-fallthrough": "off",
     },
   },
   {

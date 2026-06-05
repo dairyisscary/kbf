@@ -1,4 +1,5 @@
 "use server";
+import { sql } from "kysely";
 import { v7 } from "uuid";
 import { z } from "zod";
 
@@ -71,6 +72,27 @@ function allAssetSnapshotsQueryBase(filters?: BaseFilters) {
     query = query.where("when", ">=", filters.onOrAfter);
   }
   return query;
+}
+
+export async function mostRecentSnapshotsAsOf(asOfWhen: string) {
+  await checkSession();
+  return db
+    .selectFrom("asset_snapshots")
+    .select(DEFAULT_SELECT.map((col) => `asset_snapshots.${col}` as const))
+    .innerJoin(
+      (builder) =>
+        builder
+          .selectFrom("asset_snapshots as asi")
+          .select(["asi.asset_id", sql`max(asi."when")`.as("max_when")])
+          .where("asi.when", "<=", asOfWhen)
+          .groupBy("asi.asset_id")
+          .as("inner"),
+      (join) =>
+        join
+          .onRef("inner.asset_id", "=", "asset_snapshots.asset_id")
+          .onRef("max_when", "=", "asset_snapshots.when"),
+    )
+    .execute();
 }
 
 export async function allAssetSnapshotsByAsset(filters?: BaseFilters) {

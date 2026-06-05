@@ -29,7 +29,7 @@ export function formatDateOnly(value: Date) {
 }
 
 export function formatMoneyAmount(
-  value: { currency: Currency; amount: number } | undefined | null,
+  value: { currency: Currency; amount: number; keepNegative?: boolean } | undefined | null,
 ) {
   if (!value) {
     return null;
@@ -38,9 +38,35 @@ export function formatMoneyAmount(
     value.currency === "euro"
       ? EURO_FORMATTER.format(value.amount)
       : USD_FORMATTER.format(value.amount);
-  return rawValue.replace(/[^\d,.$€]/g, "");
+  return value.keepNegative ? rawValue : rawValue.replace(/[^\d,.$€]/g, "");
+}
+
+export function formatMoneyNoCents(
+  value: { currency: Currency; amount: number } | undefined | null,
+) {
+  return formatMoneyAmount(value)?.slice(0, -3) || null;
 }
 
 export function formatCurrencySign(currency: Currency): string {
   return currency === "euro" ? "€" : "$";
+}
+
+export function formatFractionAsPercent(numerator: number, denominator: number): string | null {
+  if (!denominator) {
+    return null;
+  }
+  const percent = (numerator / denominator) * 100;
+  const rounded = Math.round((percent + Number.EPSILON) * 100) / 100;
+  return `${rounded.toString()}%`;
+}
+
+export function formatRightAlignPadding<T>(
+  items: T[],
+  thisIndex: number,
+  formatFn: (value: T) => string,
+): string {
+  const formatted = items.map(formatFn);
+  const maxLength = formatted.reduce((max, { length }) => Math.max(max, length), 0);
+  const thisFmt = formatted[thisIndex]!;
+  return thisFmt.padStart(maxLength, " ");
 }
