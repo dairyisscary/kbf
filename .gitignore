@@ -1,7 +1,11 @@
-.direnv/
-.devenv/
-.output/
-.vinxi/
-node_modules/
-result
+/node_modules
+
+/.direnv
+/.devenv
+/result
+
+/.output
+/.vinxi
+/app.config.timestamp_*.js
+
 .env*.local

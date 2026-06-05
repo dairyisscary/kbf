@@ -5,7 +5,12 @@ import { defineConfig, globalIgnores } from "eslint/config";
 import { configs } from "typescript-eslint";
 
 export default defineConfig(
-  globalIgnores(readFileSync("./.gitignore", "utf8").split("\n").concat([".jj/"])),
+  globalIgnores(
+    readFileSync("./.gitignore", "utf8")
+      .split("\n")
+      .concat("/.jj")
+      .map((item) => item.replace(/^\//, "")),
+  ),
 
   ESLintJS.configs.recommended,
 
