@@ -6,16 +6,16 @@
     "@solidjs/meta": "^0.29.4",
     "@solidjs/router": "^0.16.1",
     "@solidjs/start": "^1.0.10",
-    "@tailwindcss/vite": "^4.3.0",
-    "chart.js": "4.5.0",
+    "@tailwindcss/vite": "^4.3.1",
+    "chart.js": "4.5.1",
     "clsx": "^2.1.1",
     "csv-parse": "^6.2.1",
-    "date-fns": "^4.3.0",
+    "date-fns": "^4.4.0",
     "feather-icons": "^4.29.2",
     "kysely": "^0.29.2",
     "pg": "^8.21.0",
     "solid-js": "^1.9.13",
-    "tailwindcss": "^4.3.0",
+    "tailwindcss": "^4.3.1",
     "uuid": "^14.0.0",
     "vinxi": "^0.5.11",
     "zod": "^4.4.3"
@@ -23,12 +23,12 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@total-typescript/ts-reset": "^0.6.1",
-    "@types/node": "^24.12.4",
+    "@types/node": "^24.13.2",
     "@types/pg": "^8.20.0",
-    "esbuild": "^0.28.0",
-    "eslint": "^10.4.1",
+    "esbuild": "^0.28.1",
+    "eslint": "^10.5.0",
     "kysely-codegen": "^0.20.0",
     "typescript": "~6.0.3",
-    "typescript-eslint": "^8.60.0"
+    "typescript-eslint": "^8.61.0"
   }
 }
