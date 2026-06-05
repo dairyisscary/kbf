@@ -5,12 +5,12 @@ import { createSignal, onCleanup, createMemo, For, Show, type JSX } from "solid-
 import Button from "~/button";
 import { allCategoriesByName } from "~/category";
 import { CategoryPill } from "~/category/pip";
-import clx from "~/clx";
 import { pealFormData, Checkbox, FormRowWithId, Label } from "~/form";
 import { CrudModal } from "~/form/crud-modal";
 import { formatDate, formatDateOnly, formatDateForInput, formatCurrencySign } from "~/format";
 import Icon from "~/icon";
 import { KbfSiteTitle } from "~/meta";
+import { FilterButton, FilterContainer, TimeFrameFilters } from "~/query-filters";
 import Table from "~/table";
 import {
   allTransactionsFromFilters,
@@ -22,7 +22,6 @@ import { AmountPill, CategoryPipItems, CategorySelectFormRow } from "~/transacti
 
 type Transaction = Awaited<ReturnType<typeof allTransactionsFromFilters>>[number];
 type Category = Awaited<ReturnType<typeof allCategoriesByName>>[number];
-type TimeFrame = "last-60" | "custom" | "last-month";
 type ModalState =
   | false
   | { type: "add"; transaction?: never }
@@ -227,104 +226,28 @@ function AddEditModal(props: {
   );
 }
 
-const FILTER_CONTROL_CX = "border! px-3 py-2 text-sm";
-const FILTER_INPUT_CX = clx(FILTER_CONTROL_CX, "bg-kbf-dark-purple");
-
 function Filters(props: { allCategories: Category[] | undefined }) {
   const [searchParams, setSearchParams] = useSearchParams();
-
-  const timeFrame = () => searchParams.timeFrame || "last-60";
-  const [customOpen, setCustomOpen] = createSignal(timeFrame() === "custom");
-  const isNonCustomTimeFrameSelected = (check: Exclude<TimeFrame, "custom">) =>
-    !customOpen() && timeFrame() === check;
-  const setTimeFrameClosed = (timeFrame: TimeFrame) => {
-    setCustomOpen(false);
-    setSearchParams({ timeFrame });
-  };
 
   const [filterCategoriesOpen, setFilterCategoriesOpen] = createSignal(false);
   const filterCategories = createMemo(
     () => (searchParams.filterCategoryIds as string | undefined)?.split(",") || [],
   );
+
   return (
-    <div class="mb-7 flex items-center gap-3">
-      <Button
-        variant="cancel"
-        class={FILTER_CONTROL_CX}
-        aria-pressed={isNonCustomTimeFrameSelected("last-60")}
-        onClick={[setTimeFrameClosed, "last-60"]}
-      >
-        Last 60 Days
-      </Button>
-      <Button
-        variant="cancel"
-        class={FILTER_CONTROL_CX}
-        aria-pressed={isNonCustomTimeFrameSelected("last-month")}
-        onClick={[setTimeFrameClosed, "last-month"]}
-      >
-        Last Month
-      </Button>
-      <Button
-        variant="cancel"
-        class={FILTER_CONTROL_CX}
-        aria-pressed={customOpen()}
-        onClick={() => {
-          setCustomOpen(true);
-          if (searchParams.onOrAfter || searchParams.onOrBefore) {
-            setSearchParams({ timeFrame: "custom" });
-          }
-        }}
-      >
-        Custom
-      </Button>
-      <div
-        aria-hidden="true"
-        class={clx(
-          "transition-opacity duration-300 md:flex-row",
-          !customOpen() && "pointer-events-none opacity-0",
-        )}
-      >
-        {" --> "}
-      </div>
-      <div
-        class={clx(
-          "flex flex-col items-center gap-2 transition-opacity duration-300 md:flex-row",
-          !customOpen() && "pointer-events-none opacity-0",
-        )}
-      >
-        <input
-          type="date"
-          autocomplete="off"
-          name="onOrAfter"
-          class={FILTER_INPUT_CX}
-          tabIndex={customOpen() ? undefined : -1}
-          value={searchParams.onOrAfter}
-          onChange={(event) => {
-            setSearchParams({ timeFrame: "custom", onOrAfter: event.target.value });
-          }}
-        />
-        <input
-          type="date"
-          autocomplete="off"
-          name="onOrBefore"
-          class={FILTER_INPUT_CX}
-          tabIndex={customOpen() ? undefined : -1}
-          value={searchParams.onOrBefore}
-          onChange={(event) => {
-            setSearchParams({ timeFrame: "custom", onOrBefore: event.target.value });
-          }}
-        />
-      </div>
+    <FilterContainer>
+      <TimeFrameFilters
+        timeFrames={[
+          { value: "last-60", label: "Last 60 Days" },
+          { value: "last-month", label: "Last Month" },
+        ]}
+      />
       <div class="relative ml-auto">
-        <Button
-          variant="cancel"
-          class={FILTER_CONTROL_CX}
-          onClick={() => setFilterCategoriesOpen((o) => !o)}
-        >
+        <FilterButton pressed={false} onClick={() => setFilterCategoriesOpen((o) => !o)}>
           {filterCategories().length
             ? `(${filterCategories().length.toString()}) Selected Categories`
             : "Categories"}
-        </Button>
+        </FilterButton>
         <Show when={filterCategoriesOpen()}>
           <FilterCategoryPopup onClose={() => setFilterCategoriesOpen(false)}>
             <For each={props.allCategories}>
@@ -350,7 +273,7 @@ function Filters(props: { allCategories: Category[] | undefined }) {
           </FilterCategoryPopup>
         </Show>
       </div>
-    </div>
+    </FilterContainer>
   );
 }
 
