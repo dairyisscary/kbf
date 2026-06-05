@@ -7,7 +7,6 @@ import { db, type DBTransaction } from "~/db";
 import { checkSession } from "~/session";
 
 import { parse } from "./csv";
-import { generateReportingData } from "./reporting";
 
 type Categories = Awaited<ReturnType<typeof categoriesForTransactionIds>>[string];
 type BaseFilters = {
@@ -101,14 +100,15 @@ export async function allTransactionsFromFilters(filter?: BaseFilters) {
   return transactionsWithCategories(transactions, undefined, { includeIds: filter?.categoryIds });
 }
 
-export async function transactionDataForReporting(
-  reportingOptions: Parameters<typeof generateReportingData>[0],
-  filter?: CategoryFilter,
-) {
+export async function getTransactionsWithCategoryFilters(options: {
+  filter?: BaseFilters;
+  categoryFilter: CategoryFilter;
+}) {
   await checkSession();
-  return generateReportingData(reportingOptions, async (baseFilter) => {
-    return transactionsWithCategories(await allTransactionQueryBase(baseFilter).execute(), filter);
-  });
+  return transactionsWithCategories(
+    await allTransactionQueryBase(options.filter).execute(),
+    options.categoryFilter,
+  );
 }
 
 export async function deleteTransaction(transactionId: string) {

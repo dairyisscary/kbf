@@ -8,7 +8,6 @@
     "@solidjs/start": "^1.0.10",
     "@tailwindcss/vite": "^4.3.0",
     "chart.js": "4.5.0",
-    "chartjs-plugin-datalabels": "^2.2.0",
     "clsx": "^2.1.1",
     "csv-parse": "^6.2.1",
     "date-fns": "^4.3.0",

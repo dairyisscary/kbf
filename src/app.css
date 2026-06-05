@@ -13,9 +13,9 @@
   --color-kbf-action: #ca1395;
   --color-kbf-action-highlight: #64b6ac;
 
-  --font-sans:
-    Inter, ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
-    "Segoe UI Symbol", "Noto Color Emoji";
+  --font-mono:
+    "Comic Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    monospace;
 
   --stroke-cap-default: "butt";
   --stroke-join-clip: "miter-clip";
@@ -81,6 +81,10 @@
   }
 
   h2 {
+    @apply text-2xl;
+  }
+
+  h3 {
     @apply text-xl;
   }
 
