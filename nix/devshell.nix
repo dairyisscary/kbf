@@ -20,7 +20,6 @@ let
     packages = [
       nodejs
       pnpm
-      (pkgs.typescript-language-server.override { inherit nodejs; })
       perSystem.self.formatter.passthru.oxfmt
     ];
 

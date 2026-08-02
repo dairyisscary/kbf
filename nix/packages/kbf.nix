@@ -3,7 +3,7 @@ let
   inherit (pkgs) lib;
 
   nodejs = pkgs.nodejs_24;
-  pnpm = pkgs.pnpm_11.override { inherit nodejs; };
+  pnpm = pkgs.pnpm_11.override { nodejs-slim = nodejs; };
 
   fs = lib.fileset;
   getSrc = mapFn: fs.toSource rec {
@@ -26,8 +26,8 @@ pkgs.stdenvNoCC.mkDerivation (finalAttrs: {
       ./../../pnpm-workspace.yaml
     ]));
     env = { inherit (finalAttrs.env) NODE_ENV; };
-    fetcherVersion = 3;
-    hash = "sha256-jbI8YKSm7mJGTwRlwFgdfFdCPhikduYeuf+hSCC9iPM=";
+    fetcherVersion = 4;
+    hash = "sha256-1rRdNI9hL9ps8oXjrR7Gg/QcPLaCQT1/cXlD7gEbamU=";
   };
 
   pnpmInstallFlags = [ "--prod" ];

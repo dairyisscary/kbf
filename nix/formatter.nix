@@ -1,8 +1,6 @@
 { perSystem, pkgs, pname, ... }:
 let
-  inherit (pkgs) lib treefmt;
-
-  inherit (perSystem.self) oxfmt;
+  inherit (pkgs) lib treefmt oxfmt;
 
   treefmtConfigFile = (pkgs.formats.toml { }).generate "treefmt.toml" {
     formatter.deadnix = {
