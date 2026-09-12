@@ -3,9 +3,9 @@ import { Router } from "@solidjs/router";
 import { FileRoutes } from "@solidjs/start/router";
 import { ErrorBoundary, Suspense } from "solid-js";
 
-import RootWrapper from "~/root-wrapper";
+import RootWrapper from "#/root-wrapper";
 
-import "~/app.css";
+import "#/app.css"; // oxlint-disable-line import/no-unassigned-import
 
 export default function App() {
   return (

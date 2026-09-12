@@ -33,21 +33,14 @@ let
 
       generate-db-types.exec = /* lang bash */ ''
         set -e
+        echo "Generating DB table TypeScript definitions..."
         pnpm exec kysely-codegen --dialect postgres --url "postgres://@/$PGDATABASE"
       '';
 
       migrate.exec = /* lang bash */ ''
         set -e
 
-        local-esbuild() {
-          "$DEVENV_ROOT/node_modules/esbuild/bin/esbuild" --platform=node --target=node${lib.versions.major nodejs.version} "$@"
-        }
-
-        rm -rf .output/scripts
-        local-esbuild --bundle --outfile=.output/scripts/migrate.cjs src/db/migrate.tsx
-        local-esbuild --outdir=.output/scripts/migrations src/db/migrations/*
-
-        node .output/scripts/migrate.cjs "$@"
+        PGMAX=1 node src/db/migrate.ts "$@"
 
         generate-db-types
       '';

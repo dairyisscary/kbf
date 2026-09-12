@@ -11,7 +11,7 @@ import {
   endOfYear,
 } from "date-fns";
 
-import { localizeDate } from "~/date";
+import { localizeDate } from "#/date";
 
 type Predicate = (when: string) => boolean;
 export type Interval = {

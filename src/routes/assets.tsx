@@ -1,14 +1,14 @@
 import { action, query, createAsync, type RouteDefinition } from "@solidjs/router";
 import { createSignal, Show } from "solid-js";
 
-import { addAsset, editAsset, deleteAsset, allAssets } from "~/asset";
-import Button from "~/button";
-import { pealFormData, Checkbox, FormRowWithId, Label } from "~/form";
-import { CrudModal } from "~/form/crud-modal";
-import { formatCurrencySign } from "~/format";
-import Icon from "~/icon";
-import { KbfSiteTitle } from "~/meta";
-import Table from "~/table";
+import { addAsset, editAsset, deleteAsset, allAssets } from "#/asset";
+import Button from "#/button";
+import { pealFormData, Checkbox, FormRowWithId, Label } from "#/form";
+import { CrudModal } from "#/form/crud-modal";
+import { formatCurrencySign } from "#/format";
+import Icon from "#/icon";
+import { KbfSiteTitle } from "#/meta";
+import Table from "#/table";
 
 type Asset = Awaited<ReturnType<typeof allAssets>>[number];
 type ModalState = false | { type: "add"; asset?: never } | { type: "edit"; asset: Asset };

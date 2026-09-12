@@ -2,23 +2,23 @@ import { createAsync, query, action, useSearchParams, type RouteDefinition } fro
 import { subDays, startOfMonth, subMonths, endOfMonth } from "date-fns";
 import { createSignal, onCleanup, createMemo, For, Show, type JSX } from "solid-js";
 
-import Button from "~/button";
-import { allCategoriesByName } from "~/category";
-import { CategoryPill } from "~/category/pip";
-import { pealFormData, Checkbox, FormRowWithId, Label } from "~/form";
-import { CrudModal } from "~/form/crud-modal";
-import { formatDate, formatDateOnly, formatDateForInput, formatCurrencySign } from "~/format";
-import Icon from "~/icon";
-import { KbfSiteTitle } from "~/meta";
-import { FilterButton, FilterContainer, TimeFrameFilters } from "~/query-filters";
-import Table from "~/table";
+import Button from "#/button";
+import { allCategoriesByName } from "#/category";
+import { CategoryPill } from "#/category/pip";
+import { pealFormData, Checkbox, FormRowWithId, Label } from "#/form";
+import { CrudModal } from "#/form/crud-modal";
+import { formatDate, formatDateOnly, formatDateForInput, formatCurrencySign } from "#/format";
+import Icon from "#/icon";
+import { KbfSiteTitle } from "#/meta";
+import { FilterButton, FilterContainer, TimeFrameFilters } from "#/query-filters";
+import Table from "#/table";
 import {
   allTransactionsFromFilters,
   addTransaction,
   editTransaction,
   deleteTransaction,
-} from "~/transaction";
-import { AmountPill, CategoryPipItems, CategorySelectFormRow } from "~/transaction/pip";
+} from "#/transaction";
+import { AmountPill, CategoryPipItems, CategorySelectFormRow } from "#/transaction/pip";
 
 type Transaction = Awaited<ReturnType<typeof allTransactionsFromFilters>>[number];
 type Category = Awaited<ReturnType<typeof allCategoriesByName>>[number];

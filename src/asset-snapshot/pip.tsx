@@ -1,4 +1,4 @@
-import { formatMoneyAmount } from "~/format";
+import { formatMoneyAmount } from "#/format";
 
 export function AssetValuePill(props: {
   assetSnapshot: { amount: number };

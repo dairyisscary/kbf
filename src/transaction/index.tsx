@@ -2,9 +2,9 @@
 import { v4 } from "uuid";
 import * as z from "zod";
 
-import { categoriesForTransactionIds, type CategoryFilter } from "~/category";
-import { db, type DBTransaction } from "~/db";
-import { checkSession } from "~/session";
+import { categoriesForTransactionIds, type CategoryFilter } from "#/category";
+import { db, type DBTransaction } from "#/db";
+import { checkSession } from "#/session";
 
 import { parse } from "./csv";
 
@@ -82,16 +82,16 @@ async function transactionsWithCategories<T extends { id: string }>(
     transactions.map((t) => t.id),
     filter,
   );
-  const transactionsWithCategories = transactions.map((transaction) => ({
+  const withCategories = transactions.map((transaction) => ({
     ...transaction,
     categories: categoriesMap[transaction.id] || [],
   }));
   const includeIds = transactionOptions?.includeIds;
   return includeIds?.length
-    ? transactionsWithCategories.filter((transaction) => {
+    ? withCategories.filter((transaction) => {
         return transaction.categories.some((category) => includeIds.includes(category.id));
       })
-    : transactionsWithCategories;
+    : withCategories;
 }
 
 export async function allTransactionsFromFilters(filter?: BaseFilters) {

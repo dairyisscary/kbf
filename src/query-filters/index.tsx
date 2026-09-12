@@ -8,8 +8,8 @@ import {
   type JSXElement,
 } from "solid-js";
 
-import Button from "~/button";
-import clx from "~/clx";
+import Button from "#/button";
+import clx from "#/clx";
 
 type OnClick = ComponentProps<typeof Button>["onClick"];
 

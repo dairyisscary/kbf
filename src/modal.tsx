@@ -3,7 +3,7 @@ import { createEffect, onCleanup, type ComponentProps } from "solid-js";
 type Props = Omit<ComponentProps<"dialog">, "class"> & { onClose: () => void };
 
 export default function Modal(props: Props) {
-  let dialogRef: HTMLDialogElement | undefined; // eslint-disable-line no-unassigned-vars
+  let dialogRef: HTMLDialogElement | undefined; // oxlint-disable-line no-unassigned-vars
   createEffect(() => {
     const { body } = document;
     const keydownCb = (event: KeyboardEvent) => {

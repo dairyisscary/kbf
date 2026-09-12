@@ -1,14 +1,14 @@
 import { action, query, createAsync, type RouteDefinition } from "@solidjs/router";
 import { createSignal, createUniqueId, Show, For } from "solid-js";
 
-import Button from "~/button";
-import { allCategoriesWithCounts, deleteCategory, addCategory, editCategory } from "~/category";
-import { CategoryColorPip, CategoryColorSelector, CategoryKindIcon } from "~/category/pip";
-import { pealFormData, Checkbox, FormRowWithId, Label, RadioTabs, FieldSet } from "~/form";
-import { CrudModal } from "~/form/crud-modal";
-import Icon from "~/icon";
-import { KbfSiteTitle } from "~/meta";
-import Table from "~/table";
+import Button from "#/button";
+import { allCategoriesWithCounts, deleteCategory, addCategory, editCategory } from "#/category";
+import { CategoryColorPip, CategoryColorSelector, CategoryKindIcon } from "#/category/pip";
+import { pealFormData, Checkbox, FormRowWithId, Label, RadioTabs, FieldSet } from "#/form";
+import { CrudModal } from "#/form/crud-modal";
+import Icon from "#/icon";
+import { KbfSiteTitle } from "#/meta";
+import Table from "#/table";
 
 type CountedCategory = Awaited<ReturnType<typeof allCategoriesWithCounts>>[number];
 type ModalState =

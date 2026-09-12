@@ -1,12 +1,13 @@
 import { createUniqueId, type JSX, type ComponentProps, For, createMemo, untrack } from "solid-js";
 
-import clx from "~/clx";
-import Icon from "~/icon";
+import clx from "#/clx";
+import Icon from "#/icon";
 
 const LABEL_CX = "text-lg font-medium";
 const CLICK_LABEL_CX = clx(LABEL_CX, "cursor-pointer");
 
 export function Label(props: ComponentProps<"label">) {
+  // oxlint-disable-next-line jsx-a11y/label-has-associated-control
   return <label {...props} class={clx(CLICK_LABEL_CX, props.class)} />;
 }
 

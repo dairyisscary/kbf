@@ -1,6 +1,6 @@
 import { format } from "date-fns";
 
-import { localizeDate } from "~/date";
+import { localizeDate } from "#/date";
 
 type Currency = "usd" | "euro";
 

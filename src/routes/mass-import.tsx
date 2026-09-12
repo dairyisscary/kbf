@@ -1,10 +1,10 @@
 import { action, query, createAsync, useSubmission, type RouteDefinition } from "@solidjs/router";
 import { createEffect, createSignal, Show } from "solid-js";
 
-import Alert from "~/alert";
-import Button from "~/button";
-import { allCategoriesByName } from "~/category";
-import clx from "~/clx";
+import Alert from "#/alert";
+import Button from "#/button";
+import { allCategoriesByName } from "#/category";
+import clx from "#/clx";
 import {
   pealFormData,
   FormFooter,
@@ -12,11 +12,11 @@ import {
   FormRowWithId,
   Label,
   NonInteractiveLabel,
-} from "~/form";
-import { formatCurrencySign } from "~/format";
-import { KbfSiteTitle } from "~/meta";
-import { massImport } from "~/transaction";
-import { CategorySelectFormRow } from "~/transaction/pip";
+} from "#/form";
+import { formatCurrencySign } from "#/format";
+import { KbfSiteTitle } from "#/meta";
+import { massImport } from "#/transaction";
+import { CategorySelectFormRow } from "#/transaction/pip";
 
 const getAllCategories = query(
   () => allCategoriesByName({ excludeArchived: true }),
@@ -37,7 +37,7 @@ export default function MassImport() {
   const allCategories = createAsync(() => getAllCategories());
   const [currency, setCurrency] = createSignal<Parameters<typeof formatCurrencySign>[0]>("usd");
   const submitting = useSubmission(massImportAction);
-  let formRef: undefined | HTMLFormElement; // eslint-disable-line no-unassigned-vars
+  let formRef: undefined | HTMLFormElement; // oxlint-disable-line no-unassigned-vars
   const reset = () => Boolean(submitting.result && !submitting.error);
   createEffect(() => {
     if (reset()) {

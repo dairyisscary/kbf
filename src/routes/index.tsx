@@ -1,21 +1,21 @@
 import { createAsync, query, useSearchParams, A, type RouteDefinition } from "@solidjs/router";
 import { createMemo, createSignal, For, Show, type ComponentProps } from "solid-js";
 
-import { allCategoriesByName, type CategoryFilter } from "~/category";
-import { CategoryColorPip, getColorsForCode } from "~/category/pip";
-import { BarChart, colorizeActiveTooltipItem, LineChart } from "~/chart";
-import clx from "~/clx";
+import { allCategoriesByName, type CategoryFilter } from "#/category";
+import { CategoryColorPip, getColorsForCode } from "#/category/pip";
+import { BarChart, colorizeActiveTooltipItem, LineChart } from "#/chart";
+import clx from "#/clx";
 import {
   formatMoneyNoCents,
   formatMoneyAmount,
   formatFractionAsPercent,
   formatRightAlignPadding,
-} from "~/format";
-import Icon from "~/icon";
-import { KbfSiteTitle } from "~/meta";
-import { getAssetsAndTransactionsForReporting } from "~/reporting";
-import TabGroup from "~/tab-group";
-import { AmountPill } from "~/transaction/pip";
+} from "#/format";
+import Icon from "#/icon";
+import { KbfSiteTitle } from "#/meta";
+import { getAssetsAndTransactionsForReporting } from "#/reporting";
+import TabGroup from "#/tab-group";
+import { AmountPill } from "#/transaction/pip";
 
 type Strategy = "separate" | "merged-usd" | "merged-euro";
 type BarChartProps = Pick<ComponentProps<typeof BarChart>, "data" | "options">;
@@ -235,7 +235,11 @@ function formatAssetFooter(lookup: AssetSums[], items: { dataIndex: number }[]) 
   });
 
   return itemsWithPercent.map((item, index) => {
-    const formatted = formatRightAlignPadding(itemsWithPercent, index, (item) => item.value);
+    const formatted = formatRightAlignPadding(
+      itemsWithPercent,
+      index,
+      (formatItem) => formatItem.value,
+    );
     return `${item.label}: ${formatted}`;
   });
 }
@@ -340,13 +344,17 @@ export default function Dashboard() {
             callbacks: {
               labelTextColor: colorizeActiveTooltipItem,
               label({ dataset, datasetIndex, dataIndex }) {
-                const formatted = formatRightAlignPadding(datasets, datasetIndex, (dataset) => {
-                  const indexData = dataset.data[dataIndex]!;
-                  return formatMoneyNoCents({
-                    amount: indexData.y || 0,
-                    currency: indexData.currency,
-                  })!;
-                });
+                const formatted = formatRightAlignPadding(
+                  datasets,
+                  datasetIndex,
+                  (formatDataset) => {
+                    const indexData = formatDataset.data[dataIndex]!;
+                    return formatMoneyNoCents({
+                      amount: indexData.y || 0,
+                      currency: indexData.currency,
+                    })!;
+                  },
+                );
                 return `${dataset.label!}: ${formatted}`;
               },
               footer: formatAssetFooter.bind(null, sumsLookup),
