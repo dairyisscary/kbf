@@ -28,7 +28,7 @@ pkgs.stdenvNoCC.mkDerivation (finalAttrs: {
     ]));
     env = { inherit (finalAttrs.env) NODE_ENV; };
     fetcherVersion = 4;
-    hash = "sha256-0uproopcs5U1wmRRfS9njDxJ928RVmi0KayTBOORZa4=";
+    hash = "sha256-OHsXEqOoXYfz54llzUeLD85OcQJmuDVb3Q2TYpO3vIo=";
   };
 
   pnpmInstallFlags = [ "--prod" ];
@@ -44,7 +44,7 @@ pkgs.stdenvNoCC.mkDerivation (finalAttrs: {
   buildPhase = ''
     runHook preBuild
 
-    pnpm exec vinxi build
+    pnpm exec vite build
 
     runHook postBuild
   '';
@@ -53,8 +53,9 @@ pkgs.stdenvNoCC.mkDerivation (finalAttrs: {
     runHook preInstall
 
     mkdir -p $out/{opt,bin}
-    cp -r .output/{server,public} $out/opt
-    echo -e "#!${lib.getExe nodejs} $out/opt/server/index.mjs" > $out/bin/kbf
+    cp -r dist/{server,client} $out/opt
+    cp -r node_modules $out/opt/server
+    echo -e "#!${lib.getExe nodejs} $out/opt/server/node.js" > $out/bin/kbf
     chmod +x $out/bin/kbf
 
     runHook postInstall

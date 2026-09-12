@@ -1,5 +1,6 @@
+import type { JSX, ComponentProps } from "@solidjs/web";
 import type { CategoryKind } from "kysely-codegen";
-import { createSignal, For, createEffect, type JSX, type ComponentProps } from "solid-js";
+import { createSignal, For, untrack } from "solid-js";
 
 import {
   CategoryColorPip,
@@ -7,19 +8,18 @@ import {
   CategoryPill,
   SelectableCategoryPill,
 } from "#/category/pip";
-import clx from "#/clx";
 import { FormRow, NonInteractiveLabel } from "#/form";
 import { formatMoneyAmount } from "#/format";
 
 export function AmountPill(props: { transaction: { amount: number; currency: "usd" | "euro" } }) {
   return (
     <span
-      class={clx(
+      class={[
         "kbf-pill font-mono first-letter:pr-0.5",
         props.transaction.amount >= 0
           ? "bg-kbf-action-highlight text-kbf-dark-purple"
           : "bg-kbf-text-accent text-kbf-text-highlight",
-      )}
+      ]}
     >
       {formatMoneyAmount(props.transaction)}
     </span>
@@ -49,28 +49,23 @@ export function CategoryPipItems(props: {
   );
 }
 
-function getInitSelectionIds(
-  allCategories: { id: string }[],
-  initCategoryIds: { id: string }[] | undefined,
-): string[] {
-  if (!initCategoryIds) {
-    return [];
-  }
-  // Never include a selected category that's not an option.
-  const allCategoryIds = new Set(allCategories.map((category) => category.id));
-  return initCategoryIds.filter((cat) => allCategoryIds.has(cat.id)).map((cat) => cat.id);
-}
-
 export function CategorySelectFormRow(props: {
   allCategories: ({ id: string } & ComponentProps<typeof CategoryPill>["category"])[];
-  reset?: boolean;
   label: JSX.Element;
   name: string;
   initCategories?: { id: string }[];
 }) {
-  const [selectedCategoryIds, setSelectedCategoryIds] = createSignal(
-    getInitSelectionIds(props.allCategories, props.initCategories),
-  );
+  const [selectedCategoryIds, setSelectedCategoryIds] = createSignal(() => {
+    const { initCategories } = props;
+    if (!initCategories?.length) {
+      return [];
+    }
+    const allCategoryIds = new Set(
+      untrack(() => props.allCategories).map((category) => category.id),
+    );
+    return initCategories.filter((cat) => allCategoryIds.has(cat.id)).map((cat) => cat.id);
+  });
+
   const toggleCategory = ({ id }: { id: string }, event: MouseEvent) => {
     setSelectedCategoryIds((current) => {
       if (event.ctrlKey) {
@@ -79,12 +74,6 @@ export function CategorySelectFormRow(props: {
       return current.includes(id) ? [] : [id];
     });
   };
-
-  createEffect(() => {
-    if (props.reset) {
-      setSelectedCategoryIds(getInitSelectionIds(props.allCategories, props.initCategories));
-    }
-  });
 
   return (
     <FormRow>

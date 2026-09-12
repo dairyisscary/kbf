@@ -23,7 +23,7 @@ let
       perSystem.self.formatter.passthru.oxfmt
     ];
 
-    processes.devserver.exec = "pnpm exec vinxi dev";
+    processes.devserver.exec = "pnpm exec vite";
 
     scripts = {
       dev.exec = /* lang bash */ ''

@@ -1,10 +1,9 @@
-import { action, query, createAsync, useSubmission, type RouteDefinition } from "@solidjs/router";
-import { createEffect, createSignal, Show } from "solid-js";
+import { action, defineRoute, query, useSubmissions } from "@solidjs/router";
+import { createSignal, createMemo, Show, Loading } from "solid-js";
 
-import Alert from "#/alert";
-import Button from "#/button";
+import { Alert } from "#/alert";
+import { Button } from "#/button";
 import { allCategoriesByName } from "#/category";
-import clx from "#/clx";
 import {
   pealFormData,
   FormFooter,
@@ -13,90 +12,110 @@ import {
   Label,
   NonInteractiveLabel,
 } from "#/form";
-import { formatCurrencySign } from "#/format";
+import { formatCurrencySign, formatPlural } from "#/format";
 import { KbfSiteTitle } from "#/meta";
+import { requireUser } from "#/session";
 import { massImport } from "#/transaction";
 import { CategorySelectFormRow } from "#/transaction/pip";
 
-const getAllCategories = query(
-  () => allCategoriesByName({ excludeArchived: true }),
-  "categoriesForMassImport",
-);
-
-export const route: RouteDefinition = {
-  load() {
-    void getAllCategories();
-  },
-};
+const getAllCategories = query(async () => {
+  "use server";
+  requireUser();
+  return allCategoriesByName({ excludeArchived: true });
+}, "categoriesNoArchived");
 
 const massImportAction = action((formData: FormData) => {
+  "use server";
+  requireUser();
   return massImport(pealFormData(formData, ["categoryIds"]));
-}, "massImport");
+});
+
+export const route = defineRoute({
+  preload() {
+    void getAllCategories();
+  },
+});
 
 export default function MassImport() {
-  const allCategories = createAsync(() => getAllCategories());
+  const allCategories = createMemo(() => getAllCategories());
+
+  const [selectedCategories, setSelectedCategories] = createSignal([]);
+
   const [currency, setCurrency] = createSignal<Parameters<typeof formatCurrencySign>[0]>("usd");
-  const submitting = useSubmission(massImportAction);
-  let formRef: undefined | HTMLFormElement; // oxlint-disable-line no-unassigned-vars
-  const reset = () => Boolean(submitting.result && !submitting.error);
-  createEffect(() => {
-    if (reset()) {
+  let formRef: HTMLFormElement | undefined; // oxlint-disable-line no-unassigned-vars
+  massImportAction.onSettled((submission) => {
+    if (!submission.error) {
       formRef!.reset();
       setCurrency("usd");
+      setSelectedCategories([]); // reset the key
     }
   });
+
+  const submissions = useSubmissions(massImportAction);
+  const latestSubmission = createMemo(() => submissions.at(-1));
+
   return (
     <>
       <KbfSiteTitle>Mass Import</KbfSiteTitle>
       <h1>Mass Import</h1>
       <form method="post" action={massImportAction} ref={formRef}>
-        <Show when={submitting.error as null | Error}>
-          {(error) => <Alert class="mt-6">{error().message}</Alert>}
-        </Show>
+        <Loading>
+          <Show when={latestSubmission()?.error}>
+            {(error) => <Alert class="mt-6">{error().message}</Alert>}
+          </Show>
 
-        <FormRowWithId>
-          {(id) => (
-            <>
-              <Label for={id}>Comma-Separated Values</Label>
-              <textarea class="min-h-[200px]" id={id} name="csv" required />
-            </>
-          )}
-        </FormRowWithId>
+          <FormRowWithId>
+            {(id) => (
+              <>
+                <Label for={id}>Comma-Separated Values</Label>
+                <textarea class="min-h-[200px]" id={id} name="csv" required />
+              </>
+            )}
+          </FormRowWithId>
 
-        <FormRow>
-          <NonInteractiveLabel>Currency Type</NonInteractiveLabel>
-          <div>
-            <Button
-              class="text-xl"
-              onClick={() => setCurrency((c) => (c === "euro" ? "usd" : "euro"))}
+          <FormRow>
+            <NonInteractiveLabel>Currency Type</NonInteractiveLabel>
+            <div>
+              <Button
+                class="text-xl"
+                onClick={() => setCurrency((c) => (c === "euro" ? "usd" : "euro"))}
+              >
+                {formatCurrencySign(currency())}
+              </Button>
+            </div>
+            <input type="hidden" name="currency" value={currency()} />
+          </FormRow>
+
+          <CategorySelectFormRow
+            initCategories={selectedCategories()}
+            allCategories={allCategories().filter((c) => c.kind === "payment")}
+            name="categoryIds"
+            label="Payment"
+          />
+
+          <CategorySelectFormRow
+            initCategories={selectedCategories()}
+            allCategories={allCategories().filter((c) => c.kind === "basic")}
+            name="categoryIds"
+            label="Categories"
+          />
+
+          <FormFooter>
+            <div
+              class={[
+                "transition-opacity duration-300",
+                !latestSubmission()?.result && "opacity-0",
+              ]}
             >
-              {formatCurrencySign(currency())}
-            </Button>
-          </div>
-          <input type="hidden" name="currency" value={currency()} />
-        </FormRow>
-
-        <CategorySelectFormRow
-          reset={reset()}
-          allCategories={allCategories()?.filter((c) => c.kind === "payment") || []}
-          name="categoryIds"
-          label="Payment"
-        />
-
-        <CategorySelectFormRow
-          reset={reset()}
-          allCategories={allCategories()?.filter((c) => c.kind === "basic") || []}
-          name="categoryIds"
-          label="Categories"
-        />
-
-        <FormFooter>
-          <div class={clx("transition-opacity duration-300", !submitting.result && "opacity-0")}>
-            {submitting.result &&
-              `Inserted ${submitting.result.insertedCount.toString()} new transaction(s) -- skipped ${submitting.result.skippedCount.toString()} duplicate transaction(s).`}
-          </div>
-          <Button type="submit">Import</Button>
-        </FormFooter>
+              <Show keyed when={latestSubmission()?.result}>
+                {(result) =>
+                  `Inserted ${formatPlural(result.insertedCount, "new transaction")} -- skipped ${formatPlural(result.skippedCount, "duplicate transaction")}.`
+                }
+              </Show>
+            </div>
+            <Button type="submit">Import</Button>
+          </FormFooter>
+        </Loading>
       </form>
     </>
   );

@@ -1,11 +1,9 @@
-"use server";
 import { sql } from "kysely";
 import { v7 } from "uuid";
-import { z } from "zod";
+import * as z from "zod";
 
 import { allAssets } from "#/asset";
 import { db } from "#/db";
-import { checkSession } from "#/session";
 
 type BaseFilters = {
   onOrBefore?: string | null;
@@ -19,7 +17,6 @@ const INPUT_SCHEMA = z.object({
 const DEFAULT_SELECT = ["id", "amount", "when", "asset_id as assetId"] as const;
 
 export async function addAssetSnapshot(assetId: string, inputs: Record<string, unknown>) {
-  await checkSession();
   const snapshot = INPUT_SCHEMA.parse(inputs);
   const id = v7();
   const now = new Date();
@@ -37,7 +34,6 @@ export async function addAssetSnapshot(assetId: string, inputs: Record<string, u
 }
 
 export async function editAssetSnapshot(assetSnapshotId: string, inputs: Record<string, unknown>) {
-  await checkSession();
   const snapshot = INPUT_SCHEMA.parse(inputs);
   await db
     .updateTable("asset_snapshot")
@@ -53,7 +49,6 @@ export async function editAssetSnapshot(assetSnapshotId: string, inputs: Record<
 }
 
 export async function deleteAssetSnapshot(assetSnapshotId: string) {
-  await checkSession();
   await db
     .deleteFrom("asset_snapshot")
     .where("id", "=", assetSnapshotId)
@@ -74,7 +69,6 @@ function allAssetSnapshotsQueryBase(filters?: BaseFilters) {
 }
 
 export async function mostRecentSnapshotsAsOf(asOfWhen: string) {
-  await checkSession();
   return db
     .selectFrom("asset_snapshot")
     .select(DEFAULT_SELECT.map((col) => `asset_snapshot.${col}` as const))
@@ -95,7 +89,6 @@ export async function mostRecentSnapshotsAsOf(asOfWhen: string) {
 }
 
 export async function allAssetSnapshotsByAsset(filters?: BaseFilters) {
-  await checkSession();
   const [fetchedSnapshots, fetchedAssets] = await Promise.all([
     allAssetSnapshotsQueryBase(filters).orderBy("when", "desc").execute(),
     allAssets(),

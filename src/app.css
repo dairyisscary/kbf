@@ -137,3 +137,5 @@
     @apply mx-auto;
   }
 }
+
+@custom-variant aria-current (&:where([aria-current]):not([aria-current="false"]));

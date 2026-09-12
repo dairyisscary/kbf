@@ -1,20 +1,22 @@
-import { createAsync, query, useSearchParams, A, type RouteDefinition } from "@solidjs/router";
-import { createMemo, createSignal, For, Show, type ComponentProps } from "solid-js";
+import { query, useSearchParams, defineRoute } from "@solidjs/router";
+import { type ComponentProps } from "@solidjs/web";
+import { createMemo, createSignal, For, Loading } from "solid-js";
 
 import { allCategoriesByName, type CategoryFilter } from "#/category";
 import { CategoryColorPip, getColorsForCode } from "#/category/pip";
 import { BarChart, colorizeActiveTooltipItem, LineChart } from "#/chart";
-import clx from "#/clx";
 import {
   formatMoneyNoCents,
   formatMoneyAmount,
   formatFractionAsPercent,
   formatRightAlignPadding,
 } from "#/format";
-import Icon from "#/icon";
+import { Icon } from "#/icon";
 import { KbfSiteTitle } from "#/meta";
+import { paths } from "#/navigation";
 import { getAssetsAndTransactionsForReporting } from "#/reporting";
-import TabGroup from "#/tab-group";
+import { requireUser } from "#/session";
+import { TabGroup } from "#/tab-group";
 import { AmountPill } from "#/transaction/pip";
 
 type Strategy = "separate" | "merged-usd" | "merged-euro";
@@ -41,12 +43,15 @@ const ONE_EURO_IN_USD = 1.14;
 const CATEGORY_FILTER: CategoryFilter = { includeKinds: ["basic"] };
 const SUM_LABEL = "Sum";
 
-const getAllCategoriesForReport = query(
-  () => allCategoriesByName({ includeUncategorized: true, ...CATEGORY_FILTER }),
-  "categoriesForReport",
-);
+const getAllCategoriesForReport = query(async () => {
+  "use server";
+  requireUser();
+  return allCategoriesByName({ includeUncategorized: true, ...CATEGORY_FILTER });
+}, "categoriesByFilterIncludeUncat");
 
-const getReportData = query((timeline: string | undefined) => {
+const getReportData = query(async (timeline: string | null) => {
+  "use server";
+  requireUser();
   const options: Parameters<typeof getAssetsAndTransactionsForReporting>[0] = {
     assetSnapshot: {
       interval: { type: DEFAULT_TIMELINE, includeCurrent: true },
@@ -69,16 +74,15 @@ const getReportData = query((timeline: string | undefined) => {
       includeCurrent: true,
     };
   }
-
   return getAssetsAndTransactionsForReporting(options);
-}, "allDataForReporting");
+}, "allReporting");
 
-export const route: RouteDefinition = {
-  load(args) {
+export const route = defineRoute({
+  preload({ location }) {
     void getAllCategoriesForReport();
-    void getReportData(args.location.query.timeline as string | undefined);
+    void getReportData((location.query.timeline as string | undefined) || null);
   },
-};
+});
 
 function zipEuroIntoUsd(options: { euro: number[]; usd: number[] }): number[] {
   return options.usd.map((usd, index) => {
@@ -246,16 +250,15 @@ function formatAssetFooter(lookup: AssetSums[], items: { dataIndex: number }[]) 
 
 export default function Dashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const reportData = createAsync(() => getReportData(searchParams.timeline as string | undefined));
-  const allCategories = createAsync(() => getAllCategoriesForReport());
+  const reportData = createMemo(() =>
+    getReportData((searchParams.timeline as string | undefined) || null),
+  );
+  const allCategories = createMemo(() => getAllCategoriesForReport());
 
   const [currencyStrategy, setCurrencyStrategy] = createSignal<Strategy>("merged-usd");
 
-  const assetGraphProps = createMemo((): LineChartProps | null => {
+  const assetGraphProps = createMemo((): LineChartProps => {
     const data = reportData();
-    if (!data) {
-      return null;
-    }
 
     const currencyStrat = currencyStrategy();
     const isSeperateCurrency = currencyStrat === "separate";
@@ -372,7 +375,7 @@ export default function Dashboard() {
       if (ctrlClicked) {
         return new Set(
           allCategories()
-            ?.map((c) => c.id)
+            .map((c) => c.id)
             .filter((id) => id !== categoryId),
         );
       }
@@ -387,11 +390,8 @@ export default function Dashboard() {
     });
   };
 
-  const spendGraph = createMemo((): BarChartProps | null => {
+  const spendGraph = createMemo((): BarChartProps => {
     const data = reportData();
-    if (!data) {
-      return null;
-    }
     const isIgnoredLookup = ignored();
     const currencyStrat = currencyStrategy();
     const { intervaledCategories } = data.transaction;
@@ -467,11 +467,8 @@ export default function Dashboard() {
   });
 
   const allCategoriesWithSums = createMemo(() => {
-    const sums = reportData()?.transaction.sumsPerCategory;
-    if (!sums) {
-      return null;
-    }
-    return allCategories()?.map((category) => ({
+    const sums = reportData().transaction.sumsPerCategory;
+    return allCategories().map((category) => ({
       category,
       sums: sums.find((sum) => sum.category.id === category.id),
     }));
@@ -509,53 +506,51 @@ export default function Dashboard() {
       </header>
 
       <div class="space-y-14">
-        <Show when={assetGraphProps()}>
-          {(graph) => (
-            <section class="space-y-8">
-              <h2>Wealth</h2>
-              <LineChart class={CHART_CX} data={graph().data} options={graph().options} />
-            </section>
-          )}
-        </Show>
+        <section class="space-y-8">
+          <h2>Wealth</h2>
+          <LineChart
+            class={CHART_CX}
+            data={assetGraphProps().data}
+            options={assetGraphProps().options}
+          />
+        </section>
 
-        <Show when={spendGraph()}>
-          {(graph) => (
-            <section class="space-y-8">
-              <h2>Spend</h2>
-              <BarChart class={CHART_CX} data={graph().data} options={graph().options} />
+        <section class="space-y-8">
+          <h2>Spend</h2>
+          <BarChart class={CHART_CX} data={spendGraph().data} options={spendGraph().options} />
 
-              <div>
-                <h3 class="mb-4">Totals</h3>
-                <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-                  <For each={allCategoriesWithSums()}>
-                    {({ category, sums }) => (
-                      <div
-                        class={clx(
-                          "flex flex-col justify-between gap-7 rounded-sm bg-kbf-light-purple p-3 transition-opacity duration-300",
-                          ignored().has(category.id) && "opacity-40",
-                        )}
-                      >
-                        <div class="flex items-center gap-2">
-                          <CategoryColorPip size="sm" class="shrink-0" code={category.colorCode} />
-                          <A
-                            href={`/transactions?filterCategoryIds=${category.id}`}
-                            class="mr-auto overflow-hidden text-ellipsis text-kbf-text-highlight hover:underline lg:text-lg"
-                          >
-                            {category.name}
-                          </A>
-                          <button type="button" onClick={[toggleIgnore, category.id]}>
-                            <Icon size="sm" name={ignored().has(category.id) ? "eye" : "eye-off"} />
-                          </button>
-                        </div>
-                        <Sums data={sums} />
+          <Loading>
+            <div>
+              <h3 class="mb-4">Totals</h3>
+              <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                <For each={allCategoriesWithSums()}>
+                  {({ category, sums }) => (
+                    <div
+                      class={[
+                        "flex flex-col justify-between gap-7 rounded-sm bg-kbf-light-purple p-3 transition-opacity duration-300",
+                        ignored().has(category.id) && "opacity-40",
+                      ]}
+                    >
+                      <div class="flex items-center gap-2">
+                        <CategoryColorPip size="sm" class="shrink-0" code={category.colorCode} />
+                        <a
+                          href={paths.transactions({ filterCategoryIds: category.id })}
+                          class="mr-auto overflow-hidden text-ellipsis text-kbf-text-highlight hover:underline lg:text-lg"
+                        >
+                          {category.name}
+                        </a>
+                        <button type="button" onClick={[toggleIgnore, category.id]}>
+                          <Icon size="sm" name={ignored().has(category.id) ? "eye" : "eye-off"} />
+                        </button>
                       </div>
-                    )}
-                  </For>
-                </div>
+                      <Sums data={sums} />
+                    </div>
+                  )}
+                </For>
               </div>
-            </section>
-          )}
-        </Show>
+            </div>
+          </Loading>
+        </section>
       </div>
     </>
   );

@@ -1,6 +1,5 @@
-import { For, type JSX } from "solid-js";
-
-import clx from "#/clx";
+import type { JSX } from "@solidjs/web";
+import { For } from "solid-js";
 
 type Props<V> = {
   value: V;
@@ -9,17 +8,17 @@ type Props<V> = {
   class?: string;
 };
 
-export default function TabGroup<V>(props: Props<V>) {
+export function TabGroup<V>(props: Props<V>) {
   return (
-    <div class={clx("inline-flex items-stretch rounded-md bg-kbf-light-purple", props.class)}>
+    <div class={["inline-flex items-stretch rounded-md bg-kbf-light-purple", props.class]}>
       <For each={props.items}>
         {(item) => (
           <button
             type="button"
-            class={clx(
+            class={[
               "flex-1 px-2 py-1 text-sm",
               item.value === props.value && "bg-kbf-action text-kbf-text-highlight",
-            )}
+            ]}
             onClick={[props.onChange, item.value]}
           >
             {item.label}

@@ -70,3 +70,11 @@ export function formatRightAlignPadding<T>(
   const thisFmt = formatted[thisIndex]!;
   return thisFmt.padStart(maxLength, " ");
 }
+
+export function formatPlural(
+  count: number,
+  singularLabel: string,
+  pluralLabel = `${singularLabel}s`,
+): string {
+  return `${count} ${count === 1 ? singularLabel : pluralLabel}`;
+}

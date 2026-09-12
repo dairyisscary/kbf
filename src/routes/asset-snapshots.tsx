@@ -1,6 +1,7 @@
-import { action, query, createAsync, type RouteDefinition, useSearchParams } from "@solidjs/router";
+import { action, defineRoute, query, useAction, type RouteProps } from "@solidjs/router";
+import { reload, type JSX } from "@solidjs/web";
 import { subDays } from "date-fns";
-import { createSignal, Switch, Match, For, untrack } from "solid-js";
+import { createSignal, createMemo, Switch, Match, For, untrack, Loading } from "solid-js";
 
 import {
   allAssetSnapshotsByAsset,
@@ -9,14 +10,16 @@ import {
   editAssetSnapshot,
 } from "#/asset-snapshot";
 import { AssetValuePill } from "#/asset-snapshot/pip";
-import Button from "#/button";
+import { Button } from "#/button";
 import { pealFormData, FormRowWithId, Label, FormRowDivider } from "#/form";
 import { CrudModal } from "#/form/crud-modal";
 import { formatDate, formatDateOnly } from "#/format";
-import Icon from "#/icon";
+import { Icon } from "#/icon";
 import { KbfSiteTitle } from "#/meta";
+import { PhantomText } from "#/phantom";
 import { FilterContainer, TimeFrameFilters } from "#/query-filters";
-import Table from "#/table";
+import { requireUser } from "#/session";
+import { Table } from "#/table";
 
 type AssetAndSnapshots = Awaited<ReturnType<typeof allAssetSnapshotsByAsset>>[number];
 type Asset = AssetAndSnapshots["asset"];
@@ -26,34 +29,36 @@ type ModalState =
   | { type: "add"; snapshot?: never }
   | { type: "edit"; snapshot: AssetSnapshot; asset: Asset };
 
-const getAllAssetSnapshotsForListing = query(
-  (params: Record<string, string | string[] | undefined>) => {
-    switch (params.timeFrame) {
-      case "custom":
-        return allAssetSnapshotsByAsset({
-          onOrAfter: params.onOrAfter as string,
-          onOrBefore: params.onOrBefore as string,
-        });
-      case "last-60":
-      default:
-        return allAssetSnapshotsByAsset({
-          onOrAfter: formatDateOnly(subDays(new Date(), 61)),
-        });
-    }
-  },
-  "allAssetSnapshotsForListing",
-);
-export const route: RouteDefinition = {
-  load(args) {
-    void getAllAssetSnapshotsForListing(args.location.query);
-  },
-};
+const getAllAssetSnapshotsForListing = query(async (search: string) => {
+  "use server";
+  requireUser();
+  const params = new URLSearchParams(search);
+  switch (params.get("timeFrame")) {
+    case "custom":
+      return allAssetSnapshotsByAsset({
+        onOrAfter: params.get("onOrAfter"),
+        onOrBefore: params.get("onOrBefore"),
+      });
+    case "last-60":
+    default:
+      return allAssetSnapshotsByAsset({
+        onOrAfter: formatDateOnly(subDays(new Date(), 61)),
+      });
+  }
+}, "assetSnapshots");
 
-const deleteAssetSnapshotAction = action(deleteAssetSnapshot, "deleteAssetSnapshot");
+const deleteAssetSnapshotAction = action(async (id: string) => {
+  "use server";
+  requireUser();
+  await deleteAssetSnapshot(id);
+  return reload({ revalidate: getAllAssetSnapshotsForListing.key });
+});
 
-const addSnapshotAction = action((formData: FormData) => {
+const addSnapshotAction = action(async (formData: FormData) => {
+  "use server";
+  requireUser();
   const pealed = pealFormData(formData);
-  return Promise.all(
+  await Promise.all(
     Object.entries(pealed).flatMap(([key, value]) => {
       if (!value || !key.startsWith("multi|")) {
         return [];
@@ -65,12 +70,16 @@ const addSnapshotAction = action((formData: FormData) => {
       });
     }),
   );
-}, "addSnapshot");
+  return reload({ revalidate: getAllAssetSnapshotsForListing.key });
+});
 
-const editSnapshotAction = action((formData: FormData) => {
+const editSnapshotAction = action(async (formData: FormData) => {
+  "use server";
+  requireUser();
   const pealed = pealFormData(formData);
-  return editAssetSnapshot(pealed.editingId as string, pealed);
-}, "editSnapshot");
+  await editAssetSnapshot(pealed.editingId as string, pealed);
+  return reload({ revalidate: getAllAssetSnapshotsForListing.key });
+});
 
 function SnapshotDateInput(props: { value?: string }) {
   return (
@@ -155,16 +164,24 @@ function CaptureModal(props: { bundles: AssetAndSnapshots[]; onClose: () => void
 }
 
 function EditModal(props: { asset: Asset; editingSnapshot: AssetSnapshot; onClose: () => void }) {
+  const deleteAction = useAction(deleteAssetSnapshotAction);
+  const deleteCrud = createMemo(() => {
+    if (props.editingSnapshot) {
+      const { id } = props.editingSnapshot;
+      return {
+        on: () => deleteAction(id),
+        confirmingButtonChildren: `Are you sure you want to delete this "${props.asset.name}" snapshot?`,
+      };
+    }
+    return undefined;
+  });
+
   return (
     <CrudModal
       onClose={props.onClose}
       header={`Edit "${props.asset.name}" Snapshot`}
       action={editSnapshotAction}
-      delete={{
-        id: props.editingSnapshot.id,
-        confirmingButtonChildren: `Are you sure you want to delete this "${props.asset.name}" snapshot?`,
-        action: deleteAssetSnapshotAction,
-      }}
+      delete={deleteCrud()}
     >
       <input name="editingId" type="hidden" value={props.editingSnapshot.id} />
 
@@ -181,9 +198,50 @@ function EditModal(props: { asset: Asset; editingSnapshot: AssetSnapshot; onClos
   );
 }
 
-export default function AssetSnapshots() {
-  const [searchParams] = useSearchParams();
-  const bundles = createAsync(() => getAllAssetSnapshotsForListing(searchParams));
+function Bundle<T>(props: {
+  title: JSX.Element;
+  onRowClick?: (item: T) => void;
+  each: T[];
+  children: (item: T) => JSX.Element[];
+}) {
+  return (
+    <div class="space-y-4">
+      <h2>{props.title}</h2>
+      <Table
+        class="[&_td]:last:not-only:text-right [&_th]:last:text-right"
+        headers={["Date", "Value"]}
+        each={props.each}
+        phantomRowCount={3}
+        onRowClick={props.onRowClick}
+      >
+        {props.children}
+      </Table>
+    </div>
+  );
+}
+
+const noCells = () => [];
+
+function PhantomBundles(props: { bundles: unknown[] }) {
+  return (
+    <For each={Array.from({ length: 4 })}>
+      {() => (
+        <Bundle each={props.bundles} title={<PhantomText />}>
+          {noCells}
+        </Bundle>
+      )}
+    </For>
+  );
+}
+
+export const route = defineRoute({
+  preload({ location }) {
+    void getAllAssetSnapshotsForListing(location.search);
+  },
+});
+
+export default function AssetSnapshots(props: RouteProps<typeof route>) {
+  const bundles = createMemo(() => getAllAssetSnapshotsForListing(props.location.search));
   const [addEditModal, setAddEditModal] = createSignal<ModalState>(null);
   return (
     <>
@@ -200,13 +258,11 @@ export default function AssetSnapshots() {
       </FilterContainer>
 
       <div class="grid grid-cols-2 gap-8">
-        <For each={bundles()}>
-          {(assetWithSnapshots) => (
-            <div class="space-y-4">
-              <h2>{assetWithSnapshots.asset.name}</h2>
-              <Table
-                class="[&_td]:last:not-only:text-right [&_th]:last:text-right"
-                headers={["Date", "Value"]}
+        <Loading fallback={<PhantomBundles bundles={bundles()} />}>
+          <For each={bundles()}>
+            {(assetWithSnapshots) => (
+              <Bundle
+                title={assetWithSnapshots.asset.name}
                 each={assetWithSnapshots.snapshots}
                 onRowClick={(snapshot) => {
                   setAddEditModal({ type: "edit", snapshot, asset: assetWithSnapshots.asset });
@@ -216,10 +272,10 @@ export default function AssetSnapshots() {
                   formatDate(assetSnapshot.when),
                   <AssetValuePill assetSnapshot={assetSnapshot} asset={assetWithSnapshots.asset} />,
                 ]}
-              </Table>
-            </div>
-          )}
-        </For>
+              </Bundle>
+            )}
+          </For>
+        </Loading>
       </div>
 
       <Switch>
@@ -229,7 +285,7 @@ export default function AssetSnapshots() {
             return state?.type === "add" && state;
           })()}
         >
-          <CaptureModal bundles={bundles()!} onClose={() => setAddEditModal(null)} />
+          <CaptureModal bundles={bundles()} onClose={() => setAddEditModal(null)} />
         </Match>
         <Match
           when={(() => {

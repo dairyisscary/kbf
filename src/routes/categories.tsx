@@ -1,14 +1,16 @@
-import { action, query, createAsync, type RouteDefinition } from "@solidjs/router";
-import { createSignal, createUniqueId, Show, For } from "solid-js";
+import { action, defineRoute, query, useAction } from "@solidjs/router";
+import { reload } from "@solidjs/web";
+import { createSignal, createMemo, createUniqueId, Show, For, untrack } from "solid-js";
 
-import Button from "#/button";
+import { Button } from "#/button";
 import { allCategoriesWithCounts, deleteCategory, addCategory, editCategory } from "#/category";
 import { CategoryColorPip, CategoryColorSelector, CategoryKindIcon } from "#/category/pip";
 import { pealFormData, Checkbox, FormRowWithId, Label, RadioTabs, FieldSet } from "#/form";
 import { CrudModal } from "#/form/crud-modal";
-import Icon from "#/icon";
+import { Icon } from "#/icon";
 import { KbfSiteTitle } from "#/meta";
-import Table from "#/table";
+import { requireUser } from "#/session";
+import { Table } from "#/table";
 
 type CountedCategory = Awaited<ReturnType<typeof allCategoriesWithCounts>>[number];
 type ModalState =
@@ -21,42 +23,57 @@ const KIND_OPTIONS = [
   { value: "payment", label: "Payment" },
 ] as const;
 
-const getAllCategories = query(allCategoriesWithCounts, "categoriesForListing");
+const getAllCategories = query(async () => {
+  "use server";
+  requireUser();
+  return allCategoriesWithCounts();
+}, "categoriesWithCounts");
 
-export const route: RouteDefinition = {
-  load() {
-    void getAllCategories();
-  },
-};
+const deleteCategoryAction = action(async (id: string) => {
+  "use server";
+  requireUser();
+  await deleteCategory(id);
+  return reload({ revalidate: getAllCategories.key });
+});
 
-const deleteCategoryAction = action(deleteCategory, "deleteCategory");
-
-const addEditAction = action((form: FormData) => {
+const addEditAction = action(async (form: FormData) => {
+  "use server";
+  requireUser();
   const pealed = pealFormData(form);
   pealed.predicates = (pealed.rulesText as string | undefined)?.split("/").filter(Boolean) || [];
-  return pealed.isEditingId
+  await (pealed.isEditingId
     ? editCategory(pealed.isEditingId as string, pealed)
-    : addCategory(pealed);
-}, "addEditCategory");
+    : addCategory(pealed));
+  return reload({ revalidate: getAllCategories.key });
+});
 
 function AddEditModal(props: {
   onClose: () => void;
   editingCategory: undefined | CountedCategory;
 }) {
-  const [selectedColorCode, setSelectedColorCode] = createSignal(props.editingCategory?.colorCode);
+  const [selectedColorCode, setSelectedColorCode] = createSignal(
+    untrack(() => props.editingCategory?.colorCode),
+  );
   const rulesDescriptionId = createUniqueId();
+
+  const deleteAction = useAction(deleteCategoryAction);
+  const deleteCrud = createMemo(() => {
+    if (props.editingCategory) {
+      const { id } = props.editingCategory;
+      return {
+        on: () => deleteAction(id),
+        confirmingButtonChildren: `Are you sure you want to delete the "${props.editingCategory.name}" category?`,
+      };
+    }
+    return undefined;
+  });
+
   return (
     <CrudModal
       action={addEditAction}
       onClose={props.onClose}
       header={`${props.editingCategory ? "Edit" : "Add"} Category`}
-      delete={
-        props.editingCategory && {
-          id: props.editingCategory.id,
-          action: deleteCategoryAction,
-          confirmingButtonChildren: `Are you sure you want to delete the "${props.editingCategory.name}" category?`,
-        }
-      }
+      delete={deleteCrud()}
     >
       <FormRowWithId>
         {(id) => (
@@ -139,8 +156,14 @@ function Predicates(props: { values: string[] }) {
   );
 }
 
+export const route = defineRoute({
+  preload() {
+    void getAllCategories();
+  },
+});
+
 export default function Categories() {
-  const categories = createAsync(() => getAllCategories());
+  const categories = createMemo(() => getAllCategories());
   const [addEditModal, setAddEditModal] = createSignal<ModalState>(false);
   return (
     <>

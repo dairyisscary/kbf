@@ -1,53 +1,68 @@
-import { action, query, createAsync, type RouteDefinition } from "@solidjs/router";
-import { createSignal, Show } from "solid-js";
+import { action, defineRoute, query, useAction } from "@solidjs/router";
+import { reload } from "@solidjs/web";
+import { createSignal, createMemo, Show, untrack } from "solid-js";
 
 import { addAsset, editAsset, deleteAsset, allAssets } from "#/asset";
-import Button from "#/button";
+import { Button } from "#/button";
 import { pealFormData, Checkbox, FormRowWithId, Label } from "#/form";
 import { CrudModal } from "#/form/crud-modal";
 import { formatCurrencySign } from "#/format";
-import Icon from "#/icon";
+import { Icon } from "#/icon";
 import { KbfSiteTitle } from "#/meta";
-import Table from "#/table";
+import { requireUser } from "#/session";
+import { Table } from "#/table";
 
 type Asset = Awaited<ReturnType<typeof allAssets>>[number];
 type ModalState = false | { type: "add"; asset?: never } | { type: "edit"; asset: Asset };
 
-const getAllAssets = query(allAssets, "allAssetsForListing");
+const getAllAssets = query(async () => {
+  "use server";
+  requireUser();
+  return allAssets();
+}, "assets");
 
-export const route: RouteDefinition = {
-  load() {
-    void getAllAssets();
-  },
-};
-
-const addEditAssetAction = action((formData: FormData) => {
+const addEditAssetAction = action(async (formData: FormData) => {
+  "use server";
+  requireUser();
   const pealed = pealFormData(formData);
-  return pealed.isEditingId ? editAsset(pealed.isEditingId as string, pealed) : addAsset(pealed);
-}, "addEditAsset");
+  await (pealed.isEditingId ? editAsset(pealed.isEditingId as string, pealed) : addAsset(pealed));
+  return reload({ revalidate: getAllAssets.key });
+});
 
-const deleteAssetAction = action(deleteAsset, "deleteAsset");
+const deleteAssetAction = action(async (id: string) => {
+  "use server";
+  requireUser();
+  await deleteAsset(id);
+  return reload({ revalidate: getAllAssets.key });
+});
 
 function AddEditModal(props: { onClose: () => void; editingAsset?: Asset }) {
   const [currency, setCurrency] = createSignal<Asset["currency"]>(
-    props.editingAsset?.currency || "usd",
+    untrack(() => props.editingAsset?.currency) || "usd",
   );
+
+  const deleteAction = useAction(deleteAssetAction);
+  const deleteCrud = createMemo(() => {
+    if (props.editingAsset) {
+      const { id, name } = props.editingAsset;
+      return {
+        on: () => deleteAction(id),
+        confirmingButtonChildren: (
+          <>
+            Are you <strong class="text-kbf-action">really</strong> sure you want to delete the "
+            {name}" asset?
+          </>
+        ),
+      };
+    }
+    return undefined;
+  });
+
   return (
     <CrudModal
       action={addEditAssetAction}
       header={`${props.editingAsset ? "Edit" : "Add"} Asset`}
-      delete={
-        props.editingAsset && {
-          id: props.editingAsset.id,
-          action: deleteAssetAction,
-          confirmingButtonChildren: (
-            <>
-              Are you <strong class="text-kbf-action">really</strong> sure you want to delete the "
-              {props.editingAsset.name}" asset?
-            </>
-          ),
-        }
-      }
+      delete={deleteCrud()}
       onClose={props.onClose}
     >
       <FormRowWithId>
@@ -96,8 +111,14 @@ function AddEditModal(props: { onClose: () => void; editingAsset?: Asset }) {
   );
 }
 
+export const route = defineRoute({
+  preload() {
+    void getAllAssets();
+  },
+});
+
 export default function Assets() {
-  const assets = createAsync(() => getAllAssets());
+  const assets = createMemo(() => getAllAssets());
   const [addEditModal, setAddEditModal] = createSignal<ModalState>(false);
   return (
     <>

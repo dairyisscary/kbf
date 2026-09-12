@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "jsx": "preserve",
-    "jsxImportSource": "solid-js",
+    "jsxImportSource": "@solidjs/web",
     "module": "preserve",
     "moduleDetection": "force",
     "moduleResolution": "bundler",
@@ -16,6 +16,7 @@
     "skipLibCheck": true,
     "strict": true,
     "target": "esnext",
+    "types": ["vite/client"],
     "verbatimModuleSyntax": true
   }
 }
