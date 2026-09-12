@@ -1,13 +1,12 @@
-import { HttpStatusCode } from "@solidjs/start";
+import { defineRoute } from "@solidjs/router";
+import { httpStatus } from "@solidjs/web";
 
-import { KbfSiteTitle } from "#/meta";
+import { HttpErrorPage } from "#/error";
 
-export default function NotFound() {
-  return (
-    <>
-      <KbfSiteTitle>Not Found</KbfSiteTitle>
-      <HttpStatusCode code={404} />
-      <h1>Page Not Found</h1>
-    </>
-  );
+export const route = defineRoute({
+  preload: () => httpStatus(404),
+});
+
+export default function FourOhFour() {
+  return <HttpErrorPage code={404} />;
 }

@@ -1,8 +1,6 @@
-"use server";
 import { allAssetSnapshotsByAsset, mostRecentSnapshotsAsOf } from "#/asset-snapshot";
 import type { CategoryFilter } from "#/category";
 import { type Options as IntervalOptions, type Interval, makeInterval } from "#/reporting/interval";
-import { checkSession } from "#/session";
 import { getTransactionsWithCategoryFilters } from "#/transaction";
 
 type ReportableTransaction = {
@@ -144,8 +142,6 @@ async function getReportingAssetSnapshots(interval: Interval) {
 }
 
 export async function getAssetsAndTransactionsForReporting(options: Options) {
-  await checkSession();
-
   const [transaction, assetSnapshot] = await Promise.all([
     getReportingTransactions(
       makeInterval(options.transaction.interval),

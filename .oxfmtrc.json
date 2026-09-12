@@ -4,7 +4,6 @@
     "internalPattern": ["#/"]
   },
   "sortTailwindcss": {
-    "functions": ["clx", "clsx"],
     "stylesheet": "./src/app.css"
   }
 }

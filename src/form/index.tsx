@@ -1,18 +1,18 @@
-import { createUniqueId, type JSX, type ComponentProps, For, createMemo, untrack } from "solid-js";
+import type { JSX, ComponentProps } from "@solidjs/web";
+import { createUniqueId, For, createMemo, untrack } from "solid-js";
 
-import clx from "#/clx";
-import Icon from "#/icon";
+import { Icon } from "#/icon";
 
 const LABEL_CX = "text-lg font-medium";
-const CLICK_LABEL_CX = clx(LABEL_CX, "cursor-pointer");
+const CLICK_LABEL_CX = [LABEL_CX, "cursor-pointer"];
 
 export function Label(props: ComponentProps<"label">) {
   // oxlint-disable-next-line jsx-a11y/label-has-associated-control
-  return <label {...props} class={clx(CLICK_LABEL_CX, props.class)} />;
+  return <label {...props} class={[CLICK_LABEL_CX, props.class]} />;
 }
 
 export function NonInteractiveLabel(props: ComponentProps<"span">) {
-  return <span {...props} class={clx(LABEL_CX, props.class)} />;
+  return <span {...props} class={[LABEL_CX, props.class]} />;
 }
 
 export function FormRow(props: Omit<ComponentProps<"div">, "class">) {
@@ -84,6 +84,7 @@ export function RadioTabs<V extends string>(props: {
   initValue: V;
   options: ReadonlyArray<{ value: V; label: JSX.Element }>;
 }) {
+  const initValue = untrack(() => props.initValue);
   return (
     <div class="flex items-stretch rounded-md border-2 border-kbf-light-purple bg-kbf-light-purple">
       <For each={props.options}>
@@ -93,7 +94,7 @@ export function RadioTabs<V extends string>(props: {
             <div class="flex-1 rounded-md text-center ring-kbf-action-highlight transition duration-300 ring-inset has-checked:bg-kbf-action has-checked:text-kbf-text-highlight has-focus-within:ring-2">
               <input
                 ref={(element) => {
-                  if (untrack(() => props.initValue === option.value)) {
+                  if (initValue === untrack(() => option.value)) {
                     element.checked = true;
                   }
                 }}
@@ -103,10 +104,7 @@ export function RadioTabs<V extends string>(props: {
                 name={props.name}
                 value={option.value}
               />
-              <label
-                class={clx(CLICK_LABEL_CX, "block size-full px-4 py-3 text-center")}
-                for={id()}
-              >
+              <label class={[CLICK_LABEL_CX, "block size-full px-4 py-3 text-center"]} for={id()}>
                 {option.label}
               </label>
             </div>

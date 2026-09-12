@@ -4,8 +4,5 @@
 /.devenv/
 /result
 
-/.output/
-/.vinxi/
-/app.config.timestamp_*.js
-
-.env*.local
+/dist/
+/src/virtual:file-routes.d.ts

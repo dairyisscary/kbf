@@ -1,10 +1,8 @@
-"use server";
 import { v4 } from "uuid";
 import * as z from "zod";
 
 import { categoriesForTransactionIds, type CategoryFilter } from "#/category";
 import { db, type DBTransaction } from "#/db";
-import { checkSession } from "#/session";
 
 import { parse } from "./csv";
 
@@ -95,7 +93,6 @@ async function transactionsWithCategories<T extends { id: string }>(
 }
 
 export async function allTransactionsFromFilters(filter?: BaseFilters) {
-  await checkSession();
   const transactions = await allTransactionQueryBase(filter).orderBy("when", "desc").execute();
   return transactionsWithCategories(transactions, undefined, { includeIds: filter?.categoryIds });
 }
@@ -104,7 +101,6 @@ export async function getTransactionsWithCategoryFilters(options: {
   filter?: BaseFilters;
   categoryFilter: CategoryFilter;
 }) {
-  await checkSession();
   return transactionsWithCategories(
     await allTransactionQueryBase(options.filter).execute(),
     options.categoryFilter,
@@ -112,7 +108,6 @@ export async function getTransactionsWithCategoryFilters(options: {
 }
 
 export async function deleteTransaction(transactionId: string) {
-  await checkSession();
   await db.deleteFrom("transactions").where("id", "=", transactionId).executeTakeFirstOrThrow();
   return transactionId;
 }
@@ -137,7 +132,6 @@ async function insertCategoryRelations(
 }
 
 export async function editTransaction(transactionId: string, inputs: Record<string, unknown>) {
-  await checkSession();
   const now = new Date();
   const transaction = INPUT_SCHEMA.parse(inputs);
   await db.transaction().execute(async (trx) => {
@@ -162,7 +156,6 @@ export async function editTransaction(transactionId: string, inputs: Record<stri
 }
 
 export async function addTransaction(inputs: Record<string, unknown>) {
-  await checkSession();
   const now = new Date();
   const id = v4();
   const transaction = INPUT_SCHEMA.parse(inputs);
@@ -185,7 +178,6 @@ export async function addTransaction(inputs: Record<string, unknown>) {
 }
 
 export async function massImport(inputs: Record<string, unknown>) {
-  await checkSession();
   const { categoryIds, csv, currency } = MASS_IMPORT_INPUT_SCHEMA.parse(inputs);
   const csvParsedTransactions = parse(csv);
   const now = new Date();
