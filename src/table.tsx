@@ -1,6 +1,6 @@
 import { For, type JSX } from "solid-js";
 
-import clx from "~/clx";
+import clx from "#/clx";
 
 type Props<T> = {
   class?: string;

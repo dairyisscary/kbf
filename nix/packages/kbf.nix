@@ -2,8 +2,9 @@
 let
   inherit (pkgs) lib;
 
-  nodejs = pkgs.nodejs_24;
-  pnpm = pkgs.pnpm_11.override { nodejs-slim = nodejs; };
+  nodejs-slim = pkgs.nodejs-slim_24;
+  nodejs = nodejs-slim.out;
+  pnpm = pkgs.pnpm_12.override { inherit nodejs-slim; };
 
   fs = lib.fileset;
   getSrc = mapFn: fs.toSource rec {
@@ -27,7 +28,7 @@ pkgs.stdenvNoCC.mkDerivation (finalAttrs: {
     ]));
     env = { inherit (finalAttrs.env) NODE_ENV; };
     fetcherVersion = 4;
-    hash = "sha256-1rRdNI9hL9ps8oXjrR7Gg/QcPLaCQT1/cXlD7gEbamU=";
+    hash = "sha256-YCnUQviq7if5aX1QUBsNg/pN3svtFRYdQnQSlGHymtY=";
   };
 
   pnpmInstallFlags = [ "--prod" ];
@@ -53,7 +54,7 @@ pkgs.stdenvNoCC.mkDerivation (finalAttrs: {
 
     mkdir -p $out/{opt,bin}
     cp -r .output/{server,public} $out/opt
-    echo -e "#!${nodejs}/bin/node $out/opt/server/index.mjs" > $out/bin/kbf
+    echo -e "#!${lib.getExe nodejs} $out/opt/server/index.mjs" > $out/bin/kbf
     chmod +x $out/bin/kbf
 
     runHook postInstall

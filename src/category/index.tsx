@@ -4,8 +4,8 @@ import type { CategoryKind } from "kysely-codegen";
 import { v4 } from "uuid";
 import * as z from "zod";
 
-import { db, type KBFDatabase, type DBTransaction } from "~/db";
-import { checkSession } from "~/session";
+import { db, type KBFDatabase, type DBTransaction } from "#/db";
+import { checkSession } from "#/session";
 
 export type CategoryFilter = {
   includeKinds?: CategoryKind[];

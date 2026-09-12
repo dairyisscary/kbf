@@ -2,8 +2,8 @@
 import { v7 } from "uuid";
 import { z } from "zod";
 
-import { db } from "~/db";
-import { checkSession } from "~/session";
+import { db } from "#/db";
+import { checkSession } from "#/session";
 
 const INPUT_SCHEMA = z.object({
   name: z.string().trim().min(1),

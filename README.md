@@ -34,7 +34,7 @@ migrate
 nix fmt .
 
 # Lint
-pnpm exec eslint .
+pnpm exec oxlint .
 
 # Typecheck
 pnpm exec tsc

@@ -1,6 +1,6 @@
 import { Kysely, PostgresDialect, type Transaction } from "kysely";
 import type { AssetSnapshots, DB, Transactions } from "kysely-codegen";
-import PG from "pg";
+import { types, Pool } from "pg";
 
 export type KBFDatabase = Omit<DB, "transactions" | "asset_snapshots"> & {
   transactions: Omit<Transactions, "when"> & {
@@ -11,8 +11,6 @@ export type KBFDatabase = Omit<DB, "transactions" | "asset_snapshots"> & {
   };
 };
 export type DBTransaction = Transaction<KBFDatabase>;
-
-const { types, Pool } = PG;
 
 function construct() {
   const { PGUSER, PGHOST, PGPORT, PGMAX, PGPASSWORD, PGDATABASE } = process.env;

@@ -7,16 +7,16 @@ import {
   addAssetSnapshot,
   deleteAssetSnapshot,
   editAssetSnapshot,
-} from "~/asset-snapshot";
-import { AssetValuePill } from "~/asset-snapshot/pip";
-import Button from "~/button";
-import { pealFormData, FormRowWithId, Label, FormRowDivider } from "~/form";
-import { CrudModal } from "~/form/crud-modal";
-import { formatDate, formatDateOnly } from "~/format";
-import Icon from "~/icon";
-import { KbfSiteTitle } from "~/meta";
-import { FilterContainer, TimeFrameFilters } from "~/query-filters";
-import Table from "~/table";
+} from "#/asset-snapshot";
+import { AssetValuePill } from "#/asset-snapshot/pip";
+import Button from "#/button";
+import { pealFormData, FormRowWithId, Label, FormRowDivider } from "#/form";
+import { CrudModal } from "#/form/crud-modal";
+import { formatDate, formatDateOnly } from "#/format";
+import Icon from "#/icon";
+import { KbfSiteTitle } from "#/meta";
+import { FilterContainer, TimeFrameFilters } from "#/query-filters";
+import Table from "#/table";
 
 type AssetAndSnapshots = Awaited<ReturnType<typeof allAssetSnapshotsByAsset>>[number];
 type Asset = AssetAndSnapshots["asset"];

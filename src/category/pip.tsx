@@ -1,8 +1,8 @@
 import type { CategoryKind } from "kysely-codegen";
 import { splitProps, For, type ComponentProps } from "solid-js";
 
-import clx from "~/clx";
-import Icon from "~/icon";
+import clx from "#/clx";
+import Icon from "#/icon";
 
 type PipProps = ComponentProps<"span"> & {
   code: number;

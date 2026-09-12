@@ -3,9 +3,9 @@ import { sql } from "kysely";
 import { v7 } from "uuid";
 import { z } from "zod";
 
-import { allAssets } from "~/asset";
-import { db } from "~/db";
-import { checkSession } from "~/session";
+import { allAssets } from "#/asset";
+import { db } from "#/db";
+import { checkSession } from "#/session";
 
 type BaseFilters = {
   onOrBefore?: string | null;

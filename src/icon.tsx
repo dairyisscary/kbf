@@ -1,6 +1,6 @@
 import IconSprite from "feather-icons/dist/feather-sprite.svg";
 
-import clx from "~/clx";
+import clx from "#/clx";
 
 export type IconName =
   | "activity"

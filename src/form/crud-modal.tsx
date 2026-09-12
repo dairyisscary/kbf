@@ -1,12 +1,12 @@
 import { useAction, type Action } from "@solidjs/router";
 import { createEffect, Show, type JSX, type ComponentProps } from "solid-js";
 
-import Alert from "~/alert";
-import Button from "~/button";
-import { FormFooter } from "~/form";
-import { ConfirmingDeleteButton } from "~/form/confirm";
-import { useClearingSubmission } from "~/form/submission";
-import Modal from "~/modal";
+import Alert from "#/alert";
+import Button from "#/button";
+import { FormFooter } from "#/form";
+import { ConfirmingDeleteButton } from "#/form/confirm";
+import { useClearingSubmission } from "#/form/submission";
+import Modal from "#/modal";
 
 type CrudModalProps<Input extends unknown[], Output, T> = ComponentProps<typeof Modal> & {
   action: Action<Input, Output, T> & JSX.SerializableAttributeValue;

@@ -1,6 +1,6 @@
 import { HttpStatusCode } from "@solidjs/start";
 
-import { KbfSiteTitle } from "~/meta";
+import { KbfSiteTitle } from "#/meta";
 
 export default function NotFound() {
   return (
