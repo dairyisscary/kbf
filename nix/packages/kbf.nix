@@ -28,7 +28,7 @@ pkgs.stdenvNoCC.mkDerivation (finalAttrs: {
     ]));
     env = { inherit (finalAttrs.env) NODE_ENV; };
     fetcherVersion = 4;
-    hash = "sha256-YCnUQviq7if5aX1QUBsNg/pN3svtFRYdQnQSlGHymtY=";
+    hash = "sha256-f1tfpJ+r9u/zsBabgYnSGVB74T+kzCD18zzMgIJtdsM=";
   };
 
   pnpmInstallFlags = [ "--prod" ];
