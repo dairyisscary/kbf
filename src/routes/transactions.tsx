@@ -1,17 +1,41 @@
-import { createAsync, query, action, useSearchParams, type RouteDefinition } from "@solidjs/router";
+import {
+  action,
+  defineRoute,
+  query,
+  useAction,
+  useSearchParams,
+  type RouteProps,
+} from "@solidjs/router";
+import { reload, type JSX } from "@solidjs/web";
 import { subDays, startOfMonth, subMonths, endOfMonth } from "date-fns";
-import { createSignal, onCleanup, createMemo, For, Show, type JSX } from "solid-js";
+import {
+  createSignal,
+  createMemo,
+  For,
+  Show,
+  Loading,
+  untrack,
+  onSettled,
+  createStore,
+} from "solid-js";
 
-import Button from "#/button";
+import { Button } from "#/button";
 import { allCategoriesByName } from "#/category";
 import { CategoryPill } from "#/category/pip";
 import { pealFormData, Checkbox, FormRowWithId, Label } from "#/form";
 import { CrudModal } from "#/form/crud-modal";
-import { formatDate, formatDateOnly, formatDateForInput, formatCurrencySign } from "#/format";
-import Icon from "#/icon";
+import {
+  formatDate,
+  formatDateOnly,
+  formatDateForInput,
+  formatCurrencySign,
+  formatPlural,
+} from "#/format";
+import { Icon } from "#/icon";
 import { KbfSiteTitle } from "#/meta";
 import { FilterButton, FilterContainer, TimeFrameFilters } from "#/query-filters";
-import Table from "#/table";
+import { requireUser } from "#/session";
+import { Table } from "#/table";
 import {
   allTransactionsFromFilters,
   addTransaction,
@@ -22,18 +46,40 @@ import { AmountPill, CategoryPipItems, CategorySelectFormRow } from "#/transacti
 
 type Transaction = Awaited<ReturnType<typeof allTransactionsFromFilters>>[number];
 type Category = Awaited<ReturnType<typeof allCategoriesByName>>[number];
-type ModalState =
-  | false
-  | { type: "add"; transaction?: never }
-  | { type: "edit"; transaction: Transaction };
 
-const getTransactionsForListing = query((params: Record<string, string[] | string | undefined>) => {
-  const categoryIds = (params.filterCategoryIds as string | undefined)?.split(",");
-  switch (params.timeFrame) {
+const addEditAction = action(async (form: FormData) => {
+  "use server";
+  requireUser();
+  const pealed = pealFormData(form, ["categoryIds"]);
+  await (pealed.isEditingId
+    ? editTransaction(pealed.isEditingId as string, pealed)
+    : addTransaction(pealed));
+  return reload({ revalidate: getTransactionsForListing.key });
+});
+
+const deleteTransactionAction = action(async (transactionId: string) => {
+  "use server";
+  requireUser();
+  await deleteTransaction(transactionId);
+  return reload({ revalidate: getTransactionsForListing.key });
+});
+
+const getAllCategories = query(async () => {
+  "use server";
+  requireUser();
+  return allCategoriesByName();
+}, "categories");
+
+const getTransactionsForListing = query(async (search: string) => {
+  "use server";
+  requireUser();
+  const params = new URLSearchParams(search);
+  const categoryIds = params.get("filterCategoryIds")?.split(",");
+  switch (params.get("timeFrame")) {
     case "custom":
       return allTransactionsFromFilters({
-        onOrAfter: params.onOrAfter as string,
-        onOrBefore: params.onOrBefore as string,
+        onOrAfter: params.get("onOrAfter"),
+        onOrBefore: params.get("onOrBefore"),
         categoryIds,
       });
     case "last-month": {
@@ -51,59 +97,31 @@ const getTransactionsForListing = query((params: Record<string, string[] | strin
         categoryIds,
       });
   }
-}, "transactionsForListing");
-
-const addEditAction = action((form: FormData) => {
-  const pealed = pealFormData(form, ["categoryIds"]);
-  return pealed.isEditingId
-    ? editTransaction(pealed.isEditingId as string, pealed)
-    : addTransaction(pealed);
-}, "addEditTransaction");
-
-const getAllCategories = query(allCategoriesByName, "categoriesForTransactions");
-
-export const route: RouteDefinition = {
-  load(args) {
-    void getAllCategories();
-    void getTransactionsForListing(args.location.query);
-  },
-};
-
-function transactionSum(
-  transactions: Transaction[] | undefined,
-  currency: Transaction["currency"],
-): number {
-  if (!transactions) {
-    return 0;
-  }
-  return transactions.reduce((accum, transaction) => {
-    return transaction.currency === currency ? accum + transaction.amount : accum;
-  }, 0);
-}
-
-const deleteTransactionAction = action(deleteTransaction, "deleteTransaction");
+}, "transactionsWithFilter");
 
 function FilterCategoryPopup(props: { onClose: () => void; children: JSX.Element }) {
+  let wrapperRef: HTMLDivElement | undefined; // oxlint-disable-line no-unassigned-vars
+  onSettled(() => {
+    const clickCallback = (event: Event) => {
+      if (wrapperRef && !wrapperRef.contains(event.target as Node)) {
+        props.onClose();
+      }
+    };
+    const keyCallback = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        props.onClose();
+      }
+    };
+    document.addEventListener("click", clickCallback);
+    document.addEventListener("keydown", keyCallback);
+    return () => {
+      document.removeEventListener("keydown", keyCallback);
+      document.removeEventListener("click", clickCallback);
+    };
+  });
   return (
     <div
-      ref={(ref) => {
-        const clickCallback = (event: Event) => {
-          if (!ref.contains(event.target as Node)) {
-            props.onClose();
-          }
-        };
-        const keyCallback = (event: KeyboardEvent) => {
-          if (event.key === "Escape") {
-            props.onClose();
-          }
-        };
-        document.addEventListener("click", clickCallback);
-        document.addEventListener("keydown", keyCallback);
-        onCleanup(() => {
-          document.removeEventListener("click", clickCallback);
-          document.removeEventListener("keydown", keyCallback);
-        });
-      }}
+      ref={wrapperRef}
       class="absolute top-full right-0 z-10 mt-2 grid h-[400px] w-[700px] grid-cols-2 gap-2 overflow-y-auto rounded-sm border border-kbf-action bg-kbf-light-purple p-4"
     >
       {props.children}
@@ -117,10 +135,10 @@ function AddEditModal(props: {
   editingTransaction: undefined | Transaction;
 }) {
   const [amountFormat, setAmountFormat] = createSignal<number>(
-    props.editingTransaction?.amount ?? NaN,
+    untrack(() => props.editingTransaction?.amount) ?? NaN,
   );
   const [currency, setCurrency] = createSignal<Parameters<typeof formatCurrencySign>[0]>(
-    props.editingTransaction?.currency || "usd",
+    untrack(() => props.editingTransaction?.currency) || "usd",
   );
 
   const selectableCategories = createMemo(() => {
@@ -130,16 +148,23 @@ function AddEditModal(props: {
     });
   });
 
+  const deleteAction = useAction(deleteTransactionAction);
+
+  const deleteCrud = createMemo(() => {
+    if (props.editingTransaction) {
+      const { id, description } = props.editingTransaction;
+      return {
+        on: () => deleteAction(id),
+        confirmingButtonChildren: `Are you sure you want to delete the "${description}" transaction?`,
+      };
+    }
+    return undefined;
+  });
+
   return (
     <CrudModal
       action={addEditAction}
-      delete={
-        props.editingTransaction && {
-          action: deleteTransactionAction,
-          id: props.editingTransaction.id,
-          confirmingButtonChildren: `Are you sure you want to delete the "${props.editingTransaction.description}" transaction?`,
-        }
-      }
+      delete={deleteCrud()}
       header={`${props.editingTransaction ? "Edit" : "Add"} Transaction`}
       onClose={props.onClose}
     >
@@ -226,7 +251,7 @@ function AddEditModal(props: {
   );
 }
 
-function Filters(props: { allCategories: Category[] | undefined }) {
+function Filters(props: { allCategories: Category[] }) {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [filterCategoriesOpen, setFilterCategoriesOpen] = createSignal(false);
@@ -277,11 +302,29 @@ function Filters(props: { allCategories: Category[] | undefined }) {
   );
 }
 
-export default function Transactions() {
-  const [searchParams] = useSearchParams();
-  const transactions = createAsync(() => getTransactionsForListing(searchParams));
-  const allCategories = createAsync(() => getAllCategories());
+function transactionSum(transactions: Transaction[], currency: Transaction["currency"]): number {
+  return transactions.reduce((accum, transaction) => {
+    return transaction.currency === currency ? accum + transaction.amount : accum;
+  }, 0);
+}
+
+export const route = defineRoute({
+  preload({ location }) {
+    void getAllCategories();
+    void getTransactionsForListing(location.search);
+  },
+});
+
+export default function Transactions(props: RouteProps<typeof route>) {
+  const [transactions] = createStore(() => getTransactionsForListing(props.location.search), []);
+  const categories = createMemo(() => getAllCategories());
+
+  type ModalState =
+    | false
+    | { type: "add"; transaction?: never }
+    | { type: "edit"; transaction: Transaction };
   const [addEditModal, setAddEditModal] = createSignal<ModalState>(false);
+
   return (
     <>
       <KbfSiteTitle>Manage Transactions</KbfSiteTitle>
@@ -291,11 +334,11 @@ export default function Transactions() {
           <Icon name="plus" /> Add Transaction
         </Button>
       </header>
-      <Filters allCategories={allCategories()} />
+      <Filters allCategories={categories()} />
       <Table
         class="mb-16 [&_td]:first:not-only:w-0 [&_td]:first:not-only:font-mono [&_td]:first:not-only:whitespace-nowrap [&_td]:last:not-only:text-right [&_th]:first:not-only:min-w-fit [&_th]:last:text-right"
         headers={["Date", "Description", "Categories", "Amount"]}
-        each={transactions()}
+        each={transactions}
         onRowClick={(transaction) => {
           setAddEditModal({ type: "edit", transaction });
         }}
@@ -307,24 +350,26 @@ export default function Transactions() {
           <AmountPill transaction={transaction} />,
         ]}
       </Table>
+      <Loading>
+        <footer class="fixed bottom-0 left-0 flex w-full items-center justify-center gap-4 border-t border-kbf-action bg-kbf-light-purple p-6 text-lg">
+          <p>Showing {formatPlural(transactions.length, "transaction")}</p>
+          <AmountPill
+            transaction={{ currency: "euro", amount: transactionSum(transactions, "euro") }}
+          />
+          <AmountPill
+            transaction={{ currency: "usd", amount: transactionSum(transactions, "usd") }}
+          />
+        </footer>
+      </Loading>
       <Show when={addEditModal()}>
         {(modalState) => (
           <AddEditModal
             onClose={() => setAddEditModal(false)}
             editingTransaction={modalState().transaction}
-            allCategories={allCategories()!}
+            allCategories={categories()}
           />
         )}
       </Show>
-      <footer class="fixed bottom-0 left-0 flex w-full items-center justify-center gap-4 border-t border-kbf-action bg-kbf-light-purple p-6 text-lg">
-        <p>Showing {transactions()?.length || 0} transaction(s)</p>
-        <AmountPill
-          transaction={{ currency: "euro", amount: transactionSum(transactions(), "euro") }}
-        />
-        <AmountPill
-          transaction={{ currency: "usd", amount: transactionSum(transactions(), "usd") }}
-        />
-      </footer>
     </>
   );
 }

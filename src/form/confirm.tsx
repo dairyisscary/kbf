@@ -1,8 +1,9 @@
-import { createSignal, Show, type JSX } from "solid-js";
+import type { JSX } from "@solidjs/web";
+import { createSignal, Show } from "solid-js";
 
-import Button from "#/button";
-import Icon from "#/icon";
-import Modal from "#/modal";
+import { Button } from "#/button";
+import { Icon } from "#/icon";
+import { Modal } from "#/modal";
 
 export function ConfirmingDeleteButton(props: { children: JSX.Element; onDelete: () => void }) {
   const [open, setOpen] = createSignal(false);

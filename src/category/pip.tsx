@@ -1,8 +1,8 @@
+import type { ComponentProps } from "@solidjs/web";
 import type { CategoryKind } from "kysely-codegen";
-import { splitProps, For, type ComponentProps } from "solid-js";
+import { omit, For } from "solid-js";
 
-import clx from "#/clx";
-import Icon from "#/icon";
+import { Icon } from "#/icon";
 
 type PipProps = ComponentProps<"span"> & {
   code: number;
@@ -61,11 +61,11 @@ function getPipStyle(code: number) {
 }
 
 function getPipClass(size?: PipProps["size"], block?: boolean) {
-  return clx(
+  return [
     block ? "flex" : "inline-flex",
     "items-center justify-center rounded-full border border-kbf-dark-purple",
     size === "sm" ? "size-4" : "size-8",
-  );
+  ];
 }
 
 export function CategoryKindIcon(
@@ -75,12 +75,12 @@ export function CategoryKindIcon(
 }
 
 export function CategoryColorPip(props: PipProps) {
-  const [local, rest] = splitProps(props, ["class", "block", "size", "code"]);
+  const rest = omit(props, "block", "size", "code");
   return (
     <span
       {...rest}
-      class={clx(getPipClass(local.size, local.block), local.class)}
-      style={getPipStyle(local.code)}
+      class={[getPipClass(props.size, props.block), props.class]}
+      style={getPipStyle(props.code)}
     />
   );
 }
@@ -95,7 +95,7 @@ export function CategoryColorSelector(props: SelectorProps) {
             class={getPipClass(props.size)}
             style={getPipStyle(code)}
             onClick={[props.onChange, code]}
-            aria-pressed={props.value === code}
+            aria-pressed={props.value === code ? "true" : "false"}
           >
             <Icon
               name="check"
@@ -119,12 +119,12 @@ export function SelectableCategoryPill<C extends PillableCategory>(
   return (
     <button
       type="button"
-      class={clx(
+      class={[
         CATEGORY_PILL_CX,
         "relative ring-0 ring-kbf-text-main transition-[padding] duration-300 aria-pressed:pl-8 aria-pressed:ring-2",
-      )}
+      ]}
       onClick={[props.onClick, props.category]}
-      aria-pressed={props.selected}
+      aria-pressed={props.selected ? "true" : "false"}
       style={getPipStyle(props.category.colorCode)}
     >
       <Icon

@@ -1,11 +1,9 @@
-"use server";
 import type { SelectQueryBuilder } from "kysely";
 import type { CategoryKind } from "kysely-codegen";
 import { v4 } from "uuid";
 import * as z from "zod";
 
 import { db, type KBFDatabase, type DBTransaction } from "#/db";
-import { checkSession } from "#/session";
 
 export type CategoryFilter = {
   includeKinds?: CategoryKind[];
@@ -90,7 +88,6 @@ export async function categoriesForTransactionIds(
   transactionIds: string[],
   filter?: CategoryFilter,
 ) {
-  await checkSession();
   const links = transactionIds.length
     ? await db
         .selectFrom("transaction_category_to_transaction")
@@ -129,7 +126,6 @@ export async function categoriesForTransactionIds(
 export async function allCategoriesByName(
   filter?: { includeUncategorized?: boolean } & CategoryFilter,
 ) {
-  await checkSession();
   const results = await addFilters(
     db.selectFrom("transaction_category").select(DEFAULT_SELECT).orderBy("name"),
     filter,
@@ -138,7 +134,6 @@ export async function allCategoriesByName(
 }
 
 export async function allCategoriesWithCounts() {
-  await checkSession();
   const [categories, counts, predicates] = await Promise.all([
     allCategoriesByName(),
     countsOfTransactions(),
@@ -152,7 +147,6 @@ export async function allCategoriesWithCounts() {
 }
 
 export async function deleteCategory(categoryId: string) {
-  await checkSession();
   await db
     .deleteFrom("transaction_category")
     .where("id", "=", categoryId)
@@ -161,7 +155,6 @@ export async function deleteCategory(categoryId: string) {
 }
 
 export async function editCategory(categoryId: string, inputs: Record<string, unknown>) {
-  await checkSession();
   const now = new Date();
   const category = INPUT_SCHEMA.parse(inputs);
   await db.transaction().execute(async (trx) => {
@@ -186,7 +179,6 @@ export async function editCategory(categoryId: string, inputs: Record<string, un
 }
 
 export async function addCategory(inputs: Record<string, unknown>) {
-  await checkSession();
   const now = new Date();
   const categoryId = v4();
   const category = INPUT_SCHEMA.parse(inputs);
