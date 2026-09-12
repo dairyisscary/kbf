@@ -6,10 +6,10 @@ import {
   CategoryKindIcon,
   CategoryPill,
   SelectableCategoryPill,
-} from "~/category/pip";
-import clx from "~/clx";
-import { FormRow, NonInteractiveLabel } from "~/form";
-import { formatMoneyAmount } from "~/format";
+} from "#/category/pip";
+import clx from "#/clx";
+import { FormRow, NonInteractiveLabel } from "#/form";
+import { formatMoneyAmount } from "#/format";
 
 export function AmountPill(props: { transaction: { amount: number; currency: "usd" | "euro" } }) {
   return (

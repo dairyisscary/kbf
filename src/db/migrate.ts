@@ -1,12 +1,19 @@
+// oxlint-disable no-console
 import { promises as fs } from "node:fs";
 import * as path from "node:path";
 
-import { Migrator, FileMigrationProvider, MigrationResultSet } from "kysely/migration";
+import { Migrator, FileMigrationProvider, type MigrationResultSet } from "kysely/migration";
 
-import { db } from "~/db";
+// @ts-expect-error -- so node can import it without a build tool
+import { db } from "#/db/index.ts";
 
 function processMigrationResultSet({ error, results }: MigrationResultSet) {
-  for (const { status, migrationName } of results || []) {
+  if (!results?.length) {
+    console.log("No migrations run");
+    return [];
+  }
+
+  for (const { status, migrationName } of results) {
     if (status === "Success") {
       console.log(`* Migration "${migrationName}" was executed successfully.`);
     } else if (status === "Error") {
@@ -24,18 +31,22 @@ function processMigrationResultSet({ error, results }: MigrationResultSet) {
 }
 
 async function main() {
+  console.log("Starting migrations");
   const migrator = new Migrator({
     db,
     provider: new FileMigrationProvider({
       fs,
       path,
-      migrationFolder: path.join(__dirname, "./migrations"),
+      migrationFolder: path.join(import.meta.dirname, "./migrations"),
     }),
   });
   const operation = process.argv[2];
   const migrateOperation =
     operation === "down" ? migrator.migrateDown() : migrator.migrateToLatest();
-  return processMigrationResultSet(await migrateOperation);
+  processMigrationResultSet(await migrateOperation);
+  console.log("Finished migrations");
 }
 
-main().catch(() => process.exit(1));
+main()
+  .then(() => process.exit(0))
+  .catch(() => process.exit(1));

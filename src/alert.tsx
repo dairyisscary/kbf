@@ -1,6 +1,6 @@
 import type { JSX } from "solid-js";
 
-import clx from "~/clx";
+import clx from "#/clx";
 
 export default function Alert(props: { class?: string; children: JSX.Element }) {
   return (

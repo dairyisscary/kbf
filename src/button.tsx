@@ -1,6 +1,6 @@
 import { splitProps, type ComponentProps } from "solid-js";
 
-import clx from "~/clx";
+import clx from "#/clx";
 
 type Props = ComponentProps<"button"> & { variant?: "action" | "cancel" };
 

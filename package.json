@@ -2,6 +2,9 @@
   "name": "kbf",
   "private": true,
   "type": "module",
+  "imports": {
+    "#/*": "./src/*"
+  },
   "dependencies": {
     "@solidjs/meta": "^0.29.4",
     "@solidjs/router": "^0.16.1",
@@ -21,14 +24,12 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@eslint/js": "^10.0.1",
     "@total-typescript/ts-reset": "^0.6.1",
     "@types/node": "^24.13.2",
     "@types/pg": "^8.20.0",
-    "esbuild": "^0.28.1",
-    "eslint": "^10.5.0",
     "kysely-codegen": "^0.20.0",
-    "typescript": "~6.0.3",
-    "typescript-eslint": "^8.61.1"
+    "oxlint": "^1.82.0",
+    "oxlint-tsgolint": "~7.0.2001",
+    "typescript": "~7.0.2"
   }
 }

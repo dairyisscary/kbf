@@ -1,7 +1,7 @@
 // @refresh reload
 import { createHandler, StartServer } from "@solidjs/start/server";
 
-import Favicon from "~/favicon.png";
+import Favicon from "#/favicon.png";
 
 const RELEASE_NAME = import.meta.env.PUBLIC_RELEASE_NAME;
 

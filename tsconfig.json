@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "isolatedModules": true,
     "jsx": "preserve",
     "jsxImportSource": "solid-js",
     "module": "preserve",
@@ -8,12 +7,15 @@
     "moduleResolution": "bundler",
     "noEmit": true,
     "noImplicitOverride": true,
+    "noImplicitReturns": true,
     "noUncheckedIndexedAccess": true,
+    "noUnusedLocals": true,
     "paths": {
-      "~/*": ["./src/*"]
+      "#/*": ["./src/*"]
     },
     "skipLibCheck": true,
     "strict": true,
-    "target": "esnext"
+    "target": "esnext",
+    "verbatimModuleSyntax": true
   }
 }
