@@ -49,40 +49,38 @@ function makeViewIntervals(interval: Interval, transactions: ReportableTransacti
 }
 
 async function getReportingTransactions(interval: Interval, categoryFilter: CategoryFilter) {
+  type Transaction = (typeof transactions)[number];
   const transactions = await getTransactionsWithCategoryFilters({
+    filter: interval.queryFilters,
     categoryFilter,
   });
 
-  const allCategories = Array.from(
-    Object.values(
-      Object.fromEntries(
-        transactions
-          .flatMap((transaction) => transaction.categories)
-          .map((category) => [category.id, category]),
-      ),
-    ),
-  );
-
-  const categoriesWithMatchingTransactions = allCategories.map((category) => {
-    const euroTransactions = [];
-    const usdTransactions = [];
-    for (const transaction of transactions) {
-      // This is a bit spooky, but should always have one transaction that matches:
-      if (category.id !== transaction.categories[0]?.id) {
-        continue;
-      }
-      if (transaction.currency === "euro") {
-        euroTransactions.push(transaction);
-        continue;
-      }
-      usdTransactions.push(transaction);
+  const dedupedCategories = new Map<string, Transaction["categories"][number]>();
+  for (const transaction of transactions) {
+    for (const category of transaction.categories) {
+      dedupedCategories.set(category.id, category);
     }
-    return {
-      category,
-      usdTransactions,
-      euroTransactions,
-    };
-  });
+  }
+
+  const categoriesWithMatchingTransactions = Array.from(dedupedCategories.values()).map(
+    (category) => {
+      const euroTransactions: Transaction[] = [];
+      const usdTransactions: Transaction[] = [];
+      for (const transaction of transactions) {
+        // This is a bit spooky, but should always have one transaction that matches:
+        if (category.id !== transaction.categories[0]?.id) {
+          continue;
+        }
+        const collection = transaction.currency === "euro" ? euroTransactions : usdTransactions;
+        collection.push(transaction);
+      }
+      return {
+        category,
+        usdTransactions,
+        euroTransactions,
+      };
+    },
+  );
 
   return {
     labels: interval.labels,
