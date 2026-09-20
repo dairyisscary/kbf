@@ -24,7 +24,7 @@ export async function addAssetSnapshot(assetId: string, inputs: Record<string, u
   const id = v7();
   const now = new Date();
   await db
-    .insertInto("asset_snapshots")
+    .insertInto("asset_snapshot")
     .values({
       id,
       when: snapshot.when,
@@ -41,7 +41,7 @@ export async function editAssetSnapshot(assetSnapshotId: string, inputs: Record<
   await checkSession();
   const snapshot = INPUT_SCHEMA.parse(inputs);
   await db
-    .updateTable("asset_snapshots")
+    .updateTable("asset_snapshot")
     .set({
       when: snapshot.when,
       amount: snapshot.amount,
@@ -56,7 +56,7 @@ export async function editAssetSnapshot(assetSnapshotId: string, inputs: Record<
 export async function deleteAssetSnapshot(assetSnapshotId: string) {
   await checkSession();
   await db
-    .deleteFrom("asset_snapshots")
+    .deleteFrom("asset_snapshot")
     .where("id", "=", assetSnapshotId)
     .returning(["id"])
     .executeTakeFirstOrThrow();
@@ -64,7 +64,7 @@ export async function deleteAssetSnapshot(assetSnapshotId: string) {
 }
 
 function allAssetSnapshotsQueryBase(filters?: BaseFilters) {
-  let query = db.selectFrom("asset_snapshots").select(DEFAULT_SELECT);
+  let query = db.selectFrom("asset_snapshot").select(DEFAULT_SELECT);
   if (filters?.onOrBefore) {
     query = query.where("when", "<=", filters.onOrBefore);
   }
@@ -77,20 +77,20 @@ function allAssetSnapshotsQueryBase(filters?: BaseFilters) {
 export async function mostRecentSnapshotsAsOf(asOfWhen: string) {
   await checkSession();
   return db
-    .selectFrom("asset_snapshots")
-    .select(DEFAULT_SELECT.map((col) => `asset_snapshots.${col}` as const))
+    .selectFrom("asset_snapshot")
+    .select(DEFAULT_SELECT.map((col) => `asset_snapshot.${col}` as const))
     .innerJoin(
       (builder) =>
         builder
-          .selectFrom("asset_snapshots as asi")
+          .selectFrom("asset_snapshot as asi")
           .select(["asi.asset_id", sql`max(asi."when")`.as("max_when")])
           .where("asi.when", "<=", asOfWhen)
           .groupBy("asi.asset_id")
           .as("inner"),
       (join) =>
         join
-          .onRef("inner.asset_id", "=", "asset_snapshots.asset_id")
-          .onRef("max_when", "=", "asset_snapshots.when"),
+          .onRef("inner.asset_id", "=", "asset_snapshot.asset_id")
+          .onRef("max_when", "=", "asset_snapshot.when"),
     )
     .execute();
 }

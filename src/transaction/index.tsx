@@ -30,7 +30,7 @@ const INPUT_SCHEMA = z.object({
 const DEFAULT_SELECT = ["id", "description", "when", "amount", "currency"] as const;
 
 function allTransactionQueryBase(filter?: BaseFilters) {
-  let query = db.selectFrom("transactions").select(DEFAULT_SELECT);
+  let query = db.selectFrom("transaction").select(DEFAULT_SELECT);
   if (filter?.onOrBefore) {
     query = query.where("when", "<=", filter.onOrBefore);
   }
@@ -46,13 +46,17 @@ async function insertCategoryRelationsForMassImport(
   hardcodedCategoryIds: string[],
 ) {
   const rules = await trx
-    .selectFrom("mass_import_rules")
-    .innerJoin("categories", "categories.id", "mass_import_rules.category_id")
-    .select(["mass_import_rules.category_id", "mass_import_rules.predicate"])
-    .where("categories.archived", "=", false)
+    .selectFrom("mass_import_rule")
+    .innerJoin(
+      "transaction_category",
+      "transaction_category.id",
+      "mass_import_rule.transaction_category_id",
+    )
+    .select(["mass_import_rule.transaction_category_id", "mass_import_rule.predicate"])
+    .where("transaction_category.archived", "=", false)
     .execute();
   const processedRules = rules.map((rule) => ({
-    category_id: rule.category_id,
+    transactionCategoryId: rule.transaction_category_id,
     predicate: rule.predicate.toLowerCase(),
   }));
   const relations = transactions.flatMap((transaction) => {
@@ -60,16 +64,16 @@ async function insertCategoryRelationsForMassImport(
     const categoriesToAdd = new Set<string>(hardcodedCategoryIds);
     for (const rule of processedRules) {
       if (transaction.description.toLowerCase().includes(rule.predicate)) {
-        categoriesToAdd.add(rule.category_id);
+        categoriesToAdd.add(rule.transactionCategoryId);
       }
     }
     return Array.from(categoriesToAdd).map((categoryId) => ({
-      category_id: categoryId,
+      transaction_category_id: categoryId,
       transaction_id: transaction.id,
     }));
   });
   if (relations.length) {
-    await trx.insertInto("categories_transactions").values(relations).execute();
+    await trx.insertInto("transaction_category_to_transaction").values(relations).execute();
   }
 }
 
@@ -113,7 +117,7 @@ export async function getTransactionsWithCategoryFilters(options: {
 
 export async function deleteTransaction(transactionId: string) {
   await checkSession();
-  await db.deleteFrom("transactions").where("id", "=", transactionId).executeTakeFirstOrThrow();
+  await db.deleteFrom("transaction").where("id", "=", transactionId).executeTakeFirstOrThrow();
   return transactionId;
 }
 
@@ -126,10 +130,10 @@ async function insertCategoryRelations(
     return [];
   }
   return trx
-    .insertInto("categories_transactions")
+    .insertInto("transaction_category_to_transaction")
     .values(
       categoryIds.map((categoryId) => ({
-        category_id: categoryId,
+        transaction_category_id: categoryId,
         transaction_id: transactionId,
       })),
     )
@@ -142,7 +146,7 @@ export async function editTransaction(transactionId: string, inputs: Record<stri
   const transaction = INPUT_SCHEMA.parse(inputs);
   await db.transaction().execute(async (trx) => {
     await trx
-      .updateTable("transactions")
+      .updateTable("transaction")
       .set({
         description: transaction.description,
         when: transaction.when,
@@ -153,7 +157,7 @@ export async function editTransaction(transactionId: string, inputs: Record<stri
       .where("id", "=", transactionId)
       .executeTakeFirstOrThrow();
     await trx
-      .deleteFrom("categories_transactions")
+      .deleteFrom("transaction_category_to_transaction")
       .where("transaction_id", "=", transactionId)
       .execute();
     return insertCategoryRelations(trx, transactionId, transaction.categoryIds);
@@ -168,7 +172,7 @@ export async function addTransaction(inputs: Record<string, unknown>) {
   const transaction = INPUT_SCHEMA.parse(inputs);
   await db.transaction().execute(async (trx) => {
     await trx
-      .insertInto("transactions")
+      .insertInto("transaction")
       .values({
         id,
         description: transaction.description,
@@ -191,7 +195,7 @@ export async function massImport(inputs: Record<string, unknown>) {
   const now = new Date();
   return db.transaction().execute(async (trx) => {
     const dupesFromDb = await trx
-      .selectFrom("transactions")
+      .selectFrom("transaction")
       .select(["id", "amount", "currency", "when"])
       .where((eb) =>
         eb.or(
@@ -221,7 +225,7 @@ export async function massImport(inputs: Record<string, unknown>) {
         inserted_at: now,
         updated_at: now,
       }));
-      await trx.insertInto("transactions").values(insertTransactions).execute();
+      await trx.insertInto("transaction").values(insertTransactions).execute();
       await insertCategoryRelationsForMassImport(trx, insertTransactions, categoryIds);
     }
     return {

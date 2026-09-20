@@ -38,7 +38,7 @@ function byName(a: { name: string }, b: { name: string }) {
 }
 
 function addFilters<Cols>(
-  query: SelectQueryBuilder<KBFDatabase, "categories", Cols>,
+  query: SelectQueryBuilder<KBFDatabase, "transaction_category", Cols>,
   filter: CategoryFilter | undefined,
 ) {
   if (filter?.includeKinds?.length) {
@@ -55,20 +55,20 @@ async function addPredicates(trx: DBTransaction, categoryId: string, predicates:
     const rules = predicates.map((predicate) => ({
       id: v4(),
       predicate,
-      category_id: categoryId,
+      transaction_category_id: categoryId,
     }));
-    await trx.insertInto("mass_import_rules").values(rules).execute();
+    await trx.insertInto("mass_import_rule").values(rules).execute();
   }
 }
 
 async function predicatesByCategory(): Promise<Record<string, undefined | string[]>> {
   const rules = await db
-    .selectFrom("mass_import_rules")
-    .select(["predicate", "category_id"])
+    .selectFrom("mass_import_rule")
+    .select(["predicate", "transaction_category_id"])
     .execute();
   const result: Record<string, undefined | string[]> = {};
   for (const rule of rules) {
-    const cur = (result[rule.category_id] ||= []);
+    const cur = (result[rule.transaction_category_id] ||= []);
     cur.push(rule.predicate);
   }
   return result;
@@ -76,14 +76,14 @@ async function predicatesByCategory(): Promise<Record<string, undefined | string
 
 async function countsOfTransactions() {
   const countItems = await db
-    .selectFrom("categories_transactions")
+    .selectFrom("transaction_category_to_transaction")
     .select((builder) => [
-      "category_id as categoryId",
+      "transaction_category_id as transactionCategoryId",
       builder.fn.count<number>("transaction_id").as("count"),
     ])
-    .groupBy("category_id")
+    .groupBy("transaction_category_id")
     .execute();
-  return Object.fromEntries(countItems.map((item) => [item.categoryId, item.count]));
+  return Object.fromEntries(countItems.map((item) => [item.transactionCategoryId, item.count]));
 }
 
 export async function categoriesForTransactionIds(
@@ -93,7 +93,7 @@ export async function categoriesForTransactionIds(
   await checkSession();
   const links = transactionIds.length
     ? await db
-        .selectFrom("categories_transactions")
+        .selectFrom("transaction_category_to_transaction")
         .selectAll()
         .where("transaction_id", "in", uniq(transactionIds))
         .execute()
@@ -102,9 +102,9 @@ export async function categoriesForTransactionIds(
   const categoriesQuery = links.length
     ? addFilters(
         db
-          .selectFrom("categories")
+          .selectFrom("transaction_category")
           .select(DEFAULT_SELECT)
-          .where("id", "in", uniq(links.map((r) => r.category_id))),
+          .where("id", "in", uniq(links.map((r) => r.transaction_category_id))),
         filter,
       )
     : undefined;
@@ -116,7 +116,7 @@ export async function categoriesForTransactionIds(
       if (link.transaction_id !== transactionId) {
         return [];
       }
-      const found = categories.find((category) => category.id === link.category_id);
+      const found = categories.find((category) => category.id === link.transaction_category_id);
       return found ? [found] : [];
     });
     result[transactionId] = catsForId.length
@@ -131,7 +131,7 @@ export async function allCategoriesByName(
 ) {
   await checkSession();
   const results = await addFilters(
-    db.selectFrom("categories").select(DEFAULT_SELECT).orderBy("name"),
+    db.selectFrom("transaction_category").select(DEFAULT_SELECT).orderBy("name"),
     filter,
   ).execute();
   return filter?.includeUncategorized ? results.concat(UNCATEGORIZED_CATEGORY) : results;
@@ -153,7 +153,10 @@ export async function allCategoriesWithCounts() {
 
 export async function deleteCategory(categoryId: string) {
   await checkSession();
-  await db.deleteFrom("categories").where("id", "=", categoryId).executeTakeFirstOrThrow();
+  await db
+    .deleteFrom("transaction_category")
+    .where("id", "=", categoryId)
+    .executeTakeFirstOrThrow();
   return categoryId;
 }
 
@@ -163,7 +166,7 @@ export async function editCategory(categoryId: string, inputs: Record<string, un
   const category = INPUT_SCHEMA.parse(inputs);
   await db.transaction().execute(async (trx) => {
     await trx
-      .updateTable("categories")
+      .updateTable("transaction_category")
       .set({
         name: category.name,
         color_code: category.colorCode,
@@ -173,7 +176,10 @@ export async function editCategory(categoryId: string, inputs: Record<string, un
       })
       .where("id", "=", categoryId)
       .executeTakeFirstOrThrow();
-    await trx.deleteFrom("mass_import_rules").where("category_id", "=", categoryId).execute();
+    await trx
+      .deleteFrom("mass_import_rule")
+      .where("transaction_category_id", "=", categoryId)
+      .execute();
     await addPredicates(trx, categoryId, category.predicates);
   });
   return categoryId;
@@ -186,7 +192,7 @@ export async function addCategory(inputs: Record<string, unknown>) {
   const category = INPUT_SCHEMA.parse(inputs);
   await db.transaction().execute(async (trx) => {
     await trx
-      .insertInto("categories")
+      .insertInto("transaction_category")
       .values({
         id: categoryId,
         name: category.name,

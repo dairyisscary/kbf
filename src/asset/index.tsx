@@ -18,7 +18,7 @@ export async function addAsset(inputs: Record<string, unknown>) {
   const id = v7();
   const now = new Date();
   await db
-    .insertInto("assets")
+    .insertInto("asset")
     .values({
       id,
       name: asset.name,
@@ -35,7 +35,7 @@ export async function editAsset(assetId: string, inputs: Record<string, unknown>
   await checkSession();
   const asset = INPUT_SCHEMA.parse(inputs);
   await db
-    .updateTable("assets")
+    .updateTable("asset")
     .set({
       name: asset.name,
       currency: asset.currency,
@@ -49,11 +49,11 @@ export async function editAsset(assetId: string, inputs: Record<string, unknown>
 
 export async function deleteAsset(assetId: string) {
   await checkSession();
-  await db.deleteFrom("assets").where("id", "=", assetId).executeTakeFirstOrThrow();
+  await db.deleteFrom("asset").where("id", "=", assetId).executeTakeFirstOrThrow();
   return assetId;
 }
 
 export async function allAssets() {
   await checkSession();
-  return db.selectFrom("assets").select(DEFAULT_SELECT).orderBy("name").execute();
+  return db.selectFrom("asset").select(DEFAULT_SELECT).orderBy("name").execute();
 }

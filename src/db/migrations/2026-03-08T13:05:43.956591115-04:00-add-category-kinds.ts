@@ -1,12 +1,12 @@
 import { sql, type Kysely } from "kysely";
-import type { Categories, DB } from "kysely-codegen";
+import type { TransactionCategory, DB } from "kysely-codegen";
 
 const KIND_COLUMN_NAME = "kind";
 const KIND_TYPE_NAME = "category_kind";
 const IGNORED_BREAKDOWN_COLUMN_NAME = "ignored_for_breakdown_reporting";
 
-type ModDB = Omit<DB, "categories"> & {
-  categories: Categories & { ignored_for_breakdown_reporting: boolean };
+type ModDB = Omit<DB, "transaction_category"> & {
+  categories: TransactionCategory & { ignored_for_breakdown_reporting: boolean };
 };
 
 export async function up(db: Kysely<ModDB>) {
