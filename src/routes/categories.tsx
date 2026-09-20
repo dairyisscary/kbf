@@ -1,10 +1,11 @@
 import { action, defineRoute, query, useAction } from "@solidjs/router";
 import { reload } from "@solidjs/web";
-import { createSignal, createMemo, createUniqueId, Show, For, untrack } from "solid-js";
+import { createSignal, createMemo, createUniqueId, Show, For } from "solid-js";
 
 import { Button } from "#/button";
 import { allCategoriesWithCounts, deleteCategory, addCategory, editCategory } from "#/category";
-import { CategoryColorPip, CategoryColorSelector, CategoryKindIcon } from "#/category/pip";
+import { CategoryKindIcon } from "#/category/pip";
+import { ColorCodePip, ColorCodeSelector } from "#/color-code";
 import { pealFormData, Checkbox, FormRowWithId, Label, RadioTabs, FieldSet } from "#/form";
 import { CrudModal } from "#/form/crud-modal";
 import { Icon } from "#/icon";
@@ -51,9 +52,6 @@ function AddEditModal(props: {
   onClose: () => void;
   editingCategory: undefined | CountedCategory;
 }) {
-  const [selectedColorCode, setSelectedColorCode] = createSignal(
-    untrack(() => props.editingCategory?.colorCode),
-  );
   const rulesDescriptionId = createUniqueId();
 
   const deleteAction = useAction(deleteCategoryAction);
@@ -95,8 +93,7 @@ function AddEditModal(props: {
         {(id) => (
           <>
             <Label for={id}>Color Code</Label>
-            <CategoryColorSelector onChange={setSelectedColorCode} value={selectedColorCode()} />
-            <input type="hidden" id={id} name="colorCode" value={selectedColorCode() || ""} />
+            <ColorCodeSelector id={id} initColorCode={props.editingCategory?.colorCode} />
           </>
         )}
       </FormRowWithId>
@@ -183,9 +180,9 @@ export default function Categories() {
         }}
       >
         {(category) => [
-          <CategoryColorPip block code={category.colorCode}>
+          <ColorCodePip block code={category.colorCode}>
             <CategoryKindIcon size="sm" kind={category.kind} />
-          </CategoryColorPip>,
+          </ColorCodePip>,
           <>
             <span class={category.archived ? "line-through" : "text-kbf-text-highlight"}>
               {category.name}

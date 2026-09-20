@@ -1,5 +1,6 @@
 import { allAssetSnapshotsByAsset, mostRecentSnapshotsAsOf } from "#/asset-snapshot";
 import type { CategoryFilter } from "#/category";
+import { allNuggetsFromFilters } from "#/nugget";
 import { type Options as IntervalOptions, type Interval, makeInterval } from "#/reporting/interval";
 import { getTransactionsWithCategoryFilters } from "#/transaction";
 
@@ -12,6 +13,9 @@ type ReportableTransaction = {
 
 type Options = {
   assetSnapshot: {
+    interval: IntervalOptions;
+  };
+  nugget: {
     interval: IntervalOptions;
   };
   transaction: {
@@ -44,6 +48,44 @@ function makeViewIntervals(interval: Interval, transactions: ReportableTransacti
     }
     return aggregate;
   });
+}
+
+async function getReportingNuggets(interval: Interval) {
+  const nuggets = await allNuggetsFromFilters(interval.queryFilters);
+
+  type TagAggregate = {
+    tag: (typeof nuggets)[number]["tags"][number];
+    euro: ReturnType<typeof makeCategorySum>;
+    usd: ReturnType<typeof makeCategorySum>;
+  };
+  const tagToNuggets = new Map<string, TagAggregate>();
+  for (const { amount, currency, tags } of nuggets) {
+    for (const tag of tags) {
+      let current = tagToNuggets.get(tag.id);
+      if (!current) {
+        current = { tag, euro: { total: 0, count: 0 }, usd: { total: 0, count: 0 } };
+        tagToNuggets.set(tag.id, current);
+      }
+      current[currency].total += amount;
+      current[currency].count++;
+    }
+  }
+
+  return {
+    labels: interval.labels,
+    intervals: interval.groupDataInto((matchesWhen) => {
+      const aggregate = { euro: 0, usd: 0 };
+      for (const nugget of nuggets) {
+        if (matchesWhen(nugget.when)) {
+          aggregate[nugget.currency] += nugget.amount;
+        }
+      }
+      return aggregate;
+    }),
+    sumsPerTag: Array.from(tagToNuggets.values()).toSorted((a, b) =>
+      a.tag.name.localeCompare(b.tag.name),
+    ),
+  };
 }
 
 async function getReportingTransactions(interval: Interval, categoryFilter: CategoryFilter) {
@@ -139,17 +181,19 @@ async function getReportingAssetSnapshots(interval: Interval) {
   };
 }
 
-export async function getAssetsAndTransactionsForReporting(options: Options) {
-  const [transaction, assetSnapshot] = await Promise.all([
+export async function getReporting(options: Options) {
+  const [transaction, assetSnapshot, nugget] = await Promise.all([
     getReportingTransactions(
       makeInterval(options.transaction.interval),
       options.transaction.categoryFilter,
     ),
     getReportingAssetSnapshots(makeInterval(options.assetSnapshot.interval)),
+    getReportingNuggets(makeInterval(options.nugget.interval)),
   ]);
 
   return {
     transaction,
     assetSnapshot,
+    nugget,
   };
 }

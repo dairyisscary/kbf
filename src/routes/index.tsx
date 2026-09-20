@@ -1,23 +1,24 @@
 import { query, useSearchParams, defineRoute } from "@solidjs/router";
-import { type ComponentProps } from "@solidjs/web";
+import type { ComponentProps, JSX } from "@solidjs/web";
 import { createMemo, createSignal, For, Loading } from "solid-js";
 
 import { allCategoriesByName, type CategoryFilter } from "#/category";
-import { CategoryColorPip, getColorsForCode } from "#/category/pip";
 import { BarChart, colorizeActiveTooltipItem, LineChart } from "#/chart";
+import { ColorCodePip, getColorsForCode } from "#/color-code";
 import {
+  AmountPill,
   formatMoneyNoCents,
   formatMoneyAmount,
   formatFractionAsPercent,
   formatRightAlignPadding,
+  formatPlural,
 } from "#/format";
 import { Icon } from "#/icon";
 import { KbfSiteTitle } from "#/meta";
 import { paths } from "#/navigation";
-import { getAssetsAndTransactionsForReporting } from "#/reporting";
+import { getReporting } from "#/reporting";
 import { requireUser } from "#/session";
 import { TabGroup } from "#/tab-group";
-import { AmountPill } from "#/transaction/pip";
 
 type Strategy = "separate" | "merged-usd" | "merged-euro";
 type BarChartProps = Pick<ComponentProps<typeof BarChart>, "data" | "options">;
@@ -52,8 +53,11 @@ const getAllCategoriesForReport = query(async () => {
 const getReportData = query(async (timeline: string | null) => {
   "use server";
   requireUser();
-  const options: Parameters<typeof getAssetsAndTransactionsForReporting>[0] = {
+  const options: Parameters<typeof getReporting>[0] = {
     assetSnapshot: {
+      interval: { type: DEFAULT_TIMELINE, includeCurrent: true },
+    },
+    nugget: {
       interval: { type: DEFAULT_TIMELINE, includeCurrent: true },
     },
     transaction: {
@@ -68,13 +72,13 @@ const getReportData = query(async (timeline: string | null) => {
       count: Number(count),
       includeCurrent: stepTimeUnit === "year",
     };
-    options.assetSnapshot.interval = {
+    options.assetSnapshot.interval = options.nugget.interval = {
       ...options.transaction.interval,
       count: options.transaction.interval.count + 1,
       includeCurrent: true,
     };
   }
-  return getAssetsAndTransactionsForReporting(options);
+  return getReporting(options);
 }, "allReporting");
 
 export const route = defineRoute({
@@ -169,20 +173,17 @@ function withMoneyTicks<R extends Record<string, unknown>>(
   return input;
 }
 
-function Sums(props: {
-  data:
-    | { euro: { total: number; count: number }; usd: { total: number; count: number } }
-    | undefined;
-}) {
+type SumData = { euro: { total: number; count: number }; usd: { total: number; count: number } };
+
+function Sums(props: { data: SumData | undefined; label: string }) {
   return (
     <div>
       <p class="pb-2 text-sm">
-        {(props.data?.euro.count || 0) + (props.data?.usd.count || 0)}
-        {" transactions"}
+        {formatPlural((props.data?.euro.count || 0) + (props.data?.usd.count || 0), props.label)}
       </p>
       <p class="flex flex-wrap items-center gap-2">
-        <AmountPill transaction={{ currency: "euro", amount: props.data?.euro.total || 0 }} />
-        <AmountPill transaction={{ currency: "usd", amount: props.data?.usd.total || 0 }} />
+        <AmountPill object={{ currency: "euro", amount: props.data?.euro.total || 0 }} />
+        <AmountPill object={{ currency: "usd", amount: props.data?.usd.total || 0 }} />
       </p>
     </div>
   );
@@ -248,6 +249,42 @@ function formatAssetFooter(lookup: AssetSums[], items: { dataIndex: number }[]) 
   });
 }
 
+function TileTotals<T>(props: {
+  title: string;
+  each: T[];
+  itemFaded?: (item: T) => boolean;
+  itemColorCode: (item: T) => number;
+  itemSums: (item: T) => SumData | undefined;
+  sumsLabel: string;
+  children: (item: T) => JSX.Element;
+}) {
+  return (
+    <Loading>
+      <div>
+        <h3 class="mb-4">{props.title}</h3>
+        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <For each={props.each}>
+            {(item) => (
+              <div
+                class={[
+                  "flex flex-col justify-between gap-7 rounded-sm bg-kbf-light-purple p-3 transition-opacity duration-300",
+                  props.itemFaded?.(item) && "opacity-40",
+                ]}
+              >
+                <div class="flex items-center gap-2">
+                  <ColorCodePip size="sm" class="shrink-0" code={props.itemColorCode(item)} />
+                  {props.children(item)}
+                </div>
+                <Sums data={props.itemSums(item)} label={props.sumsLabel} />
+              </div>
+            )}
+          </For>
+        </div>
+      </div>
+    </Loading>
+  );
+}
+
 export default function Dashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
   const reportData = createMemo(() =>
@@ -256,6 +293,90 @@ export default function Dashboard() {
   const allCategories = createMemo(() => getAllCategoriesForReport());
 
   const [currencyStrategy, setCurrencyStrategy] = createSignal<Strategy>("merged-usd");
+
+  const nuggetGraphProps = createMemo((): LineChartProps => {
+    const data = reportData();
+
+    const currencyStrat = currencyStrategy();
+    const isSeperateCurrency = currencyStrat === "separate";
+    const isMergedUsd = currencyStrat === "merged-usd";
+    const isMergedEuro = currencyStrat === "merged-euro";
+
+    const datasets = [
+      (isSeperateCurrency || isMergedUsd) && {
+        label: "USD",
+        data: data.nugget.intervals.map((interval, index) => {
+          const x = data.nugget.labels[index];
+          let y = interval.usd;
+          if (isMergedUsd) {
+            y += interval.euro * ONE_EURO_IN_USD;
+          }
+          return { x, y, currency: "usd" as const };
+        }),
+        borderColor: "#64b6ac",
+        pointStyle: "rectRounded",
+        pointRadius: 8,
+        pointBackgroundColor: "#6c6aea",
+        pointHoverRadius: 8,
+        pointHoverBackgroundColor: "#64b6ac",
+        type: undefined as unknown as "radar", // Bad Chart.js types...
+      },
+
+      (isSeperateCurrency || isMergedEuro) && {
+        label: "Euro",
+        data: data.nugget.intervals.map((interval, index) => {
+          const x = data.nugget.labels[index];
+          let y = interval.euro;
+          if (isMergedEuro) {
+            y += interval.usd / ONE_EURO_IN_USD;
+          }
+          return { x, y, currency: "euro" as const };
+        }),
+        borderColor: "#64b6ac",
+        pointStyle: "rectRounded",
+        pointRadius: 8,
+        pointBackgroundColor: "#6c6aea",
+        pointHoverRadius: 8,
+        pointHoverBackgroundColor: "#64b6ac",
+        type: undefined as unknown as "radar", // Bad Chart.js types...
+      },
+    ].filter(Boolean);
+    return {
+      data: { datasets },
+      options: {
+        interaction: { mode: "point", intersect: true },
+        scales: {
+          y: withMoneyTicks({ min: 0 }, currencyStrat),
+        },
+        plugins: {
+          tooltip: {
+            mode: "index",
+            position: "nearest",
+            displayColors: false,
+            titleAlign: "center",
+            bodyAlign: "right",
+            callbacks: {
+              labelTextColor: colorizeActiveTooltipItem,
+              label({ dataset, datasetIndex, dataIndex }) {
+                const formatted = formatRightAlignPadding(
+                  datasets,
+                  datasetIndex,
+                  (formatDataset) => {
+                    const indexData = formatDataset.data[dataIndex]!;
+                    return formatMoneyNoCents({
+                      amount: indexData.y || 0,
+                      currency: indexData.currency,
+                    })!;
+                  },
+                );
+                return `${dataset.label!}: ${formatted}`;
+              },
+            },
+          },
+        },
+      },
+    };
+  });
 
   const assetGraphProps = createMemo((): LineChartProps => {
     const data = reportData();
@@ -519,37 +640,47 @@ export default function Dashboard() {
           <h2>Spend</h2>
           <BarChart class={CHART_CX} data={spendGraph().data} options={spendGraph().options} />
 
-          <Loading>
-            <div>
-              <h3 class="mb-4">Totals</h3>
-              <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-                <For each={allCategoriesWithSums()}>
-                  {({ category, sums }) => (
-                    <div
-                      class={[
-                        "flex flex-col justify-between gap-7 rounded-sm bg-kbf-light-purple p-3 transition-opacity duration-300",
-                        ignored().has(category.id) && "opacity-40",
-                      ]}
-                    >
-                      <div class="flex items-center gap-2">
-                        <CategoryColorPip size="sm" class="shrink-0" code={category.colorCode} />
-                        <a
-                          href={paths.transactions({ filterCategoryIds: category.id })}
-                          class="mr-auto overflow-hidden text-ellipsis text-kbf-text-highlight hover:underline lg:text-lg"
-                        >
-                          {category.name}
-                        </a>
-                        <button type="button" onClick={[toggleIgnore, category.id]}>
-                          <Icon size="sm" name={ignored().has(category.id) ? "eye" : "eye-off"} />
-                        </button>
-                      </div>
-                      <Sums data={sums} />
-                    </div>
-                  )}
-                </For>
-              </div>
-            </div>
-          </Loading>
+          <TileTotals
+            title="Totals by Category"
+            each={allCategoriesWithSums()}
+            itemFaded={(item) => ignored().has(item.category.id)}
+            itemColorCode={(item) => item.category.colorCode}
+            itemSums={(item) => item.sums}
+            sumsLabel="transaction"
+          >
+            {({ category }) => (
+              <>
+                <a
+                  href={paths.transactions({ filterCategoryIds: category.id })}
+                  class="mr-auto overflow-hidden text-ellipsis text-kbf-text-highlight hover:underline lg:text-lg"
+                >
+                  {category.name}
+                </a>
+                <button type="button" onClick={[toggleIgnore, category.id]}>
+                  <Icon size="sm" name={ignored().has(category.id) ? "eye" : "eye-off"} />
+                </button>
+              </>
+            )}
+          </TileTotals>
+        </section>
+
+        <section class="space-y-8">
+          <h2>Nuggets</h2>
+          <LineChart
+            class={CHART_CX}
+            data={nuggetGraphProps().data}
+            options={nuggetGraphProps().options}
+          />
+
+          <TileTotals
+            title="Totals by Tag"
+            each={reportData().nugget.sumsPerTag}
+            itemColorCode={(item) => item.tag.colorCode}
+            itemSums={(item) => item}
+            sumsLabel="nugget"
+          >
+            {(item) => item.tag.name}
+          </TileTotals>
         </section>
       </div>
     </>

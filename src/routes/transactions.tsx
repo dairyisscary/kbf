@@ -8,29 +8,15 @@ import {
 } from "@solidjs/router";
 import { reload, type JSX } from "@solidjs/web";
 import { subDays, startOfMonth, subMonths, endOfMonth } from "date-fns";
-import {
-  createSignal,
-  createMemo,
-  For,
-  Show,
-  Loading,
-  untrack,
-  onSettled,
-  createStore,
-} from "solid-js";
+import { createSignal, createMemo, For, Show, Loading, onSettled, createStore } from "solid-js";
 
 import { Button } from "#/button";
 import { allCategoriesByName } from "#/category";
-import { CategoryPill } from "#/category/pip";
+import { ColorCodePill } from "#/color-code";
 import { pealFormData, Checkbox, FormRowWithId, Label } from "#/form";
 import { CrudModal } from "#/form/crud-modal";
-import {
-  formatDate,
-  formatDateOnly,
-  formatDateForInput,
-  formatCurrencySign,
-  formatPlural,
-} from "#/format";
+import { MoneyInput } from "#/form/money-input";
+import { AmountPill, formatDate, formatDateOnly, formatDateForInput, formatPlural } from "#/format";
 import { Icon } from "#/icon";
 import { KbfSiteTitle } from "#/meta";
 import { FilterButton, FilterContainer, TimeFrameFilters } from "#/query-filters";
@@ -42,7 +28,7 @@ import {
   editTransaction,
   deleteTransaction,
 } from "#/transaction";
-import { AmountPill, CategoryPipItems, CategorySelectFormRow } from "#/transaction/pip";
+import { CategoryPipItems, CategorySelectFormRow } from "#/transaction/pip";
 
 type Transaction = Awaited<ReturnType<typeof allTransactionsFromFilters>>[number];
 type Category = Awaited<ReturnType<typeof allCategoriesByName>>[number];
@@ -134,13 +120,6 @@ function AddEditModal(props: {
   allCategories: Category[];
   editingTransaction: undefined | Transaction;
 }) {
-  const [amountFormat, setAmountFormat] = createSignal<number>(
-    untrack(() => props.editingTransaction?.amount) ?? NaN,
-  );
-  const [currency, setCurrency] = createSignal<Parameters<typeof formatCurrencySign>[0]>(
-    untrack(() => props.editingTransaction?.currency) || "usd",
-  );
-
   const selectableCategories = createMemo(() => {
     const editingTransactionCategoryIds = props.editingTransaction?.categories.map((c) => c.id);
     return props.allCategories.filter((category) => {
@@ -188,30 +167,12 @@ function AddEditModal(props: {
         {(id) => (
           <>
             <Label for={id}>Amount</Label>
-            <div class="group relative flex gap-3">
-              <Button
-                class="aspect-square text-xl"
-                onClick={() => setCurrency((c) => (c === "euro" ? "usd" : "euro"))}
-              >
-                {formatCurrencySign(currency())}
-              </Button>
-              <input type="hidden" name="currency" value={currency()} />
-              <input
-                id={id}
-                autocomplete="off"
-                class="w-full flex-1"
-                type="text"
-                name="amount"
-                inputmode="numeric"
-                pattern="-?[0-9]+(\.[0-9]{0,2})?"
-                value={props.editingTransaction?.amount ?? ""}
-                required
-                onInput={(event) => setAmountFormat(Number(event.target.value))}
-              />
-              <div class="absolute top-0 right-0 opacity-0 transition-opacity duration-300 group-has-focus-within:opacity-100">
-                <AmountPill transaction={{ currency: currency(), amount: amountFormat() }} />
-              </div>
-            </div>
+            <MoneyInput
+              id={id}
+              allowNegative
+              initAmount={props.editingTransaction?.amount}
+              initCurrency={props.editingTransaction?.currency}
+            />
           </>
         )}
       </FormRowWithId>
@@ -290,7 +251,7 @@ function Filters(props: { allCategories: Category[] }) {
                       setSearchParams({ filterCategoryIds: newValue.join(",") });
                     }}
                   >
-                    <CategoryPill category={category} />
+                    <ColorCodePill object={category} />
                   </Checkbox>
                 </div>
               )}
@@ -347,18 +308,14 @@ export default function Transactions(props: RouteProps<typeof route>) {
           formatDate(transaction.when),
           <span class="break-all text-kbf-text-highlight">{transaction.description}</span>,
           <CategoryPipItems categories={transaction.categories} />,
-          <AmountPill transaction={transaction} />,
+          <AmountPill object={transaction} />,
         ]}
       </Table>
       <Loading>
         <footer class="fixed bottom-0 left-0 flex w-full items-center justify-center gap-4 border-t border-kbf-action bg-kbf-light-purple p-6 text-lg">
           <p>Showing {formatPlural(transactions.length, "transaction")}</p>
-          <AmountPill
-            transaction={{ currency: "euro", amount: transactionSum(transactions, "euro") }}
-          />
-          <AmountPill
-            transaction={{ currency: "usd", amount: transactionSum(transactions, "usd") }}
-          />
+          <AmountPill object={{ currency: "euro", amount: transactionSum(transactions, "euro") }} />
+          <AmountPill object={{ currency: "usd", amount: transactionSum(transactions, "usd") }} />
         </footer>
       </Loading>
       <Show when={addEditModal()}>

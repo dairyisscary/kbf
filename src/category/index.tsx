@@ -3,6 +3,7 @@ import type { CategoryKind } from "kysely-codegen";
 import { v4 } from "uuid";
 import * as z from "zod";
 
+import { uniq } from "#/array";
 import { db, type KBFDatabase, type DBTransaction } from "#/db";
 
 export type CategoryFilter = {
@@ -26,10 +27,6 @@ const UNCATEGORIZED_CATEGORY = {
   archived: false,
   kind: "basic" as const,
 };
-
-function uniq<T>(input: T[]): T[] {
-  return Array.from(new Set(input));
-}
 
 function byName(a: { name: string }, b: { name: string }) {
   return a.name.localeCompare(b.name);

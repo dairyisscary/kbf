@@ -99,6 +99,14 @@ export function MainNav() {
       </a>
 
       <Divider />
+      <a href={paths.nuggets} class={ANCHOR_CX}>
+        <NavLinkContent iconName="dollar-sign" title="Nuggets" />
+      </a>
+      <a href={paths["nugget-tags"]} class={ANCHOR_CX}>
+        <NavLinkContent iconName="tag" title="Nugget Tags" />
+      </a>
+
+      <Divider />
       <a href={paths["asset-snapshots"]} class={ANCHOR_CX}>
         <NavLinkContent iconName="git-merge" title="Asset Snapshots" />
       </a>
