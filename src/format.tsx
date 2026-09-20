@@ -41,8 +41,23 @@ export function formatMoneyAmount(
   return value.keepNegative ? rawValue : rawValue.replace(/[^\d,.$€]/g, "");
 }
 
+export function AmountPill(props: { object: { amount: number; currency: "usd" | "euro" } }) {
+  return (
+    <span
+      class={[
+        "kbf-pill font-mono first-letter:pr-0.5",
+        props.object.amount >= 0
+          ? "bg-kbf-action-highlight text-kbf-dark-purple"
+          : "bg-kbf-text-accent text-kbf-text-highlight",
+      ]}
+    >
+      {formatMoneyAmount(props.object)}
+    </span>
+  );
+}
+
 export function formatMoneyNoCents(
-  value: { currency: Currency; amount: number } | undefined | null,
+  value: { currency: Currency; amount: number; keepNegative?: boolean } | undefined | null,
 ) {
   return formatMoneyAmount(value)?.slice(0, -3) || null;
 }
