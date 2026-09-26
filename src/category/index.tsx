@@ -1,7 +1,7 @@
 "use server";
 import type { SelectQueryBuilder } from "kysely";
 import type { CategoryKind } from "kysely-codegen";
-import { v4 } from "uuid";
+import { v7 } from "uuid";
 import * as z from "zod";
 
 import { db, type KBFDatabase, type DBTransaction } from "#/db";
@@ -53,7 +53,7 @@ function addFilters<Cols>(
 async function addPredicates(trx: DBTransaction, categoryId: string, predicates: string[]) {
   if (predicates.length) {
     const rules = predicates.map((predicate) => ({
-      id: v4(),
+      id: v7(),
       predicate,
       transaction_category_id: categoryId,
     }));
@@ -188,7 +188,7 @@ export async function editCategory(categoryId: string, inputs: Record<string, un
 export async function addCategory(inputs: Record<string, unknown>) {
   await checkSession();
   const now = new Date();
-  const categoryId = v4();
+  const categoryId = v7();
   const category = INPUT_SCHEMA.parse(inputs);
   await db.transaction().execute(async (trx) => {
     await trx
@@ -199,7 +199,6 @@ export async function addCategory(inputs: Record<string, unknown>) {
         color_code: category.colorCode,
         archived: Boolean(category.archived),
         kind: category.kind,
-        inserted_at: now,
         updated_at: now,
       })
       .executeTakeFirstOrThrow();

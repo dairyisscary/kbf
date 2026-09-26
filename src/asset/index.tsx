@@ -25,7 +25,6 @@ export async function addAsset(inputs: Record<string, unknown>) {
       currency: asset.currency,
       tax_advantaged: asset.taxAdvantaged || false,
       updated_at: now,
-      inserted_at: now,
     })
     .execute();
   return id;

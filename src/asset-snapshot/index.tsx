@@ -31,7 +31,6 @@ export async function addAssetSnapshot(assetId: string, inputs: Record<string, u
       amount: snapshot.amount,
       asset_id: assetId,
       updated_at: now,
-      inserted_at: now,
     })
     .execute();
   return id;

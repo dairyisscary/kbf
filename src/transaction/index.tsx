@@ -1,5 +1,5 @@
 "use server";
-import { v4 } from "uuid";
+import { v7 } from "uuid";
 import * as z from "zod";
 
 import { categoriesForTransactionIds, type CategoryFilter } from "#/category";
@@ -168,7 +168,7 @@ export async function editTransaction(transactionId: string, inputs: Record<stri
 export async function addTransaction(inputs: Record<string, unknown>) {
   await checkSession();
   const now = new Date();
-  const id = v4();
+  const id = v7();
   const transaction = INPUT_SCHEMA.parse(inputs);
   await db.transaction().execute(async (trx) => {
     await trx
@@ -179,7 +179,6 @@ export async function addTransaction(inputs: Record<string, unknown>) {
         when: transaction.when,
         amount: transaction.amount,
         currency: transaction.currency,
-        inserted_at: now,
         updated_at: now,
       })
       .executeTakeFirstOrThrow();
@@ -217,12 +216,11 @@ export async function massImport(inputs: Record<string, unknown>) {
     });
     if (nonDupedParsedTransactions.length) {
       const insertTransactions = nonDupedParsedTransactions.map((parsedTransaction) => ({
-        id: v4(),
+        id: v7(),
         description: parsedTransaction.description,
         when: parsedTransaction.when,
         amount: parsedTransaction.amount,
         currency,
-        inserted_at: now,
         updated_at: now,
       }));
       await trx.insertInto("transaction").values(insertTransactions).execute();
