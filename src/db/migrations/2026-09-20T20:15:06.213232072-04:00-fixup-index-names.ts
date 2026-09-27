@@ -27,14 +27,12 @@ const INDEXES: [oldName: string, newName: string][] = [
 
 export async function up(db: Kysely<unknown>) {
   for (const [oldName, newName] of INDEXES) {
-    // oxlint-disable-next-line no-await-in-loop
     await sql`ALTER INDEX ${sql.id(oldName)} RENAME TO ${sql.id(newName)}`.execute(db);
   }
 }
 
 export async function down(db: Kysely<unknown>) {
   for (const [oldName, newName] of INDEXES) {
-    // oxlint-disable-next-line no-await-in-loop
     await sql`ALTER INDEX ${sql.id(newName)} RENAME TO ${sql.id(oldName)}`.execute(db);
   }
 }

@@ -25,11 +25,11 @@
   },
   "devDependencies": {
     "@total-typescript/ts-reset": "^0.6.1",
-    "@types/node": "^24.13.4",
+    "@types/node": "^24.13.6",
     "@types/pg": "^8.23.1",
     "kysely-codegen": "^0.20.0",
-    "oxlint": "^1.82.0",
-    "oxlint-tsgolint": "~7.0.2001",
+    "oxlint": "^1.83.0",
+    "oxlint-tsgolint": "~7.0.2002",
     "typescript": "~7.0.2"
   }
 }
