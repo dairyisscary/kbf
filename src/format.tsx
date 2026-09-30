@@ -66,13 +66,13 @@ export function formatCurrencySign(currency: Currency): string {
   return currency === "euro" ? "€" : "$";
 }
 
-export function formatFractionAsPercent(numerator: number, denominator: number): string | null {
-  if (!denominator) {
-    return null;
-  }
-  const percent = (numerator / denominator) * 100;
-  const rounded = Math.round((percent + Number.EPSILON) * 100) / 100;
+export function formatPercent(percent: number): string {
+  const rounded = Math.round((percent * 100 + Number.EPSILON) * 100) / 100;
   return `${rounded.toString()}%`;
+}
+
+export function formatFractionAsPercent(numerator: number, denominator: number): string | null {
+  return denominator ? formatPercent(numerator / denominator) : null;
 }
 
 export function formatRightAlignPadding<T>(

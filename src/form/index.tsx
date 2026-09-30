@@ -118,8 +118,12 @@ export function RadioTabs<V extends string>(props: {
 export function FieldSet(props: { legend: string; children: JSX.Element }) {
   return (
     <fieldset class="space-y-3">
-      <legend class={LABEL_CX}>{props.legend}</legend>
+      <Legend>{props.legend}</Legend>
       {props.children}
     </fieldset>
   );
+}
+
+export function Legend(props: { children: JSX.Element }) {
+  return <legend class={LABEL_CX}>{props.children}</legend>;
 }

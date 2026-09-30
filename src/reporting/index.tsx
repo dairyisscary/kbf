@@ -1,5 +1,6 @@
 import { allAssetSnapshotsByAsset, mostRecentSnapshotsAsOf } from "#/asset-snapshot";
 import type { CategoryFilter } from "#/category";
+import { allContributionsByAsset } from "#/contribution";
 import { allNuggetsFromFilters } from "#/nugget";
 import { allNuggetTagsByName } from "#/nugget-tag";
 import { type Options as IntervalOptions, type Interval, makeInterval } from "#/reporting/interval";
@@ -16,7 +17,7 @@ type Options = {
   assetSnapshot: {
     interval: IntervalOptions;
   };
-  nugget: {
+  income: {
     interval: IntervalOptions;
   };
   transaction: {
@@ -51,10 +52,11 @@ function makeViewIntervals(interval: Interval, transactions: ReportableTransacti
   });
 }
 
-async function getReportingNuggets(interval: Interval) {
-  const [nuggets, allNuggetTags] = await Promise.all([
+async function getReportingIncome(interval: Interval) {
+  const [nuggets, allNuggetTags, assetsWithContributions] = await Promise.all([
     allNuggetsFromFilters(interval.queryFilters),
     allNuggetTagsByName(),
+    allContributionsByAsset(interval.queryFilters),
   ]);
 
   type TagAggregate = {
@@ -77,7 +79,29 @@ async function getReportingNuggets(interval: Interval) {
 
   return {
     labels: interval.labels,
-    intervals: interval.groupDataInto((matchesWhen) => {
+    contributionSumsPerAsset: assetsWithContributions.map(({ asset, contributions }) => ({
+      asset,
+      contributionCount: contributions.length,
+      sum: contributions.reduce((accum, contribution) => accum + contribution.amount, 0),
+    })),
+    contributionIntervals: interval.groupDataInto((matchesWhen) => {
+      const aggregate = { euro: 0, usd: 0 };
+      for (const { contributions, asset } of assetsWithContributions) {
+        for (const contribution of contributions) {
+          if (matchesWhen(contribution.when)) {
+            aggregate[asset.currency] += contribution.amount;
+          }
+        }
+      }
+      return aggregate;
+    }),
+    nuggetSumsPerTag: allNuggetTags.map((tag) => ({
+      euro: { total: 0, count: 0 },
+      usd: { total: 0, count: 0 },
+      tag,
+      ...tagToNuggets.get(tag.id),
+    })),
+    nuggetIntervals: interval.groupDataInto((matchesWhen) => {
       const aggregate = { euro: 0, usd: 0 };
       for (const nugget of nuggets) {
         if (matchesWhen(nugget.when)) {
@@ -85,14 +109,6 @@ async function getReportingNuggets(interval: Interval) {
         }
       }
       return aggregate;
-    }),
-    sumsPerTag: allNuggetTags.map((tag) => {
-      return {
-        euro: { total: 0, count: 0 },
-        usd: { total: 0, count: 0 },
-        tag,
-        ...tagToNuggets.get(tag.id),
-      };
     }),
   };
 }
@@ -191,18 +207,18 @@ async function getReportingAssetSnapshots(interval: Interval) {
 }
 
 export async function getReporting(options: Options) {
-  const [transaction, assetSnapshot, nugget] = await Promise.all([
+  const [transaction, assetSnapshot, income] = await Promise.all([
     getReportingTransactions(
       makeInterval(options.transaction.interval),
       options.transaction.categoryFilter,
     ),
     getReportingAssetSnapshots(makeInterval(options.assetSnapshot.interval)),
-    getReportingNuggets(makeInterval(options.nugget.interval)),
+    getReportingIncome(makeInterval(options.income.interval)),
   ]);
 
   return {
     transaction,
     assetSnapshot,
-    nugget,
+    income,
   };
 }
