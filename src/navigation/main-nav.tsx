@@ -110,6 +110,9 @@ export function MainNav() {
       <a href={paths["asset-snapshots"]} class={ANCHOR_CX}>
         <NavLinkContent iconName="trending-up" title="Asset Snapshots" />
       </a>
+      <a href={paths.contributions} class={ANCHOR_CX}>
+        <NavLinkContent iconName="life-buoy" title="Contributions" />
+      </a>
       <a href={paths.assets} class={ANCHOR_CX}>
         <NavLinkContent iconName="layers" title="Assets" />
       </a>

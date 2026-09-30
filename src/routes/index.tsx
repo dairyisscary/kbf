@@ -10,6 +10,7 @@ import {
   formatMoneyNoCents,
   formatMoneyAmount,
   formatFractionAsPercent,
+  formatPercent,
   formatRightAlignPadding,
   formatPlural,
 } from "#/format";
@@ -43,6 +44,10 @@ const DEFAULT_TIMELINE = "year-to-date-by-month";
 const ONE_EURO_IN_USD = 1.14;
 const CATEGORY_FILTER: CategoryFilter = { includeKinds: ["basic"] };
 const SUM_LABEL = "Sum";
+const PURPLE = "#6c6aea";
+const GREEN = "#64b6ac";
+const SAVINGS_PERCENT_YAXIS = "savingsPercent";
+const MONEY_YAXIS = "money";
 
 const getAllCategoriesForReport = query(async () => {
   "use server";
@@ -57,7 +62,7 @@ const getReportData = query(async (timeline: string | null) => {
     assetSnapshot: {
       interval: { type: DEFAULT_TIMELINE, includeCurrent: true },
     },
-    nugget: {
+    income: {
       interval: { type: DEFAULT_TIMELINE, includeCurrent: true },
     },
     transaction: {
@@ -72,7 +77,7 @@ const getReportData = query(async (timeline: string | null) => {
       count: Number(count),
       includeCurrent: stepTimeUnit === "year",
     };
-    options.assetSnapshot.interval = options.nugget.interval = {
+    options.income.interval = options.assetSnapshot.interval = {
       ...options.transaction.interval,
       count: options.transaction.interval.count + 1,
       includeCurrent: true,
@@ -175,16 +180,11 @@ function withMoneyTicks<R extends Record<string, unknown>>(
 
 type SumData = { euro: { total: number; count: number }; usd: { total: number; count: number } };
 
-function Sums(props: { data: SumData | undefined; label: string }) {
+function TileData(props: { children: JSX.Element; count: number; label: string }) {
   return (
     <div>
-      <p class="pb-2 text-sm">
-        {formatPlural((props.data?.euro.count || 0) + (props.data?.usd.count || 0), props.label)}
-      </p>
-      <p class="flex flex-wrap items-center gap-2">
-        <AmountPill object={{ currency: "euro", amount: props.data?.euro.total || 0 }} />
-        <AmountPill object={{ currency: "usd", amount: props.data?.usd.total || 0 }} />
-      </p>
+      <p class="pb-2 text-sm">{formatPlural(props.count, props.label)}</p>
+      <p class="flex flex-wrap items-center gap-2">{props.children}</p>
     </div>
   );
 }
@@ -249,21 +249,27 @@ function formatAssetFooter(lookup: AssetSums[], items: { dataIndex: number }[]) 
   });
 }
 
-function TileTotals<T>(props: {
+type TileTotalProps<T> = {
   title: string;
   each: T[];
   itemFaded?: (item: T) => boolean;
-  itemColorCode: (item: T) => number;
-  itemSums: (item: T) => SumData | undefined;
-  sumsLabel: string;
   children: (item: T) => JSX.Element;
-}) {
+};
+
+function TileTotals<T>(props: TileTotalProps<T>) {
   return (
     <Loading>
       <div>
         <h3 class="mb-4">{props.title}</h3>
         <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          <For each={props.each}>
+          <For
+            each={props.each}
+            fallback={
+              <div class="col-span-full rounded-sm bg-kbf-light-purple p-3 text-center italic">
+                None
+              </div>
+            }
+          >
             {(item) => (
               <div
                 class={[
@@ -271,17 +277,44 @@ function TileTotals<T>(props: {
                   props.itemFaded?.(item) && "opacity-40",
                 ]}
               >
-                <div class="flex items-center gap-2">
-                  <ColorCodePip size="sm" class="shrink-0" code={props.itemColorCode(item)} />
-                  {props.children(item)}
-                </div>
-                <Sums data={props.itemSums(item)} label={props.sumsLabel} />
+                {props.children(item)}
               </div>
             )}
           </For>
         </div>
       </div>
     </Loading>
+  );
+}
+
+function TaggedTileTotals<T>(
+  props: TileTotalProps<T> & {
+    itemColorCode: (item: T) => number;
+    itemSums: (item: T) => SumData | undefined;
+    sumsLabel: string;
+  },
+) {
+  return (
+    <TileTotals each={props.each} title={props.title} itemFaded={props.itemFaded}>
+      {(item) => {
+        const sumData = createMemo(() => props.itemSums(item));
+        return (
+          <>
+            <div class="flex items-center gap-2">
+              <ColorCodePip size="sm" class="shrink-0" code={props.itemColorCode(item)} />
+              {props.children(item)}
+            </div>
+            <TileData
+              count={(sumData()?.euro.count || 0) + (sumData()?.usd.count || 0)}
+              label={props.sumsLabel}
+            >
+              <AmountPill object={{ currency: "euro", amount: sumData()?.euro.total || 0 }} />
+              <AmountPill object={{ currency: "usd", amount: sumData()?.usd.total || 0 }} />
+            </TileData>
+          </>
+        );
+      }}
+    </TileTotals>
   );
 }
 
@@ -295,49 +328,161 @@ export default function Dashboard() {
   const [currencyStrategy, setCurrencyStrategy] = createSignal<Strategy>("merged-usd");
 
   const nuggetGraphProps = createMemo((): LineChartProps => {
-    const data = reportData();
+    const { income, transaction } = reportData();
+    const { nuggetIntervals, contributionIntervals, labels } = income;
+
+    const totalSpendByInterval = new Map<string, { euro: number; usd: number }>();
+    let transactionIndex = 0;
+    for (const transactionLabel of transaction.labels) {
+      const transactionAggregate = { euro: 0, usd: 0 };
+      for (const { euro, usd } of transaction.intervaledCategories) {
+        transactionAggregate.euro -= euro[transactionIndex]?.income || 0;
+        transactionAggregate.euro += euro[transactionIndex]?.spend || 0;
+        transactionAggregate.usd -= usd[transactionIndex]?.income || 0;
+        transactionAggregate.usd += usd[transactionIndex]?.spend || 0;
+      }
+      totalSpendByInterval.set(transactionLabel, transactionAggregate);
+      transactionIndex++;
+    }
 
     const currencyStrat = currencyStrategy();
     const isSeperateCurrency = currencyStrat === "separate";
     const isMergedUsd = currencyStrat === "merged-usd";
     const isMergedEuro = currencyStrat === "merged-euro";
 
+    const includeUsd = isSeperateCurrency || isMergedUsd;
+    const includeEuro = isSeperateCurrency || isMergedEuro;
+
     const datasets = [
-      (isSeperateCurrency || isMergedUsd) && {
-        label: "USD",
-        data: data.nugget.intervals.map((interval, index) => {
-          const x = data.nugget.labels[index];
+      includeUsd && {
+        label: "USD Savings %",
+        data: nuggetIntervals.map((interval, index) => {
+          const x = labels[index];
+          const spendAggregate = (x && totalSpendByInterval.get(x)) || { euro: 0, usd: 0 };
+
+          let totalNuggets = interval.usd;
+          let totalSpend = spendAggregate.usd;
+          if (isMergedUsd) {
+            totalNuggets += interval.euro * ONE_EURO_IN_USD;
+            totalSpend += spendAggregate.euro * ONE_EURO_IN_USD;
+          }
+
+          const y = totalNuggets === 0 ? 1 : (totalNuggets - totalSpend) / totalNuggets;
+          return { x, y, currency: "usd" as const };
+        }),
+        yAxisID: SAVINGS_PERCENT_YAXIS,
+        borderColor: GREEN,
+        pointStyle: "triangle",
+        pointRadius: 8,
+        pointBackgroundColor: GREEN,
+        pointHoverRadius: 8,
+        pointHoverBackgroundColor: GREEN,
+        type: undefined as unknown as "radar", // Bad Chart.js types...
+      },
+
+      includeEuro && {
+        label: "Euro Savings %",
+        data: nuggetIntervals.map((interval, index) => {
+          const x = labels[index];
+          const spendAggregate = (x && totalSpendByInterval.get(x)) || { euro: 0, usd: 0 };
+
+          let totalNuggets = interval.euro;
+          let totalSpend = spendAggregate.euro;
+          if (isMergedEuro) {
+            totalNuggets += interval.usd / ONE_EURO_IN_USD;
+            totalSpend += spendAggregate.usd / ONE_EURO_IN_USD;
+          }
+
+          const y = totalNuggets === 0 ? 1 : (totalNuggets - totalSpend) / totalNuggets;
+          return { x, y, currency: "euro" as const };
+        }),
+        yAxisID: SAVINGS_PERCENT_YAXIS,
+        borderColor: GREEN,
+        pointStyle: "triangle",
+        pointRadius: 8,
+        pointBackgroundColor: GREEN,
+        pointHoverRadius: 8,
+        pointHoverBackgroundColor: GREEN,
+        type: undefined as unknown as "radar", // Bad Chart.js types...
+      },
+
+      includeUsd && {
+        label: "USD Nugget",
+        data: nuggetIntervals.map((interval, index) => {
+          const x = labels[index];
           let y = interval.usd;
           if (isMergedUsd) {
             y += interval.euro * ONE_EURO_IN_USD;
           }
           return { x, y, currency: "usd" as const };
         }),
-        borderColor: "#64b6ac",
+        yAxisID: MONEY_YAXIS,
+        borderColor: PURPLE,
         pointStyle: "rectRounded",
         pointRadius: 8,
-        pointBackgroundColor: "#6c6aea",
+        pointBackgroundColor: PURPLE,
         pointHoverRadius: 8,
-        pointHoverBackgroundColor: "#64b6ac",
+        pointHoverBackgroundColor: PURPLE,
         type: undefined as unknown as "radar", // Bad Chart.js types...
       },
 
-      (isSeperateCurrency || isMergedEuro) && {
-        label: "Euro",
-        data: data.nugget.intervals.map((interval, index) => {
-          const x = data.nugget.labels[index];
+      includeEuro && {
+        label: "Euro Nugget",
+        data: nuggetIntervals.map((interval, index) => {
+          const x = labels[index];
           let y = interval.euro;
           if (isMergedEuro) {
             y += interval.usd / ONE_EURO_IN_USD;
           }
           return { x, y, currency: "euro" as const };
         }),
-        borderColor: "#64b6ac",
+        yAxisID: MONEY_YAXIS,
+        borderColor: PURPLE,
         pointStyle: "rectRounded",
         pointRadius: 8,
-        pointBackgroundColor: "#6c6aea",
+        pointBackgroundColor: PURPLE,
         pointHoverRadius: 8,
-        pointHoverBackgroundColor: "#64b6ac",
+        pointHoverBackgroundColor: PURPLE,
+        type: undefined as unknown as "radar", // Bad Chart.js types...
+      },
+
+      includeUsd && {
+        label: "USD Contribution",
+        data: contributionIntervals.map((interval, index) => {
+          const x = labels[index];
+          let y = interval.usd;
+          if (isMergedUsd) {
+            y += interval.euro * ONE_EURO_IN_USD;
+          }
+          return { x, y, currency: "usd" as const };
+        }),
+        yAxisID: MONEY_YAXIS,
+        borderColor: GREEN,
+        pointStyle: "rectRounded",
+        pointRadius: 8,
+        pointBackgroundColor: GREEN,
+        pointHoverRadius: 8,
+        pointHoverBackgroundColor: GREEN,
+        type: undefined as unknown as "radar", // Bad Chart.js types...
+      },
+
+      includeEuro && {
+        label: "Euro Contribution",
+        data: contributionIntervals.map((interval, index) => {
+          const x = labels[index];
+          let y = interval.euro;
+          if (isMergedEuro) {
+            y += interval.usd / ONE_EURO_IN_USD;
+          }
+          return { x, y, currency: "euro" as const };
+        }),
+        yAxisID: MONEY_YAXIS,
+        borderColor: GREEN,
+        pointStyle: "rectRounded",
+        pointRadius: 8,
+        pointBackgroundColor: GREEN,
+        pointHoverRadius: 8,
+        pointHoverBackgroundColor: GREEN,
         type: undefined as unknown as "radar", // Bad Chart.js types...
       },
     ].filter(Boolean);
@@ -346,7 +491,12 @@ export default function Dashboard() {
       options: {
         interaction: { mode: "point", intersect: true },
         scales: {
-          y: withMoneyTicks({ min: 0 }, currencyStrat),
+          [MONEY_YAXIS]: withMoneyTicks({ min: 0 }, currencyStrat),
+          [SAVINGS_PERCENT_YAXIS]: {
+            position: "right",
+            ticks: { callback: formatPercent as () => string },
+            grid: { drawOnChartArea: false },
+          },
         },
         plugins: {
           tooltip: {
@@ -363,10 +513,12 @@ export default function Dashboard() {
                   datasetIndex,
                   (formatDataset) => {
                     const indexData = formatDataset.data[dataIndex]!;
-                    return formatMoneyNoCents({
-                      amount: indexData.y || 0,
-                      currency: indexData.currency,
-                    })!;
+                    return formatDataset.yAxisID !== SAVINGS_PERCENT_YAXIS
+                      ? formatMoneyNoCents({
+                          amount: indexData.y || 0,
+                          currency: indexData.currency,
+                        })!
+                      : formatPercent(indexData.y || 1);
                   },
                 );
                 return `${dataset.label!}: ${formatted}`;
@@ -419,12 +571,12 @@ export default function Dashboard() {
           : asset.taxAdvantaged
             ? "advantaged"
             : "not-advantaged",
-        backgroundColor: asset.taxAdvantaged ? "#64b6ac" : "#6c6aea",
+        backgroundColor: asset.taxAdvantaged ? GREEN : PURPLE,
         fill: true,
         pointStyle: snapshots.map(({ isVirtual }) => (isVirtual ? "star" : "rectRounded")),
         pointRadius: 8,
         pointHoverRadius: 8,
-        pointHoverBackgroundColor: asset.taxAdvantaged ? "#64b6ac" : "#6c6aea",
+        pointHoverBackgroundColor: asset.taxAdvantaged ? GREEN : PURPLE,
         type: undefined as unknown as "radar", // Bad Chart.js types...
       };
     });
@@ -512,10 +664,9 @@ export default function Dashboard() {
   };
 
   const spendGraph = createMemo((): BarChartProps => {
-    const data = reportData();
+    const { intervaledCategories, labels } = reportData().transaction;
     const isIgnoredLookup = ignored();
     const currencyStrat = currencyStrategy();
-    const { intervaledCategories } = data.transaction;
 
     const datasets = computeSpendChartDatasets(
       intervaledCategories,
@@ -528,7 +679,7 @@ export default function Dashboard() {
     );
 
     return {
-      data: { labels: data.transaction.labels, datasets },
+      data: { labels, datasets },
       options: {
         scales: { y: withMoneyTicks({}, currencyStrat) },
         plugins: {
@@ -639,7 +790,7 @@ export default function Dashboard() {
           <h2>Spend</h2>
           <BarChart class={CHART_CX} data={spendGraph().data} options={spendGraph().options} />
 
-          <TileTotals
+          <TaggedTileTotals
             title="Totals by Category"
             each={allCategoriesWithSums()}
             itemFaded={(item) => ignored().has(item.category.id)}
@@ -660,25 +811,39 @@ export default function Dashboard() {
                 </button>
               </>
             )}
-          </TileTotals>
+          </TaggedTileTotals>
         </section>
 
         <section class="space-y-8">
-          <h2>Nuggets</h2>
+          <h2>Income & Savings</h2>
           <LineChart
             class={CHART_CX}
             data={nuggetGraphProps().data}
             options={nuggetGraphProps().options}
           />
 
-          <TileTotals
-            title="Totals by Tag"
-            each={reportData().nugget.sumsPerTag}
+          <TaggedTileTotals
+            title="Totals Nuggets by Tag"
+            each={reportData().income.nuggetSumsPerTag}
             itemColorCode={(item) => item.tag.colorCode}
             itemSums={(item) => item}
             sumsLabel="nugget"
           >
-            {(item) => item.tag.name}
+            {(item) => <h4 class="text-kbf-text-highlight">{item.tag.name}</h4>}
+          </TaggedTileTotals>
+
+          <TileTotals
+            title="Totals Contributions by Asset"
+            each={reportData().income.contributionSumsPerAsset}
+          >
+            {(item) => (
+              <>
+                <h4 class="text-kbf-text-highlight">{item.asset.name}</h4>
+                <TileData count={item.contributionCount} label="contribution">
+                  <AmountPill object={{ currency: item.asset.currency, amount: item.sum }} />
+                </TileData>
+              </>
+            )}
           </TileTotals>
         </section>
       </div>

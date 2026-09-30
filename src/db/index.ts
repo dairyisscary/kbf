@@ -1,17 +1,11 @@
 import { Kysely, PostgresDialect, type Transaction as KyselyDBTransaction } from "kysely";
-import type { AssetSnapshot, DB, Nugget, Transaction } from "kysely-codegen";
+import type { DB } from "kysely-codegen";
 import { types, Pool } from "pg";
 
-export type KBFDatabase = Omit<DB, "nugget" | "transaction" | "asset_snapshot"> & {
-  transaction: Omit<Transaction, "when"> & {
-    when: string;
-  };
-  asset_snapshot: Omit<AssetSnapshot, "when"> & {
-    when: string;
-  };
-  nugget: Omit<Nugget, "when"> & {
-    when: string;
-  };
+type FixupDateKeys = "nugget" | "transaction" | "asset_snapshot" | "contribution";
+
+export type KBFDatabase = Omit<DB, FixupDateKeys> & {
+  [key in FixupDateKeys]: Omit<DB[key], "when"> & { when: string };
 };
 
 export type DBTransaction = KyselyDBTransaction<KBFDatabase>;

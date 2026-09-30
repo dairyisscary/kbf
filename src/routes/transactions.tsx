@@ -168,8 +168,10 @@ function AddEditModal(props: {
           <>
             <Label for={id}>Amount</Label>
             <MoneyInput
-              id={id}
+              required
+              name="amount"
               allowNegative
+              id={id}
               initAmount={props.editingTransaction?.amount}
               initCurrency={props.editingTransaction?.currency}
             />

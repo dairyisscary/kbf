@@ -109,6 +109,8 @@ function AddEditModal(props: {
           <>
             <Label for={id}>Amount</Label>
             <MoneyInput
+              required
+              name="amount"
               id={id}
               allowNegative={false}
               initAmount={props.editingNugget?.amount}

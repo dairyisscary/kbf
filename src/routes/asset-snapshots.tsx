@@ -1,7 +1,7 @@
 import { action, defineRoute, query, useAction, type RouteProps } from "@solidjs/router";
-import { reload, type JSX } from "@solidjs/web";
+import { reload } from "@solidjs/web";
 import { subDays } from "date-fns";
-import { createSignal, createMemo, Switch, Match, For, untrack, Loading } from "solid-js";
+import { createSignal, createMemo, Switch, Match, For, Loading } from "solid-js";
 
 import {
   allAssetSnapshotsByAsset,
@@ -9,25 +9,21 @@ import {
   deleteAssetSnapshot,
   editAssetSnapshot,
 } from "#/asset-snapshot";
-import { AssetValuePill } from "#/asset-snapshot/pip";
+import { AssetBundle, AssetBundleActionHeader, PhantomAssetBundles } from "#/asset/bundle";
+import { AssetValuePill } from "#/asset/pip";
 import { Button } from "#/button";
 import { pealFormData, FormRowWithId, Label, FormRowDivider } from "#/form";
 import { CrudModal } from "#/form/crud-modal";
+import { StaticCurrencyMoneyInput } from "#/form/money-input";
 import { formatDate, formatDateOnly } from "#/format";
 import { Icon } from "#/icon";
 import { PageTitle } from "#/page-title";
-import { PhantomText } from "#/phantom";
 import { FilterContainer, TimeFrameFilters } from "#/query-filters";
 import { requireUser } from "#/session";
-import { Table } from "#/table";
 
 type AssetAndSnapshots = Awaited<ReturnType<typeof allAssetSnapshotsByAsset>>[number];
 type Asset = AssetAndSnapshots["asset"];
 type AssetSnapshot = AssetAndSnapshots["snapshots"][number];
-type ModalState =
-  | null
-  | { type: "add"; snapshot?: never }
-  | { type: "edit"; snapshot: AssetSnapshot; asset: Asset };
 
 const getAllAssetSnapshotsForListing = query(async (search: string) => {
   "use server";
@@ -101,44 +97,11 @@ function SnapshotDateInput(props: { value?: string }) {
   );
 }
 
-function SnapshotAmountInput(props: {
-  asset: Asset;
-  required?: boolean;
-  name: string;
-  label: string;
-  value?: number;
+function CaptureModal(props: {
+  initAssetFocusId: string | undefined;
+  bundles: AssetAndSnapshots[];
+  onClose: () => void;
 }) {
-  const initValue = untrack(() => props.value);
-  const [amount, setAmount] = createSignal(initValue ?? NaN);
-  return (
-    <FormRowWithId>
-      {(id) => (
-        <>
-          <Label for={id}>{props.label}</Label>
-          <div class="group relative">
-            <input
-              type="text"
-              autocomplete="off"
-              inputmode="numeric"
-              pattern="^\d+(\.\d{0,2})?$"
-              class="block w-full"
-              id={id}
-              value={initValue ?? ""}
-              onInput={(event) => setAmount(Number(event.target.value))}
-              required={props.required}
-              name={props.name}
-            />
-            <div class="absolute top-0 right-0 opacity-0 transition-opacity duration-300 group-has-focus-within:opacity-100">
-              <AssetValuePill assetSnapshot={{ amount: amount() }} asset={props.asset} />
-            </div>
-          </div>
-        </>
-      )}
-    </FormRowWithId>
-  );
-}
-
-function CaptureModal(props: { bundles: AssetAndSnapshots[]; onClose: () => void }) {
   return (
     <CrudModal
       action={addSnapshotAction}
@@ -152,11 +115,20 @@ function CaptureModal(props: { bundles: AssetAndSnapshots[]; onClose: () => void
 
       <For each={props.bundles}>
         {(bundle) => (
-          <SnapshotAmountInput
-            asset={bundle.asset}
-            label={bundle.asset.name}
-            name={`multi|${bundle.asset.id}|amount`}
-          />
+          <FormRowWithId>
+            {(id) => (
+              <>
+                <Label for={id}>{bundle.asset.name}</Label>
+                <StaticCurrencyMoneyInput
+                  autofocus={bundle.asset.id === props.initAssetFocusId}
+                  allowNegative={false}
+                  currency={bundle.asset.currency}
+                  id={id}
+                  name={`multi|${bundle.asset.id}|amount`}
+                />
+              </>
+            )}
+          </FormRowWithId>
         )}
       </For>
     </CrudModal>
@@ -187,50 +159,22 @@ function EditModal(props: { asset: Asset; editingSnapshot: AssetSnapshot; onClos
 
       <SnapshotDateInput value={props.editingSnapshot.when} />
 
-      <SnapshotAmountInput
-        asset={props.asset}
-        label="Amount"
-        name="amount"
-        required
-        value={props.editingSnapshot.amount}
-      />
+      <FormRowWithId>
+        {(id) => (
+          <>
+            <Label for={id}>Amount</Label>
+            <StaticCurrencyMoneyInput
+              allowNegative={false}
+              required
+              name="amount"
+              currency={props.asset.currency}
+              id={id}
+              initAmount={props.editingSnapshot.amount}
+            />
+          </>
+        )}
+      </FormRowWithId>
     </CrudModal>
-  );
-}
-
-function Bundle<T>(props: {
-  title: JSX.Element;
-  onRowClick?: (item: T) => void;
-  each: T[];
-  children: (item: T) => JSX.Element[];
-}) {
-  return (
-    <div class="space-y-4">
-      <h2>{props.title}</h2>
-      <Table
-        class="[&_td]:last:not-only:text-right [&_th]:last:text-right"
-        headers={["Date", "Value"]}
-        each={props.each}
-        phantomRowCount={3}
-        onRowClick={props.onRowClick}
-      >
-        {props.children}
-      </Table>
-    </div>
-  );
-}
-
-const noCells = () => [];
-
-function PhantomBundles(props: { bundles: unknown[] }) {
-  return (
-    <For each={Array.from({ length: 4 })}>
-      {() => (
-        <Bundle each={props.bundles} title={<PhantomText />}>
-          {noCells}
-        </Bundle>
-      )}
-    </For>
   );
 }
 
@@ -242,13 +186,19 @@ export const route = defineRoute({
 
 export default function AssetSnapshots(props: RouteProps<typeof route>) {
   const bundles = createMemo(() => getAllAssetSnapshotsForListing(props.location.search));
+
+  type ModalState =
+    | null
+    | { type: "add"; snapshot?: never; initAssetFocusId?: string }
+    | { type: "edit"; snapshot: AssetSnapshot; asset: Asset };
   const [addEditModal, setAddEditModal] = createSignal<ModalState>(null);
+
   return (
     <>
       <header class="flex items-center justify-between gap-4 pb-8">
         <PageTitle icon="trending-up">Manage Snapshots</PageTitle>
         <Button onClick={() => setAddEditModal({ type: "add" })}>
-          <Icon name="camera" /> Capture Snapshots
+          <Icon name="git-merge" /> Capture Snapshots
         </Button>
       </header>
 
@@ -256,22 +206,34 @@ export default function AssetSnapshots(props: RouteProps<typeof route>) {
         <TimeFrameFilters timeFrames={[{ value: "last-60", label: "Last 60 Days" }]} />
       </FilterContainer>
 
-      <div class="grid grid-cols-2 gap-8">
-        <Loading fallback={<PhantomBundles bundles={bundles()} />}>
+      <div class="grid grid-cols-2 gap-x-8 gap-y-32">
+        <Loading fallback={<PhantomAssetBundles bundles={bundles()} />}>
           <For each={bundles()}>
             {(assetWithSnapshots) => (
-              <Bundle
-                title={assetWithSnapshots.asset.name}
+              <AssetBundle
+                title={
+                  <AssetBundleActionHeader
+                    icon="plus"
+                    onClick={() => {
+                      setAddEditModal({
+                        type: "add",
+                        initAssetFocusId: assetWithSnapshots.asset.id,
+                      });
+                    }}
+                  >
+                    {assetWithSnapshots.asset.name}
+                  </AssetBundleActionHeader>
+                }
                 each={assetWithSnapshots.snapshots}
                 onRowClick={(snapshot) => {
                   setAddEditModal({ type: "edit", snapshot, asset: assetWithSnapshots.asset });
                 }}
               >
                 {(assetSnapshot) => [
-                  formatDate(assetSnapshot.when),
-                  <AssetValuePill assetSnapshot={assetSnapshot} asset={assetWithSnapshots.asset} />,
+                  <span class="font-mono">{formatDate(assetSnapshot.when)}</span>,
+                  <AssetValuePill object={assetSnapshot} asset={assetWithSnapshots.asset} />,
                 ]}
-              </Bundle>
+              </AssetBundle>
             )}
           </For>
         </Loading>
@@ -284,7 +246,13 @@ export default function AssetSnapshots(props: RouteProps<typeof route>) {
             return state?.type === "add" && state;
           })()}
         >
-          <CaptureModal bundles={bundles()} onClose={() => setAddEditModal(null)} />
+          {(state) => (
+            <CaptureModal
+              bundles={bundles()}
+              onClose={() => setAddEditModal(null)}
+              initAssetFocusId={state().initAssetFocusId}
+            />
+          )}
         </Match>
         <Match
           when={(() => {
