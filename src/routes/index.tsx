@@ -12,8 +12,8 @@ import {
   formatRightAlignPadding,
 } from "#/format";
 import { Icon } from "#/icon";
-import { KbfSiteTitle } from "#/meta";
 import { paths } from "#/navigation";
+import { PageTitle } from "#/page-title";
 import { getAssetsAndTransactionsForReporting } from "#/reporting";
 import { requireUser } from "#/session";
 import { TabGroup } from "#/tab-group";
@@ -476,9 +476,8 @@ export default function Dashboard() {
 
   return (
     <>
-      <KbfSiteTitle>Dashboard</KbfSiteTitle>
       <header class="mb-14 space-y-6">
-        <h1>Dashboard</h1>
+        <PageTitle icon="home">Dashboard</PageTitle>
         <div class="flex items-center justify-between">
           <TabGroup
             class="w-[min(45%,500px)]"

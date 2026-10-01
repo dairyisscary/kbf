@@ -15,7 +15,7 @@ import { pealFormData, FormRowWithId, Label, FormRowDivider } from "#/form";
 import { CrudModal } from "#/form/crud-modal";
 import { formatDate, formatDateOnly } from "#/format";
 import { Icon } from "#/icon";
-import { KbfSiteTitle } from "#/meta";
+import { PageTitle } from "#/page-title";
 import { PhantomText } from "#/phantom";
 import { FilterContainer, TimeFrameFilters } from "#/query-filters";
 import { requireUser } from "#/session";
@@ -245,9 +245,8 @@ export default function AssetSnapshots(props: RouteProps<typeof route>) {
   const [addEditModal, setAddEditModal] = createSignal<ModalState>(null);
   return (
     <>
-      <KbfSiteTitle>Capture Snapshots</KbfSiteTitle>
       <header class="flex items-center justify-between gap-4 pb-8">
-        <h1>Capture and Manage Snapshots</h1>
+        <PageTitle icon="trending-up">Manage Snapshots</PageTitle>
         <Button onClick={() => setAddEditModal({ type: "add" })}>
           <Icon name="camera" /> Capture Snapshots
         </Button>

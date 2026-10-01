@@ -32,7 +32,7 @@ import {
   formatPlural,
 } from "#/format";
 import { Icon } from "#/icon";
-import { KbfSiteTitle } from "#/meta";
+import { PageTitle } from "#/page-title";
 import { FilterButton, FilterContainer, TimeFrameFilters } from "#/query-filters";
 import { requireUser } from "#/session";
 import { Table } from "#/table";
@@ -327,9 +327,8 @@ export default function Transactions(props: RouteProps<typeof route>) {
 
   return (
     <>
-      <KbfSiteTitle>Manage Transactions</KbfSiteTitle>
       <header class="flex items-center justify-between gap-4 pb-8">
-        <h1>Manage Transactions</h1>
+        <PageTitle icon="shopping-bag">Manage Transactions</PageTitle>
         <Button onClick={() => setAddEditModal({ type: "add" })}>
           <Icon name="plus" /> Add Transaction
         </Button>

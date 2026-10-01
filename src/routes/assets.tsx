@@ -8,7 +8,7 @@ import { pealFormData, Checkbox, FormRowWithId, Label } from "#/form";
 import { CrudModal } from "#/form/crud-modal";
 import { formatCurrencySign } from "#/format";
 import { Icon } from "#/icon";
-import { KbfSiteTitle } from "#/meta";
+import { PageTitle } from "#/page-title";
 import { requireUser } from "#/session";
 import { Table } from "#/table";
 
@@ -122,9 +122,8 @@ export default function Assets() {
   const [addEditModal, setAddEditModal] = createSignal<ModalState>(false);
   return (
     <>
-      <KbfSiteTitle>Manage Assets</KbfSiteTitle>
       <header class="flex items-center justify-between gap-4 pb-8">
-        <h1>Manage Assets</h1>
+        <PageTitle icon="layers">Manage Assets</PageTitle>
         <Button onClick={() => setAddEditModal({ type: "add" })}>
           <Icon name="plus" /> Add Asset
         </Button>

@@ -13,7 +13,7 @@ import {
   NonInteractiveLabel,
 } from "#/form";
 import { formatCurrencySign, formatPlural } from "#/format";
-import { KbfSiteTitle } from "#/meta";
+import { PageTitle } from "#/page-title";
 import { requireUser } from "#/session";
 import { massImport } from "#/transaction";
 import { CategorySelectFormRow } from "#/transaction/pip";
@@ -56,8 +56,7 @@ export default function MassImport() {
 
   return (
     <>
-      <KbfSiteTitle>Mass Import</KbfSiteTitle>
-      <h1>Mass Import</h1>
+      <PageTitle icon="file-plus">Mass Import</PageTitle>
       <form method="post" action={massImportAction} ref={formRef}>
         <Loading>
           <Show when={latestSubmission()?.error}>

@@ -5,7 +5,7 @@ import { createMemo, Show } from "solid-js";
 import { Alert } from "#/alert";
 import { Button } from "#/button";
 import { FormFooter, FormRowWithId, Label } from "#/form";
-import { KbfSiteTitle } from "#/meta";
+import { PageTitle } from "#/page-title";
 import { create } from "#/session";
 
 const isUnauthQuery = query(async () => {
@@ -40,8 +40,7 @@ export default function Login() {
   return (
     <Show when={isUnauthed()}>
       <div class="mx-auto w-[min(600px,100%)]">
-        <KbfSiteTitle>Login</KbfSiteTitle>
-        <h1>Login</h1>
+        <PageTitle icon="log-in">Login</PageTitle>
         <form method="post" action={loginAction}>
           <Show when={submissions.at(-1)?.error?.message}>
             {(message) => <Alert class="mt-8">{message()}</Alert>}

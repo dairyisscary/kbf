@@ -89,7 +89,7 @@ export function MainNav() {
 
       <Divider />
       <a href={paths.transactions} class={ANCHOR_CX}>
-        <NavLinkContent iconName="database" title="Transactions" />
+        <NavLinkContent iconName="shopping-bag" title="Transactions" />
       </a>
       <a href={paths["mass-import"]} class={ANCHOR_CX}>
         <NavLinkContent iconName="file-plus" title="Mass Import" />
@@ -100,7 +100,7 @@ export function MainNav() {
 
       <Divider />
       <a href={paths["asset-snapshots"]} class={ANCHOR_CX}>
-        <NavLinkContent iconName="git-merge" title="Asset Snapshots" />
+        <NavLinkContent iconName="trending-up" title="Asset Snapshots" />
       </a>
       <a href={paths.assets} class={ANCHOR_CX}>
         <NavLinkContent iconName="layers" title="Assets" />

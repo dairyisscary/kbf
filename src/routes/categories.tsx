@@ -8,7 +8,7 @@ import { CategoryColorPip, CategoryColorSelector, CategoryKindIcon } from "#/cat
 import { pealFormData, Checkbox, FormRowWithId, Label, RadioTabs, FieldSet } from "#/form";
 import { CrudModal } from "#/form/crud-modal";
 import { Icon } from "#/icon";
-import { KbfSiteTitle } from "#/meta";
+import { PageTitle } from "#/page-title";
 import { requireUser } from "#/session";
 import { Table } from "#/table";
 
@@ -167,9 +167,8 @@ export default function Categories() {
   const [addEditModal, setAddEditModal] = createSignal<ModalState>(false);
   return (
     <>
-      <KbfSiteTitle>Manage Categories</KbfSiteTitle>
       <header class="flex items-center justify-between gap-4 pb-8">
-        <h1>Manage Categories</h1>
+        <PageTitle icon="tag">Manage Categories</PageTitle>
         <Button onClick={() => setAddEditModal({ type: "add" })}>
           <Icon name="plus" /> Add Category
         </Button>
