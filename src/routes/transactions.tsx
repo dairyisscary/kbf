@@ -87,24 +87,27 @@ const getTransactionsForListing = query(async (search: string) => {
 
 function FilterCategoryPopup(props: { onClose: () => void; children: JSX.Element }) {
   let wrapperRef: HTMLDivElement | undefined; // oxlint-disable-line no-unassigned-vars
+
+  function handleClick(event: Event) {
+    if (wrapperRef && !wrapperRef.contains(event.target as Node)) {
+      props.onClose();
+    }
+  }
+  function handleKeydown(event: KeyboardEvent) {
+    if (event.key === "Escape") {
+      props.onClose();
+    }
+  }
+
   onSettled(() => {
-    const clickCallback = (event: Event) => {
-      if (wrapperRef && !wrapperRef.contains(event.target as Node)) {
-        props.onClose();
-      }
-    };
-    const keyCallback = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        props.onClose();
-      }
-    };
-    document.addEventListener("click", clickCallback);
-    document.addEventListener("keydown", keyCallback);
+    document.addEventListener("click", handleClick);
+    document.addEventListener("keydown", handleKeydown);
     return () => {
-      document.removeEventListener("keydown", keyCallback);
-      document.removeEventListener("click", clickCallback);
+      document.removeEventListener("keydown", handleKeydown);
+      document.removeEventListener("click", handleClick);
     };
   });
+
   return (
     <div
       ref={wrapperRef}

@@ -5,21 +5,22 @@ type Props = Omit<ComponentProps<"dialog">, "class"> & { onClose: () => void };
 
 export function Modal(props: Props) {
   let dialogRef: HTMLDialogElement | undefined; // oxlint-disable-line no-unassigned-vars
+
+  function handleKeydown(event: KeyboardEvent) {
+    if (event.key === "Escape") {
+      props.onClose();
+    }
+  }
+
   onSettled(() => {
-    const { body } = document;
-    const keydownCb = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        props.onClose();
-      }
-    };
-    body.addEventListener("keydown", keydownCb);
-    body.classList.add("overflow-hidden");
+    document.body.addEventListener("keydown", handleKeydown);
+    document.body.classList.add("overflow-hidden");
     dialogRef!.showModal();
 
     return () => {
       dialogRef!.close();
-      body.classList.remove("overflow-hidden");
-      body.removeEventListener("keydown", keydownCb);
+      document.body.classList.remove("overflow-hidden");
+      document.body.removeEventListener("keydown", handleKeydown);
     };
   });
   return (

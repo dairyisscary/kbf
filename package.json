@@ -12,25 +12,25 @@
     "@solidjs/web": "2.0.0-rc.13",
     "@tailwindcss/vite": "^4.3.3",
     "chart.js": "4.5.1",
-    "csv-parse": "^7.0.2",
+    "csv-parse": "^7.0.3",
     "date-fns": "^4.4.0",
     "feather-icons": "^4.29.2",
     "filesystem-routing": "^0.4.0",
-    "kysely": "^0.29.5",
+    "kysely": "^0.29.6",
     "pg": "^8.23.0",
     "solid-js": "2.0.0-rc.13",
     "tailwindcss": "^4.3.3",
     "uuid": "^14.0.2",
     "vite": "^8.3.1",
-    "zod": "^4.6.2"
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@total-typescript/ts-reset": "^0.6.1",
-    "@types/node": "^24.13.6",
+    "@types/node": "^24.19.0",
     "@types/pg": "^8.23.1",
     "kysely-codegen": "^0.20.0",
-    "oxlint": "^1.83.0",
-    "oxlint-tsgolint": "~7.0.2002",
+    "oxlint": "^1.85.0",
+    "oxlint-tsgolint": "~7.0.2003",
     "typescript": "~7.0.2"
   }
 }

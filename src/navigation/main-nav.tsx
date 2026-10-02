@@ -34,14 +34,15 @@ function NavLinkContent(props: { title: string; iconName: IconName }) {
 
 function BackToTop() {
   const [hidden, setHidden] = createSignal(true);
+  function handleScroll() {
+    setHidden(document.documentElement.scrollTop < 100);
+  }
+
   onSettled(() => {
-    const onScrollCb = () => {
-      setHidden(document.documentElement.scrollTop < 100);
-    };
-    onScrollCb();
-    document.addEventListener("scroll", onScrollCb);
+    handleScroll();
+    document.addEventListener("scroll", handleScroll);
     return () => {
-      document.removeEventListener("scroll", onScrollCb);
+      document.removeEventListener("scroll", handleScroll);
     };
   });
   return (
