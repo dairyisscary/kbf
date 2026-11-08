@@ -2,7 +2,7 @@
 let
   inherit (pkgs) lib;
 
-  nodejs-slim = pkgs.nodejs-slim_24;
+  nodejs-slim = pkgs.nodejs-slim_26;
   nodejs = nodejs-slim.out;
   pnpm = pkgs.pnpm_12.override { inherit nodejs-slim; };
 
