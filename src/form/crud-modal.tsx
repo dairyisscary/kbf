@@ -58,10 +58,9 @@ export function CrudModal<
           <Show when={props.delete}>
             {(del) => (
               <ConfirmingDeleteButton
-                onDelete={() => {
-                  void del()
-                    .on()
-                    .then(() => props.onClose());
+                onDelete={async () => {
+                  await del().on();
+                  props.onClose();
                 }}
               >
                 {del().confirmingButtonChildren}
