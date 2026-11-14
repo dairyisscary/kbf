@@ -90,7 +90,7 @@ export function ColorCodePillItems(props: { children: JSX.Element }) {
 
 export function SelectableColorCodePill<T extends Pillable>(props: {
   object: T;
-  onClick: (object: T, event: MouseEvent) => void;
+  onClick: (event: MouseEvent, object: T) => void;
   selected: boolean;
 }) {
   return (
@@ -100,7 +100,7 @@ export function SelectableColorCodePill<T extends Pillable>(props: {
         COLOR_CODE_PILL_CX,
         "relative ring-0 ring-kbf-text-main transition-[padding] duration-300 aria-pressed:pl-8 aria-pressed:ring-2",
       ]}
-      onClick={[props.onClick, props.object]}
+      onClick={(event) => props.onClick(event, props.object)}
       aria-pressed={props.selected ? "true" : "false"}
       style={getPipStyle(props.object.colorCode)}
     >

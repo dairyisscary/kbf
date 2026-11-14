@@ -77,7 +77,7 @@ function AddEditModal(props: {
     return initTags.filter((nuggetTagId) => allTagIds.has(nuggetTagId));
   });
 
-  const toggleCategory = ({ id: nuggetId }: { id: string }) => {
+  const toggleCategory = (event: MouseEvent, { id: nuggetId }: { id: string }) => {
     setSelectedNuggetTagIds((current) => {
       return current.includes(nuggetId)
         ? current.filter((id) => id !== nuggetId)

@@ -85,7 +85,7 @@ function AssetSelectionInput(props: {
               type="button"
               class="bg-kbf-light-purple p-4 aria-pressed:bg-kbf-action aria-pressed:text-kbf-text-highlight"
               aria-pressed={asset.id === props.value ? "true" : "false"}
-              onClick={[props.onInput, asset.id]}
+              onClick={() => props.onInput(asset.id)}
             >
               {asset.name}
             </button>

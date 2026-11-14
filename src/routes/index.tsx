@@ -643,7 +643,7 @@ export default function Dashboard() {
   });
 
   const [ignored, setIgnored] = createSignal(new Set<string>());
-  const toggleIgnore = (categoryId: string, event: MouseEvent) => {
+  const toggleIgnore = (event: MouseEvent, categoryId: string) => {
     const ctrlClicked = event.ctrlKey || event.metaKey;
     setIgnored((current) => {
       if (ctrlClicked) {
@@ -807,7 +807,7 @@ export default function Dashboard() {
                 >
                   {category.name}
                 </a>
-                <button type="button" onClick={[toggleIgnore, category.id]}>
+                <button type="button" onClick={(event) => toggleIgnore(event, category.id)}>
                   <Icon size="sm" name={ignored().has(category.id) ? "eye" : "eye-off"} />
                 </button>
               </>

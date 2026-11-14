@@ -4,7 +4,7 @@ import { For } from "solid-js";
 type Props<V> = {
   value: V;
   items: { label: JSX.Element; value: V }[];
-  onChange: (newValue: V, event: Event) => void;
+  onChange: (newValue: V) => void;
   class?: string;
 };
 
@@ -19,7 +19,7 @@ export function TabGroup<V>(props: Props<V>) {
               "flex-1 px-2 py-1 text-sm",
               item.value === props.value && "bg-kbf-action text-kbf-text-highlight",
             ]}
-            onClick={[props.onChange, item.value]}
+            onClick={() => props.onChange(item.value)}
           >
             {item.label}
           </button>

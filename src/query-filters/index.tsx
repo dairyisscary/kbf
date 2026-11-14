@@ -46,7 +46,7 @@ export function TimeFrameFilters(props: { timeFrames: { value: string; label: st
         {(timeFrame) => (
           <FilterButton
             pressed={!customOpen() && currentTimeFrame() === timeFrame.value}
-            onClick={[handleNonCustomClick, timeFrame.value]}
+            onClick={() => handleNonCustomClick(timeFrame.value)}
           >
             {timeFrame.label}
           </FilterButton>

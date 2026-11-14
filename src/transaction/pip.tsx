@@ -38,7 +38,7 @@ export function CategorySelectFormRow(props: {
     return initCategories.filter((cat) => allCategoryIds.has(cat.id)).map((cat) => cat.id);
   });
 
-  const toggleCategory = ({ id }: { id: string }, event: MouseEvent) => {
+  const toggleCategory = (event: MouseEvent, { id }: { id: string }) => {
     setSelectedCategoryIds((current) => {
       if (event.ctrlKey) {
         return current.includes(id) ? current.filter((c) => c !== id) : current.concat(id);
